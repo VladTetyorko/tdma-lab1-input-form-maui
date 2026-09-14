@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 using Mobile_apps_L1_Model_view.Models;
 
@@ -8,6 +9,13 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 
 public class StudentViewModel : INotifyPropertyChanged
 {
+    // "FIT 2-4": faculty code, then year-group as "2-4"
+    private static readonly Regex GroupPattern =
+        new(@"^[A-Za-zА-Яа-яІіЇїЄєҐґ]{2,10} \d{1,2}-\d{1,2}$", RegexOptions.Compiled);
+
+    private const double MinAverageScore = 0.0;
+    private const double MaxAverageScore = 5.0;
+
     private readonly Student _student = new();
 
     public StudentViewModel()
@@ -44,6 +52,8 @@ public class StudentViewModel : INotifyPropertyChanged
                 _student.Group = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(Greeting));
+                OnPropertyChanged(nameof(IsGroupValid));
+                ((Command)AddStudentCommand).ChangeCanExecute();
             }
         }
     }
@@ -58,6 +68,8 @@ public class StudentViewModel : INotifyPropertyChanged
                 _student.AverageScore = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsHighScore));
+                OnPropertyChanged(nameof(IsAverageScoreValid));
+                ((Command)AddStudentCommand).ChangeCanExecute();
             }
         }
     }
@@ -66,10 +78,19 @@ public class StudentViewModel : INotifyPropertyChanged
 
     public bool IsHighScore => AverageScore >= 4.0;
 
+    public bool IsGroupValid => GroupPattern.IsMatch(Group);
+
+    public bool IsAverageScoreValid => AverageScore > MinAverageScore && AverageScore <= MaxAverageScore;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void AddStudent()
     {
+        if (!CanAddStudent())
+        {
+            return;
+        }
+
         Students.Add(new Student
         {
             FullName = FullName,
@@ -84,7 +105,7 @@ public class StudentViewModel : INotifyPropertyChanged
 
     private bool CanAddStudent()
     {
-        return !string.IsNullOrWhiteSpace(FullName);
+        return !string.IsNullOrWhiteSpace(FullName) && IsGroupValid && IsAverageScoreValid;
     }
 
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

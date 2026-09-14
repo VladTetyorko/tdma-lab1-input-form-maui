@@ -24,11 +24,91 @@ public class StudentViewModelTests
     }
 
     [Fact]
-    public void AddStudentCommand_CanExecute_WhenFullNameIsProvided()
+    public void AddStudentCommand_CanExecute_WhenAllFieldsAreValid()
     {
-        var viewModel = new StudentViewModel { FullName = "Іван Петренко" };
+        var viewModel = new StudentViewModel
+        {
+            FullName = "Іван Петренко",
+            Group = "FIT 2-4",
+            AverageScore = 4.5
+        };
 
         Assert.True(viewModel.AddStudentCommand.CanExecute(null));
+    }
+
+    [Theory]
+    [InlineData("123")]
+    [InlineData("22")]
+    [InlineData("FIT24")]
+    [InlineData("FIT 2")]
+    [InlineData("FIT2-4")]
+    [InlineData("FIT -4")]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void AddStudentCommand_CannotExecute_WhenGroupDoesNotMatchPattern(string group)
+    {
+        var viewModel = new StudentViewModel
+        {
+            FullName = "Іван Петренко",
+            Group = group,
+            AverageScore = 4.5
+        };
+
+        Assert.False(viewModel.AddStudentCommand.CanExecute(null));
+        Assert.False(viewModel.IsGroupValid);
+    }
+
+    [Theory]
+    [InlineData("FIT 2-4")]
+    [InlineData("ФІТ 2-4")]
+    [InlineData("ІПЗ 10-12")]
+    public void AddStudentCommand_CanExecute_WhenGroupMatchesPattern(string group)
+    {
+        var viewModel = new StudentViewModel
+        {
+            FullName = "Іван Петренко",
+            Group = group,
+            AverageScore = 4.5
+        };
+
+        Assert.True(viewModel.AddStudentCommand.CanExecute(null));
+        Assert.True(viewModel.IsGroupValid);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(5.01)]
+    [InlineData(100)]
+    [InlineData(double.NaN)]
+    public void AddStudentCommand_CannotExecute_WhenAverageScoreIsOutOfRange(double averageScore)
+    {
+        var viewModel = new StudentViewModel
+        {
+            FullName = "Іван Петренко",
+            Group = "FIT 2-4",
+            AverageScore = averageScore
+        };
+
+        Assert.False(viewModel.AddStudentCommand.CanExecute(null));
+        Assert.False(viewModel.IsAverageScoreValid);
+    }
+
+    [Theory]
+    [InlineData(0.01)]
+    [InlineData(2.5)]
+    [InlineData(5.0)]
+    public void AddStudentCommand_CanExecute_WhenAverageScoreIsInRange(double averageScore)
+    {
+        var viewModel = new StudentViewModel
+        {
+            FullName = "Іван Петренко",
+            Group = "FIT 2-4",
+            AverageScore = averageScore
+        };
+
+        Assert.True(viewModel.AddStudentCommand.CanExecute(null));
+        Assert.True(viewModel.IsAverageScoreValid);
     }
 
     [Fact]
@@ -37,7 +117,7 @@ public class StudentViewModelTests
         var viewModel = new StudentViewModel
         {
             FullName = "Іван Петренко",
-            Group = "КН-101",
+            Group = "FIT 2-4",
             AverageScore = 4.5
         };
 
@@ -45,7 +125,7 @@ public class StudentViewModelTests
 
         var student = Assert.Single(viewModel.Students);
         Assert.Equal("Іван Петренко", student.FullName);
-        Assert.Equal("КН-101", student.Group);
+        Assert.Equal("FIT 2-4", student.Group);
         Assert.Equal(4.5, student.AverageScore);
     }
 
@@ -55,7 +135,7 @@ public class StudentViewModelTests
         var viewModel = new StudentViewModel
         {
             FullName = "Іван Петренко",
-            Group = "КН-101",
+            Group = "FIT 2-4",
             AverageScore = 4.5
         };
 
@@ -69,15 +149,40 @@ public class StudentViewModelTests
     [Fact]
     public void AddStudentCommand_Execute_AppendsMultipleStudentsInOrder()
     {
-        var viewModel = new StudentViewModel { FullName = "Перший" };
+        var viewModel = new StudentViewModel
+        {
+            FullName = "Перший",
+            Group = "FIT 2-4",
+            AverageScore = 4.5
+        };
         viewModel.AddStudentCommand.Execute(null);
 
         viewModel.FullName = "Другий";
+        viewModel.Group = "FIT 2-4";
+        viewModel.AverageScore = 4.5;
         viewModel.AddStudentCommand.Execute(null);
 
         Assert.Equal(2, viewModel.Students.Count);
         Assert.Equal("Перший", viewModel.Students[0].FullName);
         Assert.Equal("Другий", viewModel.Students[1].FullName);
+    }
+
+    [Theory]
+    [InlineData("123", 4.5)]
+    [InlineData("FIT 2-4", -1)]
+    [InlineData("FIT 2-4", 0)]
+    public void AddStudentCommand_Execute_DoesNotAddStudent_WhenDataIsInvalid(string group, double averageScore)
+    {
+        var viewModel = new StudentViewModel
+        {
+            FullName = "Іван Петренко",
+            Group = group,
+            AverageScore = averageScore
+        };
+
+        viewModel.AddStudentCommand.Execute(null);
+
+        Assert.Empty(viewModel.Students);
     }
 
     [Theory]
