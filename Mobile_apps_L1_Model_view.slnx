@@ -1,0 +1,4 @@
+<Solution>
+    <Project Path="Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj"/>
+    <Project Path="Mobile_apps_L1_Model_view.Tests/Mobile_apps_L1_Model_view.Tests.csproj"/>
+</Solution>

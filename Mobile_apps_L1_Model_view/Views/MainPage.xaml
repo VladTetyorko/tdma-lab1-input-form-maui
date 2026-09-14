@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Mobile_apps_L1_Model_view.Converters"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.MainPage"
+             Title="Студент">
+
+    <ContentPage.Resources>
+        <converters:HighScoreToColorConverter x:Key="HighScoreToColorConverter" />
+    </ContentPage.Resources>
+
+    <ContentPage.BindingContext>
+        <viewModels:StudentViewModel />
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,20" Spacing="20">
+
+            <Label Text="Дані студента" Style="{StaticResource Headline}" />
+
+            <Entry Text="{Binding FullName, Mode=TwoWay}"
+                   Placeholder="ПІБ студента" />
+
+            <Entry Text="{Binding Group, Mode=TwoWay}"
+                   Placeholder="Група" />
+
+            <Label Text="{Binding AverageScore, StringFormat='Середній бал: {0:F2}'}" />
+
+            <Slider Minimum="0" Maximum="5"
+                    Value="{Binding AverageScore, Mode=TwoWay}" />
+
+            <Label Text="{Binding Greeting, Mode=OneWay}"
+                   FontAttributes="Bold"
+                   TextColor="{Binding IsHighScore, Converter={StaticResource HighScoreToColorConverter}}" />
+
+            <Button Text="Додати студента"
+                    Command="{Binding AddStudentCommand}" />
+
+            <Label Text="Список студентів" Style="{StaticResource SubHeadline}" />
+
+            <CollectionView ItemsSource="{Binding Students}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="0,5" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                            <Label Grid.Column="0" Text="{Binding FullName}" />
+                            <Label Grid.Column="1" Text="{Binding Group}" />
+                            <Label Grid.Column="2" Text="{Binding AverageScore, StringFormat='{0:F2}'}" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

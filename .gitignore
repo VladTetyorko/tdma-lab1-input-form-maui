@@ -1,0 +1,54 @@
+## .NET / Visual Studio / Rider
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# MSTest test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Visual Studio cache/options
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# MAUI / mobile build artifacts
+*.apk
+*.aab
+*.ipa
+*.appx
+*.appxbundle
+*.appxupload
+*.msix
+*.msixbundle
+*.msixupload
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Rider/VS crash logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
