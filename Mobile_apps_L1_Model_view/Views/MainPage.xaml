@@ -26,6 +26,10 @@
             <Entry Text="{Binding Group, Mode=TwoWay}"
                    Placeholder="Група" />
 
+            <Label Text="Формат: Факультет Рік-Група (наприклад, FIT 2-4)"
+                   FontSize="12"
+                   TextColor="Gray" />
+
             <Label Text="{Binding AverageScore, StringFormat='Середній бал: {0:F2}'}" />
 
             <Slider Minimum="0" Maximum="5"
