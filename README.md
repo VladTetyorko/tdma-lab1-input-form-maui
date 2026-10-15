@@ -8,31 +8,32 @@ backed by a database.
 
 ## What we are building
 
-A warehouse app where people can:
+A deliberately **simple** warehouse app: one warehouse, three people, three
+roles, about ten products. It does four things:
 
-- see **current stock**: which products are on hand, how many, and where;
-- see **stock-out history**: which products ran out, when, and for how long;
-- watch **dashboards**: low-stock alerts, deliveries expected today, stock
-  movement over time;
-- do warehouse work: **receive deliveries, issue goods, move stock between
-  locations, count stock**;
-- work in a **role-based** way: a storekeeper, a supplier's driver and a
-  warehouse manager each see and do different things.
+- shows the **product list** with characteristics and quantity on hand;
+- **sorts** the list by any characteristic;
+- lets the manager **add products and characteristics**;
+- **scans a barcode** so a user can record that goods were taken out or brought in.
 
-The domain model and roles are described in
-[`docs/domain/roles.md`](docs/domain/roles.md).
+Data is stored in **SQLite** (UUID keys, `CreatedAt`/`UpdatedAt` on every
+table, third normal form), so the database is one file that is easy to export.
+
+Details: [`docs/domain/domain-model.md`](docs/domain/domain-model.md).
 
 ## Why a warehouse
 
 The course's sample domains (a student list, a railway ERP) only show the
-techniques. A warehouse gives every lab a real job to do:
+techniques. A small warehouse gives every lab a real job to do without
+growing into a big system:
 
 | Lab | Course topic | What it becomes in StockRoom |
 |-----|--------------|------------------------------|
-| 1 | MVVM, data binding, `INotifyPropertyChanged`, validation | Product entry form with validation *(done on the Student model; moves to Product in a later step)* |
-| 2 | Shell navigation, `ICommand`, routes, passing parameters | Product list → product details → edit and return the updated product |
-| 3 | App and page lifecycle, DI, saving state, theme, deep links | Session and role kept in a singleton service, last screen restored, light/dark theme, `stockroom://product/{id}` deep links |
-| 4 | SQLite, repository pattern, CRUD, migrations, sync, encryption | Local database of products, stock and movements; an offline sync queue for drivers on the road; encrypted credentials |
+| 1 | MVVM, data binding, `INotifyPropertyChanged`, validation | Add-product form with validation *(done on the Student model; moves to Product)* |
+| 2 | Shell navigation, `ICommand`, routes, passing parameters | Product list → product details → edit characteristics and return the updated product |
+| 3 | App and page lifecycle, DI, saving state, theme, deep links | Current user in a singleton service, last user remembered, reload on `OnAppearing`, light/dark theme, `stockroom://product/{id}` |
+| 4 | SQLite, repository pattern, CRUD, migrations, sync, encryption | SQLite tables and repositories, schema versioning, database export |
+| — | Extra step | Barcode scanner → In / Out operation |
 
 ## How the project is developed
 
@@ -66,7 +67,10 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 
 | Step | Lab | Document | Status |
 |------|-----|----------|--------|
-| 00 | — | [Project vision and role model](docs/steps/00-vision-and-roles.md) | in review |
+| 00 | — | [Project vision and domain model](docs/steps/00-vision-and-roles.md) | in review |
+| 01 | 1 / 4 | SQLite and migrations | planned |
+| 02 | 1 | Student → warehouse models, ViewModels, UI | planned |
+| 03+ | 2 | Navigation: product list → details | planned |
 
 ## Current architecture (Lab 1)
 
@@ -98,7 +102,7 @@ graph TD
 Mobile_apps_L1_Model_view/        MAUI app (Models, ViewModels, Views, Converters)
 Mobile_apps_L1_Model_view/docks/  Lab assignments (PDF, Ukrainian)
 Mobile_apps_L1_Model_view.Tests/  Unit tests (ViewModels, models, converters)
-docs/domain/                      Domain model and roles
+docs/domain/                      Domain model, roles, database schema
 docs/steps/                       One document per step / PR
 ```
 
