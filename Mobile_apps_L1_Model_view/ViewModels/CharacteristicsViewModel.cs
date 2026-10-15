@@ -71,7 +71,14 @@ public partial class CharacteristicsViewModel(
         Items.Add(result.Value!);
         _changed = true;
         StatusMessage = string.Empty;
+        ResetForm();
+    }
+
+    // Clearing the name fires live validation ("required"); an untouched form should show no error
+    private void ResetForm()
+    {
         NewName = string.Empty;
+        NameError = string.Empty;
     }
 
     // Tells the list to rebuild its sort options only when something was added

@@ -87,7 +87,7 @@ public class CharacteristicsViewModelTests
         Assert.Equal(string.Empty, _viewModel.StatusMessage);
     }
 
-    [Fact(Skip = "BUG: after a successful add the form is cleared, which sets NameError to \"Name is required.\" on an empty form")]
+    [Fact]
     public async Task Add_Success_DoesNotShowRequiredErrorOnTheClearedForm()
     {
         await _store.SignInAsync(Role.Manager);
