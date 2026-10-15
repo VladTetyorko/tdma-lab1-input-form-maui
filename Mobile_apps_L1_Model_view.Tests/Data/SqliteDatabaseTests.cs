@@ -140,4 +140,43 @@ public class SqliteDatabaseTests : IDisposable
         Assert.Equal(10, await copy.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Products"));
         await copy.CloseAsync();
     }
+
+    [Fact]
+    public async Task Counterparty_WithTheKeyLost_ShowsAPlaceholderInsteadOfBreakingTheHistory()
+    {
+        var operations = _provider.GetRequiredService<IOperationRepository>();
+        var product = (await _provider.GetRequiredService<IProductRepository>().GetAllAsync())[0];
+        await operations.AddAsync(new Operation
+        {
+            ProductId = product.Id, Direction = OperationDirection.In, Quantity = 5,
+            Counterparty = "Acme Ltd", CreatedByUserId = SeedData.DriverId
+        });
+        var secrets = _provider.GetRequiredService<FakeSecretStore>();
+        secrets.Values[AesFieldEncryptor.KeyName] = Convert.ToBase64String(new byte[64]);
+
+        // A new encryptor instance reads the (now different) key; the repository is built around it
+        var lostKey = new SqliteOperationRepository(
+            _provider.GetRequiredService<IDatabase>(), _provider.GetRequiredService<SyncJournal>(),
+            new AesFieldEncryptor(secrets), Microsoft.Extensions.Logging.Abstractions.NullLogger<SqliteOperationRepository>.Instance);
+
+        var history = await lostKey.GetByProductAsync(product.Id);
+
+        Assert.Contains(history, o => o.Counterparty == SqliteOperationRepository.UnreadableCounterparty);
+        Assert.Equal(history.Count, (await operations.GetByProductAsync(product.Id)).Count);
+    }
+
+    [Fact]
+    public async Task RecordingAnOperation_WhenSecureStorageFails_IsRefusedWithAMessage()
+    {
+        var stock = _provider.GetRequiredService<IStockService>();
+        var users = _provider.GetRequiredService<IUserRepository>();
+        _provider.GetRequiredService<ICurrentUserService>().SignIn((await users.GetByIdAsync(SeedData.StorekeeperId))!);
+        var product = (await _provider.GetRequiredService<IProductRepository>().GetAllAsync())[0];
+        _provider.GetRequiredService<FakeSecretStore>().Failing = true;
+
+        var result = await stock.RecordAsync(product.Id, OperationDirection.In, 1, counterparty: "Acme Ltd");
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("not saved", result.Error);
+    }
 }

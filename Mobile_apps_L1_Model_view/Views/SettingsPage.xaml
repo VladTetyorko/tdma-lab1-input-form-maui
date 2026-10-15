@@ -4,8 +4,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
              x:Class="Mobile_apps_L1_Model_view.Views.SettingsPage"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
              x:DataType="viewModels:SettingsViewModel"
              Title="Settings">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
 
     <ScrollView>
         <VerticalStackLayout Padding="30,20" Spacing="8">
@@ -13,6 +18,24 @@
             <Label Text="System follows the device setting." Style="{StaticResource CaptionLabel}" />
             <Picker ItemsSource="{Binding ThemeOptions}"
                     SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
+
+            <Label Text="Synchronisation" Style="{StaticResource SectionLabel}" />
+            <Label Text="Changes are saved on this device first and sent to the server when a network is available."
+                   Style="{StaticResource CaptionLabel}" />
+            <Label Text="{Binding NetworkText, StringFormat='Network: {0}'}" />
+            <Label Text="{Binding PendingCount, StringFormat='Waiting to be sent: {0}'}" FontAttributes="Bold" />
+            <HorizontalStackLayout Spacing="10">
+                <Label Text="Simulate offline" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding SimulateOffline, Mode=TwoWay}" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+            <Button Text="Sync now" Command="{Binding SyncNowCommand}" HorizontalOptions="Start" />
+            <Label Text="{Binding SyncText}" Style="{StaticResource CaptionLabel}" />
+
+            <Label Text="Database" Style="{StaticResource SectionLabel}" />
+            <Label Text="Share the SQLite file (stockroom.db3) to open it on a PC. Counterparty names are encrypted in it."
+                   Style="{StaticResource CaptionLabel}" />
+            <Button Text="Share database" Command="{Binding ShareDatabaseCommand}" HorizontalOptions="Start" />
+            <Label Text="{Binding ExportText}" Style="{StaticResource CaptionLabel}" />
 
             <Label Text="Open a link" Style="{StaticResource SectionLabel}" />
             <Label Text="Try a deep link without another app, e.g. stockroom://product/4820001000016"
