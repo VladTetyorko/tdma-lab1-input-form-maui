@@ -97,4 +97,34 @@ public class SeedMigrationTests : IDisposable
         Assert.Equal(before, (await products.GetAllAsync()).Count);
         reopened.Dispose();
     }
+
+    // The demo stock of the lab 3 DataSeeder (received, shipped): on hand = received - shipped
+    [Theory]
+    [InlineData("482000100001", 21)]
+    [InlineData("482000100002", 28)]
+    [InlineData("482000100003", 85)]
+    [InlineData("482000100004", 24)]
+    [InlineData("482000100005", 13)]
+    [InlineData("482000100006", 120)]
+    [InlineData("482000100007", 0)]
+    [InlineData("482000100008", 90)]
+    [InlineData("482000100009", 42)]
+    [InlineData("482000100010", 0)]
+    public async Task Seed_QuantityOnHandMatchesTheDemoStock(string barcodeBase, int expected)
+    {
+        var product = await _products.GetByBarcodeAsync(Ean13.WithCheckDigit(barcodeBase));
+        Assert.NotNull(product);
+
+        var stock = await _provider.GetRequiredService<IStockService>().GetQuantityOnHandAsync(product.Id);
+
+        Assert.Equal(expected, stock);
+    }
+
+    [Fact]
+    public async Task Seed_ProductWithoutMovements_HasNoOperations()
+    {
+        var product = await _products.GetByBarcodeAsync(Ean13.WithCheckDigit("482000100010"));
+
+        Assert.False(await _provider.GetRequiredService<IOperationRepository>().AnyForProductAsync(product!.Id));
+    }
 }
