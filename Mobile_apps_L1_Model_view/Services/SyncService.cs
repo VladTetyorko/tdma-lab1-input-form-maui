@@ -13,10 +13,11 @@ public sealed class SyncService(
     IConnectivityMonitor connectivity,
     IOfflineSimulator offline,
     IClock clock,
-    ILogger<SyncService> logger) : ISyncService
+    ILogger<SyncService> logger) : ISyncService, IDisposable
 {
     private readonly SemaphoreSlim _running = new(1, 1);
     private bool _started;
+    private Task _lastRun = Task.CompletedTask;
 
     public bool IsOnline => connectivity.HasInternet && !offline.IsOffline;
 
@@ -39,9 +40,12 @@ public sealed class SyncService(
     {
         if (IsOnline)
         {
-            _ = RunSafelyAsync();
+            _lastRun = RunSafelyAsync();
         }
     }
+
+    // Lets a sync that is running finish before the database is closed (the container disposes this first)
+    public void Dispose() => _lastRun.Wait(TimeSpan.FromSeconds(5));
 
     public Task<int> GetPendingCountAsync() => queue.CountAsync();
 

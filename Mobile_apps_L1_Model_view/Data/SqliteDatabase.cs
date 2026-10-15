@@ -7,6 +7,7 @@ public sealed class SqliteDatabase(IDatabasePathProvider paths, MigrationRunner 
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private SQLiteAsyncConnection? _connection;
+    private bool _disposed;
 
     public async Task<SQLiteAsyncConnection> GetConnectionAsync()
     {
@@ -18,6 +19,7 @@ public sealed class SqliteDatabase(IDatabasePathProvider paths, MigrationRunner 
         await _gate.WaitAsync();
         try
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
             return _connection ??= await OpenAsync();
         }
         finally
@@ -40,11 +42,21 @@ public sealed class SqliteDatabase(IDatabasePathProvider paths, MigrationRunner 
         await source.CopyToAsync(target);
     }
 
-    // Closes the file (tests delete their temporary database afterwards)
+    // Closes the file (tests delete their temporary database afterwards). Waits for an open in progress,
+    // and refuses new ones, so a background sync cannot reopen the file after the owner is gone
     public void Dispose()
     {
-        _connection?.CloseAsync().GetAwaiter().GetResult();
-        _gate.Dispose();
+        _gate.Wait();
+        try
+        {
+            _disposed = true;
+            _connection?.CloseAsync().GetAwaiter().GetResult();
+            _connection = null;
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     private async Task<SQLiteAsyncConnection> OpenAsync()

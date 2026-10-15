@@ -64,8 +64,6 @@
         <!-- SQLite: sqlite-net-pcl is the thin ORM; the bundle ships the native sqlite3 library per platform -->
         <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
         <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
-        <!-- The bundle's native sqlite3 (2.1.11) has a known vulnerability (GHSA-2m69-gcr7-jv3q); newer natives fix it -->
-        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
     </ItemGroup>
 
     <!-- Numbered schema scripts are read by MigrationRunner; the logical name is the file name -->
@@ -73,8 +71,13 @@
         <EmbeddedResource Include="Data\Migrations\*.sql" LogicalName="Migrations/%(Filename)%(Extension)" />
     </ItemGroup>
 
+    <!-- The bundle's native sqlite3 (2.1.11) has a known vulnerability (GHSA-2m69-gcr7-jv3q); 2.1.14 fixes it.
+         Android has its own native package, the other platforms share the desktop one -->
     <ItemGroup Condition="$(TargetFramework.StartsWith('net10.0-android'))">
         <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3.android" Version="2.1.14" />
+    </ItemGroup>
+    <ItemGroup Condition="!$(TargetFramework.StartsWith('net10.0-android'))">
+        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
     </ItemGroup>
 
     <!-- Camera barcode scanning exists on Android and iOS only; Windows uses manual entry -->
