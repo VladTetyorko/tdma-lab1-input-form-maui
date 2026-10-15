@@ -75,7 +75,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | Step | Lab | Document | Status |
 |------|-----|----------|--------|
 | 00 | — | [Project vision and domain model](docs/steps/00-vision-and-roles.md) | in review |
-| 01 | 1 | [Warehouse domain, MVVM, validation](docs/steps/01-warehouse-entities.md) | in progress |
+| 01 | 1 | [Warehouse domain, MVVM, validation](docs/steps/01-warehouse-entities.md) | done (145 tests) |
 | 02 | 2 | Shell navigation, parameters, characteristics, sorting | planned |
 | 03 | 3 | Lifecycle, DI, state, theme, deep links, scanner | planned |
 | 04 | 4 | SQLite, repositories, sync queue, encryption | planned |

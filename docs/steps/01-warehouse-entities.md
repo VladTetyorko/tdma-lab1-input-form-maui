@@ -28,7 +28,7 @@ The same techniques, moved to the domain from
 | 4 | EAN-13 helper, `IProductValidator`, async repositories (in memory), `DataSeeder`, `IStockService`, `IProductService` | done |
 | 5 | `LoginViewModel`, `ProductListViewModel`, `ProductFormViewModel`, `AddStockRoomCore` DI extension, `QuantityToColorConverter` | done |
 | 6 | Login, products and add-product pages; `Student` code removed; app renamed to StockRoom | done |
-| 7 | Tests for the new code (EndToEnd flows included) | planned (test agent) |
+| 7 | Tests for the new code (EndToEnd flows included) | done — 145 tests: Models, Services, Data, ViewModels, Converters, EndToEnd |
 
 ## 4. Decisions
 
