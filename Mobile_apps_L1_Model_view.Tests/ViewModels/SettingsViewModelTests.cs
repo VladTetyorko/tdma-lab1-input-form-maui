@@ -125,4 +125,47 @@ public class SettingsViewModelTests
         await _viewModel.ShareDatabaseCommand.ExecuteAsync(null);
         Assert.Contains("disk full", _viewModel.ExportText);
     }
+
+    [Fact]
+    public async Task SyncNow_WhileOffline_SaysHowManyChangesWait()
+    {
+        _sync.Result = new SyncResult(SyncStatus.Offline, 0, 3);
+
+        await _viewModel.SyncNowCommand.ExecuteAsync(null);
+
+        Assert.Equal("Offline: 3 changes wait for a connection.", _viewModel.SyncText);
+        Assert.Equal(3, _viewModel.PendingCount);
+    }
+
+    [Fact]
+    public async Task SyncNow_WhenAnotherSyncRuns_SaysSo()
+    {
+        _sync.Result = new SyncResult(SyncStatus.Busy, 0, 2);
+
+        await _viewModel.SyncNowCommand.ExecuteAsync(null);
+
+        Assert.Equal("A sync is already running.", _viewModel.SyncText);
+    }
+
+    [Fact]
+    public void NetworkText_ShowsOnlineOrOffline_FromTheSyncService()
+    {
+        _sync.IsOnline = false;
+        _viewModel.OnAppearing();
+        Assert.Equal("Offline", _viewModel.NetworkText);
+
+        _sync.IsOnline = true;
+        _viewModel.OnAppearing();
+        Assert.Equal("Online", _viewModel.NetworkText);
+    }
+
+    [Fact]
+    public async Task RefreshPending_ShowsTheQueueSize()
+    {
+        _sync.Pending = 5;
+
+        await _viewModel.RefreshPendingCommand.ExecuteAsync(null);
+
+        Assert.Equal(5, _viewModel.PendingCount);
+    }
 }
