@@ -10,6 +10,7 @@ public partial class ProductListViewModel(
     IProductCatalog catalog,
     ICharacteristicService characteristics,
     ICurrentUserService currentUser,
+    IAppStateService appState,
     INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
@@ -117,6 +118,7 @@ public partial class ProductListViewModel(
     private Task SignOutAsync()
     {
         currentUser.SignOut();
+        appState.Clear();
         return navigation.GoToAsync(Routes.Absolute(Routes.Login));
     }
 

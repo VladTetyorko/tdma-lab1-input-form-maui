@@ -11,4 +11,7 @@ public static class NavigationKeys
 
     // bool: the characteristic catalogue changed, the list must rebuild its sort options
     public const string CharacteristicsChanged = "CharacteristicsChanged";
+
+    // string: a barcode (scanner -> add-product form: prefill the barcode that was not found)
+    public const string Barcode = "Barcode";
 }

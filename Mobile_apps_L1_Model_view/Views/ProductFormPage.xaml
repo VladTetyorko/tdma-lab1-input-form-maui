@@ -2,10 +2,19 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
              x:Class="Mobile_apps_L1_Model_view.Views.ProductFormPage"
              x:DataType="viewModels:ProductFormViewModel"
              Title="New product">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding CancelCommand}" />
+    </Shell.BackButtonBehavior>
 
     <ScrollView>
         <VerticalStackLayout Padding="30,20" Spacing="8">

@@ -15,7 +15,7 @@ public class ProductDetailViewModelTests
     public ProductDetailViewModelTests()
     {
         _viewModel = new ProductDetailViewModel(
-            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Navigation);
+            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.AppState, _store.Navigation);
     }
 
     [Fact]

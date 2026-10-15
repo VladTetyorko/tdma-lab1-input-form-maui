@@ -15,7 +15,7 @@ public class OperationViewModelTests
 
     public OperationViewModelTests()
     {
-        _viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Navigation);
+        _viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.AppState, _store.Navigation);
     }
 
     [Fact]

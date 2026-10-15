@@ -19,7 +19,7 @@ public class ProductFormViewModelTests
     {
         var validator = new ProductValidator(_products);
         var service = new ProductService(_products, validator, _currentUser, new FakeClock());
-        _viewModel = new ProductFormViewModel(validator, service, _currentUser, _navigation);
+        _viewModel = new ProductFormViewModel(validator, service, _currentUser, new AppStateService(new FakePreferencesStore()), _navigation);
     }
 
     [Fact]

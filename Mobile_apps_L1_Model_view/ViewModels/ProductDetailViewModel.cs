@@ -6,15 +6,24 @@ using Mobile_apps_L1_Model_view.Services;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
-// Opened from the list with the selected ProductSummary in the navigation parameters
+// Opened from the list with the selected ProductSummary in the navigation parameters.
+// Characteristic edits that are not saved yet are kept as a draft in IAppStateService, so they
+// survive the page reloading when it appears again (after the operation page) and the app being stopped.
 public partial class ProductDetailViewModel(
     IProductCatalog catalog,
     ICharacteristicService characteristics,
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
+    IAppStateService appState,
     INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private ProductSummary? _product;
+
+    // Stored value of each characteristic as last loaded: an edit is "unsaved" when it differs
+    private Dictionary<Guid, string> _stored = [];
+
+    // True while items are being built or the draft applied (those assignments are not user edits)
+    private bool _rebuilding;
 
     public ObservableCollection<CharacteristicEditItem> Characteristics { get; } = [];
 
@@ -70,18 +79,10 @@ public partial class ProductDetailViewModel(
         _product = details.Summary;
         ShowSummary(details.Summary);
 
-        foreach (var item in Characteristics)
-        {
-            item.PropertyChanged -= OnItemChanged;
-        }
-
-        Characteristics.Clear();
-        foreach (var source in details.Characteristics)
-        {
-            var item = new CharacteristicEditItem(source, validator, CanEdit);
-            item.PropertyChanged += OnItemChanged;
-            Characteristics.Add(item);
-        }
+        _rebuilding = true;
+        RebuildCharacteristics(details.Characteristics);
+        RestoreDraft();
+        _rebuilding = false;
 
         History.Clear();
         foreach (var line in details.History)
@@ -104,12 +105,18 @@ public partial class ProductDetailViewModel(
             return;
         }
 
+        appState.ClearDraft<ProductDetailDraft>();
         await ReturnToListAsync();
     }
 
     [RelayCommand]
-    private Task GoBackAsync() => ReturnToListAsync();
+    private Task GoBackAsync()
+    {
+        appState.ClearDraft<ProductDetailDraft>();
+        return ReturnToListAsync();
+    }
 
+    // The draft stays: the edits are still on screen when this page appears again
     [RelayCommand]
     private Task OpenOperationAsync() =>
         _product is null
@@ -140,5 +147,61 @@ public partial class ProductDetailViewModel(
         Quantity = product.Quantity;
     }
 
-    private void OnItemChanged(object? sender, PropertyChangedEventArgs e) => SaveCommand.NotifyCanExecuteChanged();
+    private void RebuildCharacteristics(IReadOnlyList<CharacteristicValueItem> sources)
+    {
+        foreach (var item in Characteristics)
+        {
+            item.PropertyChanged -= OnItemChanged;
+        }
+
+        Characteristics.Clear();
+        foreach (var source in sources)
+        {
+            var item = new CharacteristicEditItem(source, validator, CanEdit);
+            item.PropertyChanged += OnItemChanged;
+            Characteristics.Add(item);
+        }
+
+        _stored = sources.ToDictionary(s => s.CharacteristicId, s => s.Value);
+    }
+
+    // Puts the unsaved edits of this product (if any) back into the freshly built items
+    private void RestoreDraft()
+    {
+        if (!CanEdit || appState.GetDraft<ProductDetailDraft>() is not { } draft || draft.Barcode != _product!.Barcode)
+        {
+            return;
+        }
+
+        foreach (var item in Characteristics.Where(i => draft.Values.ContainsKey(i.CharacteristicId)))
+        {
+            item.Value = draft.Values[item.CharacteristicId];
+        }
+    }
+
+    // The draft is the set of values that differ from the stored ones; none = no draft
+    private void SaveDraft()
+    {
+        var edits = Characteristics
+            .Where(c => c.Value != _stored.GetValueOrDefault(c.CharacteristicId, string.Empty))
+            .ToDictionary(c => c.CharacteristicId, c => c.Value);
+
+        if (edits.Count == 0)
+        {
+            appState.ClearDraft<ProductDetailDraft>();
+        }
+        else
+        {
+            appState.SetDraft(new ProductDetailDraft(_product!.Barcode, edits));
+        }
+    }
+
+    private void OnItemChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        SaveCommand.NotifyCanExecuteChanged();
+        if (e.PropertyName == nameof(CharacteristicEditItem.Value) && !_rebuilding && CanEdit)
+        {
+            SaveDraft();
+        }
+    }
 }
