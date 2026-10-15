@@ -34,7 +34,7 @@ list, In/Out operations, a barcode scanner. See
 | Quantity, first delivery date are computed | Stored on `Products` | Stored copies break 3NF and can drift |
 | UUID keys, `CreatedAt`/`UpdatedAt`, `CreatedByUserId` everywhere | Integer autoincrement keys | Rows can be created offline / on several devices without clashes; every row records who and when |
 | `Role`, `Direction`, `ValueType` as text enums | Lookup tables | Fixed sets with no attributes; still 3NF; readable export |
-| SQLite from the start (before Lab 4) | In-memory lists until Lab 4 | One file, easy to export; models are designed around the real schema from day one |
+| Design the schema now, add SQLite in Lab 4 | SQLite from the start | Follows the course order; entities already match the future tables, so Lab 4 only adds storage |
 | Demo login (pick one of three users) | Real authentication | Not a lab topic |
 | Docs and code in English | Ukrainian | Project owner's choice |
 
@@ -42,11 +42,12 @@ list, In/Out operations, a barcode scanner. See
 
 - `README.md`: project vision, lab-to-feature mapping, workflow, step log.
 - `docs/domain/domain-model.md`: roles, permissions, schema, computed values, scan flow.
+- `docs/domain/entities.md`: entity catalogue with class diagram, fields, relations, permissions, scaling.
 - `docs/steps/_template.md`, `docs/steps/00-vision-and-roles.md`.
 - No code changes.
 
 ## 6. Next steps
 
-1. **Step 01 — SQLite and migrations** (`feat/01-sqlite-migrations`).
-2. **Step 02 — Student → warehouse models, ViewModels and UI** (`feat/02-warehouse-models`).
-3. Then Lab 2 (navigation).
+1. **Step 01 — migrate Student → warehouse entities, ViewModels and UI** (`feat/01-warehouse-entities`).
+2. Lab 2 (navigation).
+3. Lab 4: SQLite, repositories, migrations.

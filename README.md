@@ -16,10 +16,12 @@ roles, about ten products. It does four things:
 - lets the manager **add products and characteristics**;
 - **scans a barcode** so a user can record that goods were taken out or brought in.
 
-Data is stored in **SQLite** (UUID keys, `CreatedAt`/`UpdatedAt` on every
-table, third normal form), so the database is one file that is easy to export.
+Entities use UUID keys, `CreatedAt`/`UpdatedAt` and an owner (`CreatedByUserId`),
+and are designed in third normal form. Until Lab 4 data lives in memory; in
+Lab 4 it moves to **SQLite**, a single file that is easy to export.
 
-Details: [`docs/domain/domain-model.md`](docs/domain/domain-model.md).
+Details: [`docs/domain/domain-model.md`](docs/domain/domain-model.md) (overview, roles)
+and [`docs/domain/entities.md`](docs/domain/entities.md) (every entity, its fields and relations).
 
 ## Why a warehouse
 
@@ -32,7 +34,7 @@ growing into a big system:
 | 1 | MVVM, data binding, `INotifyPropertyChanged`, validation | Add-product form with validation *(done on the Student model; moves to Product)* |
 | 2 | Shell navigation, `ICommand`, routes, passing parameters | Product list → product details → edit characteristics and return the updated product |
 | 3 | App and page lifecycle, DI, saving state, theme, deep links | Current user in a singleton service, last user remembered, reload on `OnAppearing`, light/dark theme, `stockroom://product/{id}` |
-| 4 | SQLite, repository pattern, CRUD, migrations, sync, encryption | SQLite tables and repositories, schema versioning, database export |
+| 4 | SQLite, repository pattern, CRUD, migrations, sync, encryption | Entities mapped to SQLite tables, repositories, schema migrations via `PRAGMA user_version`, database export |
 | — | Extra step | Barcode scanner → In / Out operation |
 
 ## How the project is developed
@@ -68,9 +70,8 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | Step | Lab | Document | Status |
 |------|-----|----------|--------|
 | 00 | — | [Project vision and domain model](docs/steps/00-vision-and-roles.md) | in review |
-| 01 | 1 / 4 | SQLite and migrations | planned |
-| 02 | 1 | Student → warehouse models, ViewModels, UI | planned |
-| 03+ | 2 | Navigation: product list → details | planned |
+| 01 | 1 | Migrate Student → warehouse entities, ViewModels, UI | in progress |
+| 02+ | 2 | Navigation: product list → details | planned |
 
 ## Current architecture (Lab 1)
 
@@ -102,7 +103,7 @@ graph TD
 Mobile_apps_L1_Model_view/        MAUI app (Models, ViewModels, Views, Converters)
 Mobile_apps_L1_Model_view/docks/  Lab assignments (PDF, Ukrainian)
 Mobile_apps_L1_Model_view.Tests/  Unit tests (ViewModels, models, converters)
-docs/domain/                      Domain model, roles, database schema
+docs/domain/                      Domain model, roles, entity catalogue
 docs/steps/                       One document per step / PR
 ```
 

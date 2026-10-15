@@ -31,7 +31,11 @@ separate decision.
 There is no real authentication. On start the user picks one of the three
 seeded accounts.
 
-## Database (SQLite)
+## Database (SQLite, Lab 4)
+
+The schema is designed now, so the C# entities match it from the start
+(see [`entities.md`](entities.md)). Until Lab 4 the data is kept in memory;
+in Lab 4 it moves to SQLite.
 
 Conventions for **every** table:
 
