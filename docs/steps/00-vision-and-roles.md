@@ -1,7 +1,7 @@
 # Step 00 — Project vision and domain model
 
 - **Lab:** none (setup step)
-- **Branch:** `docs/00-vision-and-roles`
+- **Branch:** `lab1` (first commits)
 - **PR:** _to be added_
 
 ## 1. Before
@@ -48,6 +48,6 @@ list, In/Out operations, a barcode scanner. See
 
 ## 6. Next steps
 
-1. **Step 01 — migrate Student → warehouse entities, ViewModels and UI** (`feat/01-warehouse-entities`).
+1. **Step 01 — migrate Student → warehouse entities, ViewModels and UI** (`lab1`).
 2. Lab 2 (navigation).
 3. Lab 4: SQLite, repositories, migrations.

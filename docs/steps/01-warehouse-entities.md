@@ -1,7 +1,7 @@
 # Step 01 — Migrate Student → warehouse entities
 
 - **Lab:** 1 (MVVM, data binding, validation), reapplied to the warehouse domain
-- **Branch:** `feat/01-warehouse-entities`
+- **Branch:** `lab1`
 - **PR:** _to be added_
 
 ## 1. Before
