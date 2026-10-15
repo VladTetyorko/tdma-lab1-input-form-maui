@@ -19,6 +19,7 @@ public static class MauiProgram
             });
 
         builder.Services.AddStockRoomCore();
+        builder.Services.AddSingleton<IPreferencesStore, MauiPreferencesStore>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<ProductsPage>();

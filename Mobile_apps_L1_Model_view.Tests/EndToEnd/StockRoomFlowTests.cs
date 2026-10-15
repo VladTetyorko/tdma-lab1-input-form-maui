@@ -17,6 +17,7 @@ public class StockRoomFlowTests : IDisposable
     {
         var services = new ServiceCollection().AddStockRoomCore();
         services.AddSingleton<INavigationService>(_navigation);
+        services.AddSingleton<IPreferencesStore>(new FakePreferencesStore());
         _provider = services.BuildServiceProvider();
         _provider.GetRequiredService<IDataSeeder>().SeedAsync().GetAwaiter().GetResult();
     }
