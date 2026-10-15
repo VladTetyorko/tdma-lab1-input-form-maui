@@ -18,7 +18,7 @@
         <converters:QuantityToColorConverter x:Key="QuantityToColorConverter" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20,10" RowSpacing="10">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Padding="20,10" RowSpacing="10">
         <Label Grid.Row="0" Text="{Binding CurrentUserName}" Style="{StaticResource CaptionLabel}" />
 
         <HorizontalStackLayout Grid.Row="1" Spacing="10">
@@ -33,7 +33,7 @@
         <CollectionView Grid.Row="2" ItemsSource="{Binding Products}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="services:ProductSummary">
-                    <Grid ColumnDefinitions="*,Auto" Padding="0,8">
+                    <Grid ColumnDefinitions="*,Auto,Auto" Padding="0,8" ColumnSpacing="10">
                         <Grid.GestureRecognizers>
                             <!-- Navigation starts in the ViewModel: the row is the command parameter -->
                             <TapGestureRecognizer
@@ -48,12 +48,29 @@
                                Text="{Binding Quantity, StringFormat='{0} pcs'}"
                                Style="{StaticResource QuantityLabel}"
                                TextColor="{Binding Quantity, Converter={StaticResource QuantityToColorConverter}}" />
+                        <!-- Manager only. A product that has operations cannot be deleted (see the note below the list) -->
+                        <HorizontalStackLayout Grid.Column="2" Spacing="6"
+                                               IsVisible="{Binding CanManageProducts, Source={RelativeSource AncestorType={x:Type viewModels:ProductListViewModel}}}">
+                            <Button Text="Edit" StyleClass="Compact"
+                                    Command="{Binding EditProductCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductListViewModel}}}"
+                                    CommandParameter="{Binding .}" />
+                            <Button Text="Delete" StyleClass="Compact"
+                                    IsEnabled="{Binding CanDelete}"
+                                    Command="{Binding DeleteProductCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductListViewModel}}}"
+                                    CommandParameter="{Binding .}" />
+                        </HorizontalStackLayout>
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <FlexLayout Grid.Row="3" Wrap="Wrap">
+        <VerticalStackLayout Grid.Row="3" Spacing="4">
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+            <Label Text="A product with stock history cannot be deleted: operations are permanent records."
+                   Style="{StaticResource CaptionLabel}" IsVisible="{Binding CanManageProducts}" />
+        </VerticalStackLayout>
+
+        <FlexLayout Grid.Row="4" Wrap="Wrap">
             <Button Text="Add product" Command="{Binding AddProductCommand}"
                     IsVisible="{Binding CanAddProduct}" Margin="0,0,10,6" />
             <Button Text="Characteristics" Command="{Binding OpenCharacteristicsCommand}"

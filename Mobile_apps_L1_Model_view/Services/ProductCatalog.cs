@@ -17,7 +17,7 @@ public sealed class ProductCatalog(
         var valuesByProduct = (await values.GetAllAsync()).ToLookup(v => v.ProductId);
 
         return (await products.GetAllAsync())
-            .Select(p => Summarize(p, quantities.GetValueOrDefault(p.Id), valuesByProduct[p.Id]))
+            .Select(p => Summarize(p, quantities.GetValueOrDefault(p.Id), valuesByProduct[p.Id], quantities.ContainsKey(p.Id)))
             .ToList();
     }
 
@@ -32,7 +32,8 @@ public sealed class ProductCatalog(
         return Summarize(
             product,
             await stock.GetQuantityOnHandAsync(productId),
-            await values.GetByProductAsync(productId));
+            await values.GetByProductAsync(productId),
+            await operations.AnyForProductAsync(productId));
     }
 
     public async Task<ProductSummary?> GetSummaryByBarcodeAsync(string barcode) =>
@@ -47,14 +48,15 @@ public sealed class ProductCatalog(
         }
 
         var productValues = await values.GetByProductAsync(productId);
-        var summary = Summarize(product, await stock.GetQuantityOnHandAsync(productId), productValues);
+        var history = await BuildHistoryAsync(productId);
+        var summary = Summarize(product, await stock.GetQuantityOnHandAsync(productId), productValues, history.Count > 0);
 
         var items = (await characteristics.GetAllAsync())
             .Select(c => new CharacteristicValueItem(
                 c.Id, c.Name, c.ValueType, summary.Values.GetValueOrDefault(c.Id, string.Empty)))
             .ToList();
 
-        return new ProductDetails(summary, items, await BuildHistoryAsync(productId));
+        return new ProductDetails(summary, items, history);
     }
 
     private async Task<IReadOnlyList<OperationHistoryItem>> BuildHistoryAsync(Guid productId)
@@ -76,9 +78,10 @@ public sealed class ProductCatalog(
     }
 
     private static ProductSummary Summarize(
-        Product product, int quantity, IEnumerable<ProductCharacteristic> productValues) =>
+        Product product, int quantity, IEnumerable<ProductCharacteristic> productValues, bool hasOperations) =>
         new(product.Id, product.Name, product.Barcode, quantity)
         {
-            Values = productValues.ToDictionary(v => v.CharacteristicId, v => v.Value)
+            Values = productValues.ToDictionary(v => v.CharacteristicId, v => v.Value),
+            HasOperations = hasOperations
         };
 }

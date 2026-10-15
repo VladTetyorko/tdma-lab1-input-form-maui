@@ -4,8 +4,10 @@ using Mobile_apps_L1_Model_view.Services;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
-// Add-product form. Opened from the list, or from the scanner with an unknown barcode (prefilled).
-// What is typed is kept as a draft in IAppStateService until the product is saved or the form cancelled
+// Add/edit-product form. Opened from the list (add, or edit with the product in the navigation parameters),
+// or from the scanner with an unknown barcode (prefilled).
+// A new product's typed text is kept as a draft in IAppStateService until it is saved or cancelled;
+// editing keeps no draft
 public partial class ProductFormViewModel(
     IProductValidator validator,
     IProductService productService,
@@ -15,6 +17,11 @@ public partial class ProductFormViewModel(
 {
     private bool _opened;
     private bool _prefilled;
+
+    // The product being edited; null when adding
+    private ProductSummary? _editing;
+
+    public string PageTitle => _editing is null ? "New product" : "Edit product";
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
@@ -46,9 +53,17 @@ public partial class ProductFormViewModel(
         SaveDraft();
     }
 
-    // The scanner passes the unknown barcode it could not find
+    // The scanner passes the unknown barcode it could not find; the list passes the product to edit
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
+        if (query.TryGetValue(NavigationKeys.SelectedProduct, out var selected) && selected is ProductSummary product)
+        {
+            _editing = product;
+            OnPropertyChanged(nameof(PageTitle));
+            Name = product.Name;
+            Barcode = product.Barcode;
+        }
+
         if (query.TryGetValue(NavigationKeys.Barcode, out var value) && value is string barcode)
         {
             _prefilled = true;
@@ -65,7 +80,7 @@ public partial class ProductFormViewModel(
         }
 
         _opened = true;
-        if (_prefilled || appState.GetDraft<ProductFormDraft>() is not { } draft)
+        if (_prefilled || _editing is not null || appState.GetDraft<ProductFormDraft>() is not { } draft)
         {
             return;
         }
@@ -77,35 +92,49 @@ public partial class ProductFormViewModel(
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
-        // Uniqueness needs the repository, so it is checked on save, not on every keystroke
-        var barcodeError = await validator.ValidateBarcodeAsync(Barcode);
+        // Uniqueness needs the repository, so it is checked on save, not on every keystroke.
+        // When editing, the product's own barcode is not a duplicate
+        var barcodeError = await validator.ValidateBarcodeAsync(Barcode, _editing?.Id);
         if (barcodeError is not null)
         {
             BarcodeError = barcodeError;
             return;
         }
 
-        var result = await productService.AddAsync(Name, Barcode);
+        var result = _editing is null
+            ? await productService.AddAsync(Name, Barcode)
+            : await productService.UpdateAsync(_editing.Id, Name, Barcode);
         if (!result.IsSuccess)
         {
             StatusMessage = result.Error!;
             return;
         }
 
-        appState.ClearDraft<ProductFormDraft>();
+        if (_editing is null)
+        {
+            appState.ClearDraft<ProductFormDraft>();
+        }
 
-        // The list adds the new product from these parameters instead of reloading
+        // The list updates the row from these parameters instead of reloading. An edited row keeps its
+        // quantity and characteristic values
         var product = result.Value!;
+        var summary = _editing is null
+            ? new ProductSummary(product.Id, product.Name, product.Barcode, 0)
+            : _editing with { Name = product.Name, Barcode = product.Barcode };
         await navigation.GoToAsync(Routes.Back, new Dictionary<string, object>
         {
-            [NavigationKeys.UpdatedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
+            [NavigationKeys.UpdatedProduct] = summary
         });
     }
 
     [RelayCommand]
     private Task CancelAsync()
     {
-        appState.ClearDraft<ProductFormDraft>();
+        if (_editing is null)
+        {
+            appState.ClearDraft<ProductFormDraft>();
+        }
+
         return navigation.GoToAsync(Routes.Back);
     }
 
@@ -117,6 +146,11 @@ public partial class ProductFormViewModel(
 
     private void SaveDraft()
     {
+        if (_editing is not null)
+        {
+            return;
+        }
+
         if (Name.Length == 0 && Barcode.Length == 0)
         {
             appState.ClearDraft<ProductFormDraft>();

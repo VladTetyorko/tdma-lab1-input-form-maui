@@ -10,13 +10,14 @@ public class ProductServiceTests
     private const string ValidBarcode = "4006381333931";
 
     private readonly InMemoryProductRepository _products = new();
+    private readonly InMemoryOperationRepository _operations = new();
     private readonly CurrentUserService _currentUser = new();
     private readonly FakeClock _clock = new();
     private readonly ProductService _service;
 
     public ProductServiceTests()
     {
-        _service = new ProductService(_products, new ProductValidator(_products), _currentUser, _clock);
+        _service = new ProductService(_products, _operations, new ProductValidator(_products), _currentUser, _clock);
     }
 
     [Fact]
@@ -110,6 +111,82 @@ public class ProductServiceTests
 
         Assert.Equal(_clock.UtcNow, result.Value!.CreatedAt);
         Assert.Equal(_clock.UtcNow, result.Value.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ChangesNameAndKeepsTheOwnBarcode()
+    {
+        SignInAsManager();
+        var saw = (await _service.AddAsync("Cordless Saw", ValidBarcode)).Value!;
+        _clock.UtcNow = saw.UpdatedAt.AddMinutes(5);
+
+        var result = await _service.UpdateAsync(saw.Id, " Circular Saw ", ValidBarcode);
+
+        Assert.True(result.IsSuccess);
+        var stored = await _products.GetByIdAsync(saw.Id);
+        Assert.Equal("Circular Saw", stored!.Name);
+        Assert.Equal(_clock.UtcNow, stored.UpdatedAt);
+        Assert.Equal(saw.CreatedAt, stored.CreatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_BarcodeOfAnotherProduct_Fails()
+    {
+        SignInAsManager();
+        await _service.AddAsync("Cordless Saw", ValidBarcode);
+        var drill = (await _service.AddAsync("Drill", "4820001000016")).Value!;
+
+        var result = await _service.UpdateAsync(drill.Id, "Drill", ValidBarcode);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("A product with this barcode already exists.", result.Error);
+        Assert.Equal("4820001000016", (await _products.GetByIdAsync(drill.Id))!.Barcode);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_NonManager_Fails()
+    {
+        _currentUser.SignIn(new User { FullName = "Petro", Role = Role.Storekeeper });
+
+        var result = await _service.UpdateAsync(Guid.NewGuid(), "Saw", ValidBarcode);
+
+        Assert.Contains("cannot edit products", result.Error);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ProductWithoutOperations_RemovesIt()
+    {
+        SignInAsManager();
+        var saw = (await _service.AddAsync("Cordless Saw", ValidBarcode)).Value!;
+
+        var result = await _service.DeleteAsync(saw.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(await _products.GetByIdAsync(saw.Id));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ProductWithOperations_IsRefusedWithAnExplanation()
+    {
+        SignInAsManager();
+        var saw = (await _service.AddAsync("Cordless Saw", ValidBarcode)).Value!;
+        await _operations.AddAsync(new Operation { ProductId = saw.Id, Direction = OperationDirection.In, Quantity = 1 });
+
+        var result = await _service.DeleteAsync(saw.Id);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ProductService.HasOperationsMessage, result.Error);
+        Assert.NotNull(await _products.GetByIdAsync(saw.Id));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_NonManager_Fails()
+    {
+        _currentUser.SignIn(new User { FullName = "Ivan", Role = Role.Driver });
+
+        var result = await _service.DeleteAsync(Guid.NewGuid());
+
+        Assert.Contains("cannot delete products", result.Error);
     }
 
     private User SignInAsManager()

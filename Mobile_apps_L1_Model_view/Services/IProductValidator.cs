@@ -8,6 +8,7 @@ public interface IProductValidator
     // Format only (13 digits and a correct check digit): cheap, safe to call on every keystroke
     string? ValidateBarcodeFormat(string? barcode);
 
-    // Format plus uniqueness among existing products
-    Task<string?> ValidateBarcodeAsync(string? barcode);
+    // Format plus uniqueness among existing products; excludeProductId is the product being edited,
+    // which may keep its own barcode
+    Task<string?> ValidateBarcodeAsync(string? barcode, Guid? excludeProductId = null);
 }

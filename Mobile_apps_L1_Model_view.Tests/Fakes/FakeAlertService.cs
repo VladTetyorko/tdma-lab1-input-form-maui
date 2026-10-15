@@ -7,6 +7,17 @@ public sealed class FakeAlertService : IAlertService
 {
     public List<(string Title, string Message)> Shown { get; } = [];
 
+    // The answer ConfirmAsync gives, and the questions asked
+    public bool ConfirmAnswer { get; set; } = true;
+
+    public List<(string Title, string Message)> Confirmations { get; } = [];
+
+    public Task<bool> ConfirmAsync(string title, string message, string accept, string cancel)
+    {
+        Confirmations.Add((title, message));
+        return Task.FromResult(ConfirmAnswer);
+    }
+
     public Task ShowAsync(string title, string message)
     {
         Shown.Add((title, message));

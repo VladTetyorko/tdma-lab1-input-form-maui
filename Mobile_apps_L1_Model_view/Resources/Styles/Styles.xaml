@@ -517,6 +517,14 @@
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
+    <!-- Small buttons inside list rows; added to the normal Button style with StyleClass="Compact" -->
+    <Style TargetType="Button" Class="Compact">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="MinimumHeightRequest" Value="32" />
+        <Setter Property="HeightRequest" Value="32" />
+    </Style>
+
     <Style TargetType="Label" x:Key="SectionLabel">
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="16" />

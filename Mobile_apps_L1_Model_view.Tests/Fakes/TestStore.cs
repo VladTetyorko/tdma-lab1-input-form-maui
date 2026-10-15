@@ -33,6 +33,9 @@ public sealed class TestStore
     // The services are stateless wrappers over the repositories above, so building them on access is cheap
     public IStockService Stock => new StockService(Operations, Products, CurrentUser, Clock);
 
+    public IProductService ProductService =>
+        new ProductService(Products, Operations, new ProductValidator(Products), CurrentUser, Clock);
+
     public ICharacteristicValidator Validator => new CharacteristicValidator(Characteristics);
 
     public ICharacteristicService CharacteristicService =>
