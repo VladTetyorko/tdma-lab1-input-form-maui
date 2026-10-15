@@ -10,7 +10,7 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 public partial class OperationViewModel(
     IStockService stock,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject, IQueryAttributable
+    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private Guid _productId;
 
@@ -48,6 +48,8 @@ public partial class OperationViewModel(
             QuantityOnHand = product.Quantity;
         }
     }
+
+    public void OnAppearing() => LoadCommand.Execute(null);
 
     [RelayCommand]
     private async Task LoadAsync()

@@ -12,7 +12,7 @@ public partial class ProductDetailViewModel(
     ICharacteristicService characteristics,
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject, IQueryAttributable
+    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private ProductSummary? _product;
 
@@ -45,6 +45,8 @@ public partial class ProductDetailViewModel(
             ShowSummary(product);
         }
     }
+
+    public void OnAppearing() => LoadCommand.Execute(null);
 
     // Everything else is read from the services every time the page appears,
     // so it also refreshes after the operation page records something

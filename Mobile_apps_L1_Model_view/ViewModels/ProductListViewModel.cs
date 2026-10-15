@@ -10,7 +10,7 @@ public partial class ProductListViewModel(
     IProductCatalog catalog,
     ICharacteristicService characteristics,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject, IQueryAttributable
+    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;
@@ -42,6 +42,8 @@ public partial class ProductListViewModel(
     partial void OnSelectedSortOptionChanged(SortOption? value) => ApplySort();
 
     partial void OnSortDescendingChanged(bool value) => ApplySort();
+
+    public void OnAppearing() => EnsureLoadedCommand.Execute(null);
 
     // Called by the page every time it appears: loads once per signed-in user.
     // Changes made on other pages arrive through ApplyQueryAttributes instead

@@ -12,12 +12,6 @@ public partial class CharacteristicsPage : ContentPage
         BindingContext = _viewModel = viewModel;
     }
 
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        _viewModel.LoadCommand.Execute(null);
-    }
-
     // Hardware back button: the same command as the on-screen back arrow and button
     protected override bool OnBackButtonPressed()
     {

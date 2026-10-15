@@ -10,13 +10,15 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 public partial class LoginViewModel(
     IUserRepository users,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject
+    INavigationService navigation) : ObservableObject, IPageLifecycleAware
 {
     public ObservableCollection<User> Users { get; } = [];
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SignInCommand))]
     public partial User? SelectedUser { get; set; }
+
+    public void OnAppearing() => LoadCommand.Execute(null);
 
     [RelayCommand]
     private async Task LoadAsync()

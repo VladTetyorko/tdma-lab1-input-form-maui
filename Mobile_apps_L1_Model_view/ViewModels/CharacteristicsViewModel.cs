@@ -10,7 +10,7 @@ public partial class CharacteristicsViewModel(
     ICharacteristicService characteristics,
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject
+    INavigationService navigation) : ObservableObject, IPageLifecycleAware
 {
     private bool _changed;
 
@@ -36,6 +36,8 @@ public partial class CharacteristicsViewModel(
     public partial string StatusMessage { get; set; } = string.Empty;
 
     partial void OnNewNameChanged(string value) => NameError = validator.ValidateName(value) ?? string.Empty;
+
+    public void OnAppearing() => LoadCommand.Execute(null);
 
     [RelayCommand]
     private async Task LoadAsync()
