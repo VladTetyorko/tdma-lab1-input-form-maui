@@ -33,7 +33,7 @@ growing into a big system:
 
 | Lab | Course topic | What it becomes in StockRoom |
 |-----|--------------|------------------------------|
-| 1 | MVVM, data binding, `INotifyPropertyChanged`, validation | Add-product form with validation *(done on the Student model; moves to Product)* |
+| 1 | MVVM, data binding, `INotifyPropertyChanged`, validation | Login, product list with quantities, add-product form with validation (name, EAN-13, unique barcode) |
 | 2 | Shell navigation, `ICommand`, routes, passing parameters | Product list → details → edit characteristics and return; add characteristics; sort; In/Out page |
 | 3 | App and page lifecycle, DI, saving state, theme, deep links | App state service, drafts survive backgrounding, reload on `OnAppearing`, theme switch, `stockroom://product/{barcode}`, **barcode scanner** (camera stops on `OnDisappearing`) |
 | 4 | SQLite, repository pattern, CRUD, migrations, sync, encryption | Entities mapped to SQLite tables, repositories, schema migrations via `PRAGMA user_version`, database export |
@@ -95,35 +95,81 @@ Every architectural decision, newest last. Details are in the step documents.
 | 7 | 1 | Relations as IDs only, no navigation properties | Entities match tables; joins live in services |
 | 8 | — | Stacked branches `lab1`…`lab4`, one PR per lab | Each lab reviewable alone; matches course branch names |
 | 9 | — | Code, docs and UI in English | Project owner's choice |
+| 10 | 1 | CommunityToolkit.Mvvm (`[ObservableProperty]`, `[RelayCommand]`) | Removes `INotifyPropertyChanged`/`Command` boilerplate (DRY) |
+| 11 | 1 | Validation in `IProductValidator` (+ `Ean13`), not in ViewModels | Testable without UI; one set of rules for form and service |
+| 12 | 1 | Async repository interfaces, in-memory implementations | Lab 4 swaps implementations without touching callers |
+| 13 | 1 | `IStockService` computes quantity on hand and records operations, returns `Result` | One place for stock rules (role, quantity above 0, Out not above on hand) |
+| 14 | 1 | `AddStockRoomCore` DI extension; pages and navigation registered in `MauiProgram` | Tests build the same container with fake platform services |
+| 15 | 1 | Minimal `INavigationService` and `Routes` introduced in Lab 1 | ViewModels must not use `Shell`; Lab 2 extends it |
 
 ## Architecture
 
 ```mermaid
 graph TD
     subgraph Views
-        App
         AppShell
-        MainPage
+        LoginPage
+        ProductsPage
+        ProductFormPage
     end
     subgraph ViewModels
-        StudentViewModel["StudentViewModel (DTO/representation)"]
-    end
-    subgraph Models
-        Student["Student (Entity)"]
+        LoginViewModel
+        ProductListViewModel
+        ProductFormViewModel
     end
     subgraph Converters
-        HighScoreToColorConverter
+        QuantityToColorConverter
+    end
+    subgraph Services
+        IStockService
+        IProductService
+        IProductValidator
+        ICurrentUserService
+        INavigationService
+        IClock
+        RolePermissions
+        Ean13
+    end
+    subgraph Data
+        IUserRepository
+        IProductRepository
+        IOperationRepository
+        ICharacteristicRepository
+        IProductCharacteristicRepository
+        InMemory["In-memory implementations"]
+        IDataSeeder
+    end
+    subgraph Models
+        Entities["User, Product, Characteristic, ProductCharacteristic, Operation"]
     end
 
-    MainPage --> StudentViewModel
-    MainPage --> HighScoreToColorConverter
-    StudentViewModel --> Student
+    LoginPage --> LoginViewModel
+    ProductsPage --> ProductListViewModel
+    ProductsPage --> QuantityToColorConverter
+    ProductFormPage --> ProductFormViewModel
+    LoginViewModel --> IUserRepository
+    LoginViewModel --> ICurrentUserService
+    LoginViewModel --> INavigationService
+    ProductListViewModel --> IProductRepository
+    ProductListViewModel --> IStockService
+    ProductListViewModel --> INavigationService
+    ProductFormViewModel --> IProductValidator
+    ProductFormViewModel --> IProductService
+    IProductService --> IProductValidator
+    IProductService --> IProductRepository
+    IStockService --> IOperationRepository
+    IStockService --> RolePermissions
+    IProductValidator --> Ean13
+    IProductValidator --> IProductRepository
+    InMemory -.implements.-> IProductRepository
+    IDataSeeder --> InMemory
+    IProductRepository --> Entities
 ```
 
 ## Repository layout
 
 ```
-Mobile_apps_L1_Model_view/        MAUI app (Models, ViewModels, Views, Converters)
+Mobile_apps_L1_Model_view/        MAUI app (Models, Services, Data, ViewModels, Views, Converters)
 Mobile_apps_L1_Model_view/docks/  Lab assignments (PDF, Ukrainian)
 Mobile_apps_L1_Model_view.Tests/  Unit tests (ViewModels, models, converters)
 docs/domain/                      Domain model, roles, entity catalogue
