@@ -59,6 +59,28 @@ public class ProductCatalogTests
     }
 
     [Fact]
+    public async Task GetSummaryByBarcodeAsync_KnownBarcode_ReturnsTheProductWithQuantity()
+    {
+        var drill = await _store.AddProductAsync("Drill", ValidBarcode);
+        await _store.Operations.AddAsync(new Operation { ProductId = drill.Id, Direction = OperationDirection.In, Quantity = 6 });
+
+        var summary = await _catalog.GetSummaryByBarcodeAsync(ValidBarcode);
+
+        Assert.NotNull(summary);
+        Assert.Equal(drill.Id, summary.Id);
+        Assert.Equal("Drill", summary.Name);
+        Assert.Equal(6, summary.Quantity);
+    }
+
+    [Fact]
+    public async Task GetSummaryByBarcodeAsync_UnknownBarcode_ReturnsNull()
+    {
+        await _store.AddProductAsync("Drill", ValidBarcode);
+
+        Assert.Null(await _catalog.GetSummaryByBarcodeAsync("4820001000016"));
+    }
+
+    [Fact]
     public async Task GetDetailsAsync_UnknownProduct_ReturnsNull()
     {
         Assert.Null(await _catalog.GetDetailsAsync(Guid.NewGuid()));

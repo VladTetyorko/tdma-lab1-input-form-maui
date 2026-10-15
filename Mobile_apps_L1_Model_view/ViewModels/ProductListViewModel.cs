@@ -10,11 +10,14 @@ public partial class ProductListViewModel(
     IProductCatalog catalog,
     ICharacteristicService characteristics,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject, IQueryAttributable
+    IAppStateService appState,
+    IStartupNavigator startup,
+    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;
     private bool _sortOptionsStale;
+    private bool _productsStale;
 
     // What the list shows: _all, sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
@@ -43,22 +46,27 @@ public partial class ProductListViewModel(
 
     partial void OnSortDescendingChanged(bool value) => ApplySort();
 
+    public void OnAppearing() => EnsureLoadedCommand.Execute(null);
+
     // Called by the page every time it appears: loads once per signed-in user.
     // Changes made on other pages arrive through ApplyQueryAttributes instead
     [RelayCommand]
     private async Task EnsureLoadedAsync()
     {
-        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id)
+        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id && !_productsStale)
         {
             if (_sortOptionsStale)
             {
                 await SyncSortOptionsAsync();
             }
-
-            return;
+        }
+        else
+        {
+            await LoadAsync();
         }
 
-        await LoadAsync();
+        // A deep link or an unfinished form from the last run (does nothing when there is none)
+        await startup.RunAsync();
     }
 
     [RelayCommand]
@@ -72,6 +80,7 @@ public partial class ProductListViewModel(
         _all = [.. await catalog.GetSummariesAsync()];
         await SyncSortOptionsAsync();
         _loadedForUserId = user?.Id;
+        _productsStale = false;
         ApplySort();
     }
 
@@ -90,6 +99,11 @@ public partial class ProductListViewModel(
             }
 
             ApplySort();
+        }
+
+        if (query.ContainsKey(NavigationKeys.ProductsChanged))
+        {
+            _productsStale = true;
         }
 
         if (query.ContainsKey(NavigationKeys.CharacteristicsChanged))
@@ -112,9 +126,16 @@ public partial class ProductListViewModel(
     private Task OpenCharacteristicsAsync() => navigation.GoToAsync(Routes.Characteristics);
 
     [RelayCommand]
+    private Task OpenSettingsAsync() => navigation.GoToAsync(Routes.Settings);
+
+    [RelayCommand]
+    private Task ScanAsync() => navigation.GoToAsync(Routes.Scanner);
+
+    [RelayCommand]
     private Task SignOutAsync()
     {
         currentUser.SignOut();
+        appState.Clear();
         return navigation.GoToAsync(Routes.Absolute(Routes.Login));
     }
 

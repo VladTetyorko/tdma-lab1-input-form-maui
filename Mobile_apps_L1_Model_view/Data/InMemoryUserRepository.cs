@@ -6,5 +6,7 @@ public sealed class InMemoryUserRepository : InMemoryRepository<User>, IUserRepo
 {
     public Task<IReadOnlyList<User>> GetAllAsync() => QueryAsync();
 
+    public Task<User?> GetByIdAsync(Guid id) => FindAsync(u => u.Id == id);
+
     public Task AddAsync(User item) => InsertAsync(item);
 }

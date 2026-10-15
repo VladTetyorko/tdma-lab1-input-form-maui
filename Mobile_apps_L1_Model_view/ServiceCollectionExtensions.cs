@@ -7,12 +7,18 @@ namespace Mobile_apps_L1_Model_view;
 
 public static class ServiceCollectionExtensions
 {
-    // Everything except pages and platform services (INavigationService),
+    // Everything except pages and platform services (INavigationService, IPreferencesStore, ...),
     // so tests can build the same container with fake platform services
     public static IServiceCollection AddStockRoomCore(this IServiceCollection services)
     {
+        services.AddLogging();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
+        services.AddSingleton<IAppStateService, AppStateService>();
+        services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IDeepLinkHandler, DeepLinkHandler>();
+        services.AddSingleton<IStartupNavigator, StartupNavigator>();
+        services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
 
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         services.AddSingleton<IProductRepository, InMemoryProductRepository>();
@@ -34,6 +40,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProductDetailViewModel>();
         services.AddTransient<CharacteristicsViewModel>();
         services.AddTransient<OperationViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<ScannerViewModel>();
 
         return services;
     }

@@ -5,6 +5,9 @@ namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 // Records every route a ViewModel asks for, in order, and the parameters sent with it
 public sealed class FakeNavigationService : INavigationService
 {
+    // Tests set this to simulate the page that is open
+    public string CurrentRoute { get; set; } = string.Empty;
+
     public List<string> RequestedRoutes { get; } = [];
 
     // Parallel to RequestedRoutes: null when the call had no parameters

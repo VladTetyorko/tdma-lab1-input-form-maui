@@ -13,13 +13,19 @@ public class ProductFormViewModelTests
     private readonly InMemoryProductRepository _products = new();
     private readonly CurrentUserService _currentUser = new();
     private readonly FakeNavigationService _navigation = new();
+    private readonly AppStateService _appState = new(new FakePreferencesStore());
     private readonly ProductFormViewModel _viewModel;
 
     public ProductFormViewModelTests()
     {
+        _viewModel = CreateViewModel(_appState);
+    }
+
+    private ProductFormViewModel CreateViewModel(AppStateService appState)
+    {
         var validator = new ProductValidator(_products);
         var service = new ProductService(_products, validator, _currentUser, new FakeClock());
-        _viewModel = new ProductFormViewModel(validator, service, _currentUser, _navigation);
+        return new ProductFormViewModel(validator, service, _currentUser, appState, _navigation);
     }
 
     [Fact]
@@ -143,6 +149,86 @@ public class ProductFormViewModelTests
         Assert.Equal("Cordless Saw", created.Name);
         Assert.Equal(ValidBarcode, created.Barcode);
         Assert.Equal(0, created.Quantity);
+    }
+
+    [Fact]
+    public void Typing_SavesADraftOfNameAndBarcode()
+    {
+        _viewModel.Name = "Cordless Saw";
+        _viewModel.Barcode = ValidBarcode;
+
+        Assert.Equal(new ProductFormDraft("Cordless Saw", ValidBarcode), _appState.GetDraft<ProductFormDraft>());
+    }
+
+    [Fact]
+    public void ClearingBothFields_RemovesTheDraft()
+    {
+        FillValidForm();
+
+        _viewModel.Name = string.Empty;
+        _viewModel.Barcode = string.Empty;
+
+        Assert.Null(_appState.GetDraft<ProductFormDraft>());
+    }
+
+    [Fact]
+    public void OnAppearing_RestoresTheDraftOnce()
+    {
+        _appState.SetDraft(new ProductFormDraft("Cordless Saw", ValidBarcode));
+        var viewModel = CreateViewModel(_appState);
+
+        viewModel.OnAppearing();
+
+        Assert.Equal("Cordless Saw", viewModel.Name);
+        Assert.Equal(ValidBarcode, viewModel.Barcode);
+    }
+
+    [Fact]
+    public void OnAppearing_AgainAfterReturningFromAnotherPage_DoesNotOverwriteTyping()
+    {
+        _appState.SetDraft(new ProductFormDraft("Cordless Saw", ValidBarcode));
+        var viewModel = CreateViewModel(_appState);
+        viewModel.OnAppearing();
+        viewModel.Name = "Changed";
+
+        _appState.SetDraft(new ProductFormDraft("Stale", ValidBarcode));
+        viewModel.OnAppearing();
+
+        Assert.Equal("Changed", viewModel.Name);
+    }
+
+    [Fact]
+    public void OnAppearing_WithPrefilledBarcode_IgnoresTheDraft()
+    {
+        _appState.SetDraft(new ProductFormDraft("Cordless Saw", ValidBarcode));
+        var viewModel = CreateViewModel(_appState);
+        viewModel.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.Barcode] = "4820001000016" });
+
+        viewModel.OnAppearing();
+
+        Assert.Equal(string.Empty, viewModel.Name);
+        Assert.Equal("4820001000016", viewModel.Barcode);
+    }
+
+    [Fact]
+    public async Task Save_Success_ClearsTheDraft()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena Kovalenko", Role = Role.Manager });
+        FillValidForm();
+
+        await _viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Null(_appState.GetDraft<ProductFormDraft>());
+    }
+
+    [Fact]
+    public async Task Cancel_ClearsTheDraft()
+    {
+        FillValidForm();
+
+        await _viewModel.CancelCommand.ExecuteAsync(null);
+
+        Assert.Null(_appState.GetDraft<ProductFormDraft>());
     }
 
     private void FillValidForm()

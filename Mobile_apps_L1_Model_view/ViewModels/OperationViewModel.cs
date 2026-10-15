@@ -5,14 +5,17 @@ using Mobile_apps_L1_Model_view.Services;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
-// Records "N units of this product moved In or Out". Opened from the detail page now,
-// from the barcode scanner in Lab 3 (both pass the product in the navigation parameters).
+// Records "N units of this product moved In or Out". Opened from the detail page and from the
+// barcode scanner (both pass the product in the navigation parameters). What is typed is kept as a
+// draft in IAppStateService until the operation is saved or the page is left with Cancel/back.
 public partial class OperationViewModel(
     IStockService stock,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject, IQueryAttributable
+    IAppStateService appState,
+    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private Guid _productId;
+    private string _barcode = string.Empty;
 
     // Only the directions the current role may record (a Driver can only bring goods In)
     public IReadOnlyList<OperationDirection> AvailableDirections { get; private set; } = [];
@@ -39,15 +42,27 @@ public partial class OperationViewModel(
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
+    partial void OnSelectedDirectionChanged(OperationDirection value) => SaveDraft();
+
+    partial void OnQuantityChanged(int value) => SaveDraft();
+
+    partial void OnCounterpartyChanged(string value) => SaveDraft();
+
+    partial void OnReasonChanged(string value) => SaveDraft();
+
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue(NavigationKeys.SelectedProduct, out var value) && value is ProductSummary product)
         {
             _productId = product.Id;
+            _barcode = product.Barcode;
             ProductName = product.Name;
             QuantityOnHand = product.Quantity;
+            RestoreDraft();
         }
     }
+
+    public void OnAppearing() => LoadCommand.Execute(null);
 
     [RelayCommand]
     private async Task LoadAsync()
@@ -79,12 +94,41 @@ public partial class OperationViewModel(
             return;
         }
 
+        appState.ClearDraft<OperationDraft>();
+
         // The detail page reloads when it appears again
         await navigation.GoToAsync(Routes.Back);
     }
 
     [RelayCommand]
-    private Task GoBackAsync() => navigation.GoToAsync(Routes.Back);
+    private Task GoBackAsync()
+    {
+        appState.ClearDraft<OperationDraft>();
+        return navigation.GoToAsync(Routes.Back);
+    }
+
+    // Only a draft for this very product applies; the local copy survives the property setters below,
+    // which each save a draft of their own
+    private void RestoreDraft()
+    {
+        if (appState.GetDraft<OperationDraft>() is not { } draft || draft.Barcode != _barcode)
+        {
+            return;
+        }
+
+        SelectedDirection = draft.Direction;
+        Quantity = draft.Quantity;
+        Counterparty = draft.Counterparty;
+        Reason = draft.Reason;
+    }
+
+    private void SaveDraft()
+    {
+        if (_barcode.Length > 0)
+        {
+            appState.SetDraft(new OperationDraft(_barcode, SelectedDirection, Quantity, Counterparty, Reason));
+        }
+    }
 
     private static string? Blank(string text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 }

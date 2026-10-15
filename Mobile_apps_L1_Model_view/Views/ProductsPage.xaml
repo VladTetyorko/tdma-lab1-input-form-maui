@@ -2,12 +2,17 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
              xmlns:converters="clr-namespace:Mobile_apps_L1_Model_view.Converters"
              xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
              x:Class="Mobile_apps_L1_Model_view.Views.ProductsPage"
              x:DataType="viewModels:ProductListViewModel"
              Title="Products">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
 
     <ContentPage.Resources>
         <converters:QuantityToColorConverter x:Key="QuantityToColorConverter" />
@@ -48,12 +53,14 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <HorizontalStackLayout Grid.Row="3" Spacing="10">
+        <FlexLayout Grid.Row="3" Wrap="Wrap">
             <Button Text="Add product" Command="{Binding AddProductCommand}"
-                    IsVisible="{Binding CanAddProduct}" />
+                    IsVisible="{Binding CanAddProduct}" Margin="0,0,10,6" />
             <Button Text="Characteristics" Command="{Binding OpenCharacteristicsCommand}"
-                    IsVisible="{Binding CanManageCharacteristics}" />
-            <Button Text="Sign out" Command="{Binding SignOutCommand}" />
-        </HorizontalStackLayout>
+                    IsVisible="{Binding CanManageCharacteristics}" Margin="0,0,10,6" />
+            <Button Text="Scan" Command="{Binding ScanCommand}" Margin="0,0,10,6" />
+            <Button Text="Settings" Command="{Binding OpenSettingsCommand}" Margin="0,0,10,6" />
+            <Button Text="Sign out" Command="{Binding SignOutCommand}" Margin="0,0,10,6" />
+        </FlexLayout>
     </Grid>
 </ContentPage>

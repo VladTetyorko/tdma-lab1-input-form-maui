@@ -63,4 +63,9 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
     </ItemGroup>
 
+    <!-- Camera barcode scanning exists on Android and iOS only; Windows uses manual entry -->
+    <ItemGroup Condition="$(TargetFramework.StartsWith('net10.0-android')) or $(TargetFramework.StartsWith('net10.0-ios'))">
+        <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.10.4" />
+    </ItemGroup>
+
 </Project>

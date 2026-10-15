@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.ScannerPage"
+             x:DataType="viewModels:ScannerViewModel"
+             Title="Scan barcode">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding GoBackCommand}" />
+    </Shell.BackButtonBehavior>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,20" Spacing="8">
+            <views:CameraScannerView HeightRequest="280"
+                                     IsVisible="{Binding IsCameraSupported}"
+                                     IsActive="{Binding IsCameraActive}"
+                                     DetectedCommand="{Binding BarcodeDetectedCommand}" />
+
+            <Label Text="Camera scanning is not available on this device. Type the barcode instead."
+                   Style="{StaticResource CaptionLabel}"
+                   IsVisible="{Binding IsCameraUnavailable}" />
+
+            <Label Text="Barcode" Style="{StaticResource SectionLabel}" />
+            <Entry Text="{Binding ManualBarcode, Mode=TwoWay}"
+                   Placeholder="EAN-13"
+                   Keyboard="Numeric"
+                   ReturnCommand="{Binding LookUpCommand}" />
+            <Button Text="Find product" Command="{Binding LookUpCommand}" HorizontalOptions="Start" />
+
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Add this product" Command="{Binding CreateProductCommand}"
+                        IsVisible="{Binding CanCreateProduct}" />
+                <Button Text="Scan again" Command="{Binding ScanAgainCommand}"
+                        IsVisible="{Binding CanScanAgain}" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
