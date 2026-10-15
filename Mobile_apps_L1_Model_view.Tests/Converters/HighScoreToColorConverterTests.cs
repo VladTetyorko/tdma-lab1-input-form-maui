@@ -1,7 +1,7 @@
 using System.Globalization;
 using Mobile_apps_L1_Model_view.Converters;
 
-namespace Mobile_apps_L1_Model_view.Tests;
+namespace Mobile_apps_L1_Model_view.Tests.Converters;
 
 public class HighScoreToColorConverterTests
 {

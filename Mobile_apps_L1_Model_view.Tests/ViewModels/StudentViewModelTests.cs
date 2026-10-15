@@ -1,6 +1,6 @@
 using Mobile_apps_L1_Model_view.ViewModels;
 
-namespace Mobile_apps_L1_Model_view.Tests;
+namespace Mobile_apps_L1_Model_view.Tests.ViewModels;
 
 public class StudentViewModelTests
 {
