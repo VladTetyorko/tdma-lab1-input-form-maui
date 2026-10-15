@@ -90,6 +90,124 @@ public class StockRoomFlowTests : IDisposable
         Assert.Equal(33, updated.Quantity);
     }
 
+    [Fact]
+    public async Task Manager_EditsWeight_AndListShowsNewValueInSortedPosition()
+    {
+        await SignInAsync(Role.Manager);
+        var list = _provider.GetRequiredService<ProductListViewModel>();
+        await list.LoadCommand.ExecuteAsync(null);
+        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
+
+        await list.OpenDetailsCommand.ExecuteAsync(drill);
+        var detail = _provider.GetRequiredService<ProductDetailViewModel>();
+        detail.ApplyQueryAttributes(LastParameters());
+        await detail.LoadCommand.ExecuteAsync(null);
+        var weight = detail.Characteristics.Single(c => c.Name == "Weight (kg)");
+        Assert.Equal("1.6", weight.Value);
+
+        weight.Value = "9.5";
+        Assert.True(detail.SaveCommand.CanExecute(null));
+        await detail.SaveCommand.ExecuteAsync(null);
+
+        // Shell hands the parameters of the Back navigation to the list
+        Assert.Equal(Routes.Back, _navigation.RequestedRoutes.Last());
+        list.ApplyQueryAttributes(LastParameters());
+
+        var updated = Assert.Single(list.Products, p => p.Id == drill.Id);
+        Assert.Equal("9.5", updated.Values[weight.CharacteristicId]);
+
+        list.SelectedSortOption = list.SortOptions.Single(o => o.Title == "Weight (kg)");
+        Assert.Equal("Interior Paint 10 L", list.Products.Last().Name);
+        Assert.Equal(8, list.Products.IndexOf(updated));
+
+        list.SortDescending = true;
+        Assert.Equal("Interior Paint 10 L", list.Products[0].Name);
+        Assert.Equal(drill.Id, list.Products[1].Id);
+    }
+
+    [Fact]
+    public async Task Manager_AddsCharacteristic_AndListOffersItAsSortOption()
+    {
+        await SignInAsync(Role.Manager);
+        var list = _provider.GetRequiredService<ProductListViewModel>();
+        await list.LoadCommand.ExecuteAsync(null);
+        await list.OpenCharacteristicsCommand.ExecuteAsync(null);
+
+        var characteristics = _provider.GetRequiredService<CharacteristicsViewModel>();
+        await characteristics.LoadCommand.ExecuteAsync(null);
+        characteristics.NewName = "Shelf";
+        characteristics.NewValueType = CharacteristicValueType.Number;
+        await characteristics.AddCommand.ExecuteAsync(null);
+        await characteristics.GoBackCommand.ExecuteAsync(null);
+
+        Assert.Equal(Routes.Back, _navigation.RequestedRoutes.Last());
+        list.ApplyQueryAttributes(LastParameters());
+        await list.EnsureLoadedCommand.ExecuteAsync(null);
+
+        list.SelectedSortOption = Assert.Single(list.SortOptions, o => o.Title == "Shelf");
+        var names = list.Products.Select(p => p.Name).ToList();
+        // No product has a Shelf value yet, so every row is "missing" and the order falls back to name
+        Assert.Equal(names.OrderBy(n => n, StringComparer.OrdinalIgnoreCase), names);
+    }
+
+    [Fact]
+    public async Task Storekeeper_RecordsOutFromOperationPage_AndDetailShowsReducedQuantity()
+    {
+        await SignInAsync(Role.Storekeeper);
+        var list = _provider.GetRequiredService<ProductListViewModel>();
+        await list.LoadCommand.ExecuteAsync(null);
+        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
+
+        await list.OpenDetailsCommand.ExecuteAsync(drill);
+        var detail = _provider.GetRequiredService<ProductDetailViewModel>();
+        detail.ApplyQueryAttributes(LastParameters());
+        await detail.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(21, detail.Quantity);
+
+        await detail.OpenOperationCommand.ExecuteAsync(null);
+        var operation = _provider.GetRequiredService<OperationViewModel>();
+        operation.ApplyQueryAttributes(LastParameters());
+        await operation.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(21, operation.QuantityOnHand);
+
+        operation.SelectedDirection = OperationDirection.Out;
+        operation.Quantity = 2;
+        await operation.SaveCommand.ExecuteAsync(null);
+        Assert.Equal(Routes.Back, _navigation.RequestedRoutes.Last());
+
+        // The detail page reloads its data when it appears again
+        await detail.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(19, detail.Quantity);
+        Assert.Equal(OperationDirection.Out, detail.History[0].Direction);
+        Assert.Equal(2, detail.History[0].Quantity);
+    }
+
+    [Fact]
+    public async Task Driver_OperationPageOffersOnlyIn()
+    {
+        await SignInAsync(Role.Driver);
+        var list = _provider.GetRequiredService<ProductListViewModel>();
+        await list.LoadCommand.ExecuteAsync(null);
+        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
+
+        await list.OpenDetailsCommand.ExecuteAsync(drill);
+        var detail = _provider.GetRequiredService<ProductDetailViewModel>();
+        detail.ApplyQueryAttributes(LastParameters());
+        await detail.LoadCommand.ExecuteAsync(null);
+        Assert.False(detail.CanEdit);
+
+        await detail.OpenOperationCommand.ExecuteAsync(null);
+        var operation = _provider.GetRequiredService<OperationViewModel>();
+        operation.ApplyQueryAttributes(LastParameters());
+        await operation.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(new[] { OperationDirection.In }, operation.AvailableDirections);
+        Assert.Equal(OperationDirection.In, operation.SelectedDirection);
+    }
+
+    // Shell hands the parameters of the last navigation to the page that was opened
+    private IDictionary<string, object> LastParameters() => _navigation.RequestedParameters.Last()!;
+
     private async Task SignInAsync(Role role)
     {
         var login = _provider.GetRequiredService<LoginViewModel>();
