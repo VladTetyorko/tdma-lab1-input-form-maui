@@ -16,6 +16,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IAppStateService, AppStateService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IDeepLinkHandler, DeepLinkHandler>();
+        services.AddSingleton<IStartupNavigator, StartupNavigator>();
         services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
 
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();

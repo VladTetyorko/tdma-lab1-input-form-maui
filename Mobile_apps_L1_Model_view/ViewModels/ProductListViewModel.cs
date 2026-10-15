@@ -11,6 +11,7 @@ public partial class ProductListViewModel(
     ICharacteristicService characteristics,
     ICurrentUserService currentUser,
     IAppStateService appState,
+    IStartupNavigator startup,
     INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
@@ -57,11 +58,14 @@ public partial class ProductListViewModel(
             {
                 await SyncSortOptionsAsync();
             }
-
-            return;
+        }
+        else
+        {
+            await LoadAsync();
         }
 
-        await LoadAsync();
+        // A deep link or an unfinished form from the last run (does nothing when there is none)
+        await startup.RunAsync();
     }
 
     [RelayCommand]

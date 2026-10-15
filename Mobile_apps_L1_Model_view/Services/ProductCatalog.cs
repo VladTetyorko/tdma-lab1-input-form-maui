@@ -35,6 +35,9 @@ public sealed class ProductCatalog(
             await values.GetByProductAsync(productId));
     }
 
+    public async Task<ProductSummary?> GetSummaryByBarcodeAsync(string barcode) =>
+        await products.GetByBarcodeAsync(barcode) is { } product ? await GetSummaryAsync(product.Id) : null;
+
     public async Task<ProductDetails?> GetDetailsAsync(Guid productId)
     {
         var product = await products.GetByIdAsync(productId);

@@ -13,6 +13,12 @@
             <Label Text="System follows the device setting." Style="{StaticResource CaptionLabel}" />
             <Picker ItemsSource="{Binding ThemeOptions}"
                     SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
+
+            <Label Text="Open a link" Style="{StaticResource SectionLabel}" />
+            <Label Text="Try a deep link without another app, e.g. stockroom://product/4820001000016"
+                   Style="{StaticResource CaptionLabel}" />
+            <Entry Text="{Binding LinkText, Mode=TwoWay}" Placeholder="stockroom://product/{barcode}" />
+            <Button Text="Open" Command="{Binding OpenLinkCommand}" HorizontalOptions="Start" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

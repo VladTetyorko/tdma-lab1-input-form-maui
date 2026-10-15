@@ -8,13 +8,21 @@ namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 // container. ViewModel tests share one store, so a change made by one service is seen by the others.
 public sealed class TestStore
 {
-    public TestStore() => AppState = new AppStateService(Preferences);
+    public TestStore()
+    {
+        AppState = new AppStateService(Preferences);
+        DeepLinks = new DeepLinkHandler(Catalog, CurrentUser, Navigation, Alerts);
+        Startup = new StartupNavigator(AppState, DeepLinks, Catalog, Navigation);
+    }
 
     public FakeClock Clock { get; } = new();
     public CurrentUserService CurrentUser { get; } = new();
     public FakeNavigationService Navigation { get; } = new();
     public FakePreferencesStore Preferences { get; } = new();
     public AppStateService AppState { get; }
+    public FakeAlertService Alerts { get; } = new();
+    public DeepLinkHandler DeepLinks { get; }
+    public StartupNavigator Startup { get; }
 
     public InMemoryUserRepository Users { get; } = new();
     public InMemoryProductRepository Products { get; } = new();
