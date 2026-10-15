@@ -501,7 +501,8 @@
     </Style>
 
     <Style TargetType="Label" x:Key="ErrorLabel">
-        <Setter Property="TextColor" Value="{StaticResource Danger}" />
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
         <Setter Property="FontSize" Value="12" />
     </Style>
 

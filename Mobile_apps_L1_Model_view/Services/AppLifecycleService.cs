@@ -6,12 +6,14 @@ namespace Mobile_apps_L1_Model_view.Services;
 public sealed class AppLifecycleService(
     IAppStateService state,
     ICurrentUserService currentUser,
+    IThemeService theme,
     IUserRepository users,
     INavigationService navigation,
     ILogger<AppLifecycleService> logger) : IAppLifecycleService
 {
     public async Task<string> RestoreAsync()
     {
+        theme.Load();
         state.Restore();
 
         if (state.SignedInUserId is { } userId && await users.GetByIdAsync(userId) is { } user)

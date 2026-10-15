@@ -13,6 +13,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.ProductDetail, typeof(ProductDetailPage));
         Routing.RegisterRoute(Routes.Characteristics, typeof(CharacteristicsPage));
         Routing.RegisterRoute(Routes.Operation, typeof(OperationPage));
+        Routing.RegisterRoute(Routes.Settings, typeof(SettingsPage));
 
         // Set before the Shell is shown, so there is no flash of the sign-in page
         CurrentItem = Items.FirstOrDefault(item => item.CurrentItem?.CurrentItem?.Route == startRoute) ?? CurrentItem;

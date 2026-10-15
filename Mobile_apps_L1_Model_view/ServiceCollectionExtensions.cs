@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IAppStateService, AppStateService>();
+        services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
 
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
@@ -37,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProductDetailViewModel>();
         services.AddTransient<CharacteristicsViewModel>();
         services.AddTransient<OperationViewModel>();
+        services.AddTransient<SettingsViewModel>();
 
         return services;
     }

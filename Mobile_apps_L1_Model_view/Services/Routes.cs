@@ -9,6 +9,7 @@ public static class Routes
     public const string ProductDetail = "productdetail";
     public const string Characteristics = "characteristics";
     public const string Operation = "operation";
+    public const string Settings = "settings";
     public const string Back = "..";
 
     // "//products/productform" -> "productform": the page that is open, without the route path to it

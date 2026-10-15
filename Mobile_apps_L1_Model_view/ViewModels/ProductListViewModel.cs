@@ -115,6 +115,9 @@ public partial class ProductListViewModel(
     private Task OpenCharacteristicsAsync() => navigation.GoToAsync(Routes.Characteristics);
 
     [RelayCommand]
+    private Task OpenSettingsAsync() => navigation.GoToAsync(Routes.Settings);
+
+    [RelayCommand]
     private Task SignOutAsync()
     {
         currentUser.SignOut();

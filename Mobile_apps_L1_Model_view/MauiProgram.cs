@@ -20,6 +20,7 @@ public static class MauiProgram
 
         builder.Services.AddStockRoomCore();
         builder.Services.AddSingleton<IPreferencesStore, MauiPreferencesStore>();
+        builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<ProductsPage>();
@@ -27,6 +28,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ProductDetailPage>();
         builder.Services.AddTransient<CharacteristicsPage>();
         builder.Services.AddTransient<OperationPage>();
+        builder.Services.AddTransient<SettingsPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();
