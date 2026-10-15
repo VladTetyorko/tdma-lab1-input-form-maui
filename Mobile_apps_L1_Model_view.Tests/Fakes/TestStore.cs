@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
@@ -11,6 +12,7 @@ public sealed class TestStore
     public TestStore()
     {
         AppState = new AppStateService(Preferences);
+        Drafts = new OperationDraftStore(AppState, new AesFieldEncryptor(Secrets), NullLogger<OperationDraftStore>.Instance);
         DeepLinks = new DeepLinkHandler(Catalog, CurrentUser, Navigation, Alerts);
         Startup = new StartupNavigator(AppState, DeepLinks, Catalog, Navigation);
     }
@@ -20,6 +22,8 @@ public sealed class TestStore
     public FakeNavigationService Navigation { get; } = new();
     public FakePreferencesStore Preferences { get; } = new();
     public AppStateService AppState { get; }
+    public FakeSecretStore Secrets { get; } = new();
+    public OperationDraftStore Drafts { get; }
     public FakeAlertService Alerts { get; } = new();
     public DeepLinkHandler DeepLinks { get; }
     public StartupNavigator Startup { get; }

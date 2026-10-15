@@ -4,14 +4,15 @@ using Mobile_apps_L1_Model_view.Services;
 namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 
 // The real DI container (AddStockRoomCore) with fake platform services and a fresh, seeded temporary SQLite database.
-// Passing the same preferences to two containers simulates the app being killed and started again.
+// Passing the same preferences (and secret store) to two containers simulates the app being killed and started again.
 // Every fake is also resolvable by its concrete type (FakeAlertService, FakeThemeApplier, ...).
 public static class TestContainer
 {
     public static ServiceProvider Create(
         FakePreferencesStore preferences,
         FakeNavigationService navigation,
-        FakeBarcodeScanner? scanner = null)
+        FakeBarcodeScanner? scanner = null,
+        FakeSecretStore? secrets = null)
     {
         var services = new ServiceCollection().AddStockRoomCore().AddFakePlatform();
         var alerts = new FakeAlertService();
@@ -27,6 +28,13 @@ public static class TestContainer
         services.AddSingleton<IThemeApplier>(applier);
         services.AddSingleton(scanner ?? new FakeBarcodeScanner());
         services.AddSingleton<IBarcodeScanner>(provider => provider.GetRequiredService<FakeBarcodeScanner>());
+
+        if (secrets is not null)
+        {
+            // Same secret store in two containers = the same device keystore after a restart
+            services.AddSingleton(secrets);
+            services.AddSingleton<ISecretStore>(secrets);
+        }
 
         // The database is created, migrated and seeded by the first query
         return services.BuildServiceProvider();

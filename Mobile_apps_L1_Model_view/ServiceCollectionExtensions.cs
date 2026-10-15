@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IAppStateService, AppStateService>();
+        services.AddSingleton<IOperationDraftStore, OperationDraftStore>();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<IDeepLinkHandler, DeepLinkHandler>();
         services.AddSingleton<IStartupNavigator, StartupNavigator>();

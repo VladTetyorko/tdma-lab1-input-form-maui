@@ -7,15 +7,17 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 
 // Records "N units of this product moved In or Out". Opened from the detail page and from the
 // barcode scanner (both pass the product in the navigation parameters). What is typed is kept as a
-// draft in IAppStateService until the operation is saved or the page is left with Cancel/back.
+// draft in IOperationDraftStore (counterparty encrypted) until the operation is saved or the page is
+// left with Cancel/back.
 public partial class OperationViewModel(
     IStockService stock,
     ICurrentUserService currentUser,
-    IAppStateService appState,
+    IOperationDraftStore drafts,
     INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private Guid _productId;
     private string _barcode = string.Empty;
+    private Task _restoring = Task.CompletedTask;
 
     // Only the directions the current role may record (a Driver can only bring goods In)
     public IReadOnlyList<OperationDirection> AvailableDirections { get; private set; } = [];
@@ -58,7 +60,7 @@ public partial class OperationViewModel(
             _barcode = product.Barcode;
             ProductName = product.Name;
             QuantityOnHand = product.Quantity;
-            RestoreDraft();
+            _restoring = RestoreDraftAsync();
         }
     }
 
@@ -67,6 +69,7 @@ public partial class OperationViewModel(
     [RelayCommand]
     private async Task LoadAsync()
     {
+        await _restoring;
         var user = currentUser.CurrentUser;
         AvailableDirections = user is null
             ? []
@@ -94,7 +97,7 @@ public partial class OperationViewModel(
             return;
         }
 
-        appState.ClearDraft<OperationDraft>();
+        drafts.Clear();
 
         // The detail page reloads when it appears again
         await navigation.GoToAsync(Routes.Back);
@@ -103,15 +106,15 @@ public partial class OperationViewModel(
     [RelayCommand]
     private Task GoBackAsync()
     {
-        appState.ClearDraft<OperationDraft>();
+        drafts.Clear();
         return navigation.GoToAsync(Routes.Back);
     }
 
     // Only a draft for this very product applies; the local copy survives the property setters below,
     // which each save a draft of their own
-    private void RestoreDraft()
+    private async Task RestoreDraftAsync()
     {
-        if (appState.GetDraft<OperationDraft>() is not { } draft || draft.Barcode != _barcode)
+        if (await drafts.LoadAsync(_barcode) is not { } draft)
         {
             return;
         }
@@ -126,7 +129,7 @@ public partial class OperationViewModel(
     {
         if (_barcode.Length > 0)
         {
-            appState.SetDraft(new OperationDraft(_barcode, SelectedDirection, Quantity, Counterparty, Reason));
+            _ = drafts.SaveAsync(new OperationDraft(_barcode, SelectedDirection, Quantity, Counterparty, Reason));
         }
     }
 

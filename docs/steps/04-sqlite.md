@@ -290,10 +290,15 @@ sequenceDiagram
   encryption is impossible fails with "The operation was not saved. …" instead
   of storing the name in clear text. (This can really happen: restoring an
   Android backup to a new device brings the database but not the Keystore key.)
-- **Known limitation:** the operation form's *draft* (Lab 3) keeps the typed
-  counterparty in `Preferences` until the operation is saved or cancelled. It
-  is unencrypted and short-lived; moving drafts to `ISecretStore` is a
-  possible follow-up.
+- **Operation draft:** the operation form's *draft* (Lab 3) is encrypted too.
+  `OperationDraftStore` (`IOperationDraftStore`) sits between
+  `OperationViewModel` and the generic `IAppStateService` and encrypts the
+  counterparty with the same `IFieldEncryptor` before the draft goes to
+  `Preferences`; the other fields stay plain. On restore, a counterparty that
+  cannot be decrypted (key lost or changed, text tampered, secure storage
+  unavailable) is dropped: the draft comes back with an empty counterparty and
+  a logged warning. If encryption is impossible when saving, the draft is
+  stored without the counterparty, never in clear text.
 
 ## 9. Changes in the PR
 
@@ -445,6 +450,6 @@ no security.
   devices' changes) with a conflict UI if "last write wins" proves too blunt.
 - Android WorkManager (and iOS background tasks) to sync while the app is
   closed — decision 14.
-- Encrypt the operation draft; consider SQLCipher if a stricter policy appears.
+- Consider SQLCipher if a stricter policy appears.
 - `IsArchived` for products with history instead of "cannot delete".
 - Lab 5+ may add a `UpdatedByUserId` / audit table (see `docs/domain/entities.md`).

@@ -139,6 +139,7 @@ Every architectural decision, newest last. Details are in the step documents.
 | 41 | 4 | `Operation.Counterparty` encrypted with AES-256-CBC + HMAC-SHA256 (`IFieldEncryptor`), key in `SecureStorage` (`ISecretStore`); undecryptable value shows a placeholder | Personal data protected, the rest of the export stays readable; CBC+HMAC runs on every target |
 | 42 | 4 | "Share database": checkpoint WAL, copy the file, `Share.RequestAsync` behind `IFileSharer` | A complete file the user can open on a PC |
 | 43 | 4 | In-memory repositories moved to the test project | Dead code in the app otherwise; still fast test doubles |
+| 44 | 4 | The counterparty in the persisted operation draft is encrypted with `IFieldEncryptor` by `OperationDraftStore`; `IAppStateService` stays generic; undecryptable counterparty is dropped on restore | One encryption mechanism (DRY); personal data is never in `Preferences` in clear text; a lost key must not crash the form |
 
 ## Architecture
 
