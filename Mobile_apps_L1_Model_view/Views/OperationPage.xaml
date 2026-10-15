@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.OperationPage"
+             x:DataType="viewModels:OperationViewModel"
+             Title="Record operation">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding GoBackCommand}" />
+    </Shell.BackButtonBehavior>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,20" Spacing="8">
+            <Label Text="{Binding ProductName}" Style="{StaticResource Headline}" />
+            <Label Text="{Binding QuantityOnHand, StringFormat='On hand: {0} pcs'}"
+                   Style="{StaticResource CaptionLabel}" />
+
+            <Label Text="Direction" />
+            <Picker ItemsSource="{Binding AvailableDirections}"
+                    SelectedItem="{Binding SelectedDirection, Mode=TwoWay}" />
+
+            <Label Text="{Binding Quantity, StringFormat='Units: {0}'}" />
+            <Stepper Minimum="1" Maximum="10000" Increment="1" Value="{Binding Quantity, Mode=TwoWay}" />
+
+            <Label Text="Counterparty (optional)" />
+            <Entry Text="{Binding Counterparty, Mode=TwoWay}" Placeholder="Supplier or customer" />
+
+            <Label Text="Reason (optional)" />
+            <Entry Text="{Binding Reason, Mode=TwoWay}" Placeholder="Why" />
+
+            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabel}" />
+
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Save" Command="{Binding SaveCommand}" />
+                <Button Text="Cancel" Command="{Binding GoBackCommand}" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

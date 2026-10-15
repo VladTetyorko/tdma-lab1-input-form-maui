@@ -17,7 +17,14 @@ public class ProductListViewModelTests
     public ProductListViewModelTests()
     {
         var stock = new StockService(_operations, _products, _currentUser, new FakeClock());
-        _viewModel = new ProductListViewModel(_products, stock, _currentUser, _navigation);
+        var characteristics = new InMemoryCharacteristicRepository();
+        var catalog = new ProductCatalog(
+            _products, characteristics, new InMemoryProductCharacteristicRepository(), _operations,
+            new InMemoryUserRepository(), stock);
+        var characteristicService = new CharacteristicService(
+            characteristics, new InMemoryProductCharacteristicRepository(), _products,
+            new CharacteristicValidator(characteristics), _currentUser, new FakeClock());
+        _viewModel = new ProductListViewModel(catalog, characteristicService, _currentUser, _navigation);
     }
 
     [Fact]

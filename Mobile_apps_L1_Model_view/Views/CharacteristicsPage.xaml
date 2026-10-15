@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Mobile_apps_L1_Model_view.Models"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.CharacteristicsPage"
+             x:DataType="viewModels:CharacteristicsViewModel"
+             Title="Characteristics">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding GoBackCommand}" />
+    </Shell.BackButtonBehavior>
+
+    <Grid RowDefinitions="*,Auto" Padding="20,10" RowSpacing="10">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Items}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Characteristic">
+                    <VerticalStackLayout Padding="0,6">
+                        <Label Text="{Binding Name}" FontAttributes="Bold" />
+                        <Label Text="{Binding ValueType}" Style="{StaticResource CaptionLabel}" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="6">
+            <VerticalStackLayout IsVisible="{Binding CanManage}" Spacing="6">
+                <Label Text="New characteristic" Style="{StaticResource SectionLabel}" />
+                <Entry Text="{Binding NewName, Mode=TwoWay}" Placeholder="Name" />
+                <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" />
+                <Picker ItemsSource="{Binding ValueTypes}"
+                        SelectedItem="{Binding NewValueType, Mode=TwoWay}"
+                        Title="Value type" />
+                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+                <Button Text="Add" Command="{Binding AddCommand}" />
+            </VerticalStackLayout>
+            <Button Text="Back" Command="{Binding GoBackCommand}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

@@ -51,7 +51,12 @@ public partial class ProductFormViewModel(
             return;
         }
 
-        await navigation.GoToAsync(Routes.Back);
+        // The list adds the new product from these parameters instead of reloading
+        var product = result.Value!;
+        await navigation.GoToAsync(Routes.Back, new Dictionary<string, object>
+        {
+            [NavigationKeys.UpdatedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
+        });
     }
 
     [RelayCommand]
