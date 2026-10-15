@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CharacteristicsViewModel>();
         services.AddTransient<OperationViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<ScannerViewModel>();
 
         return services;
     }

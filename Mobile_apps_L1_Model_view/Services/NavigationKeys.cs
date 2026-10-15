@@ -14,4 +14,7 @@ public static class NavigationKeys
 
     // string: a barcode (scanner -> add-product form: prefill the barcode that was not found)
     public const string Barcode = "Barcode";
+
+    // bool: products or stock changed on pages the list is not told about (scanner flow), reload it
+    public const string ProductsChanged = "ProductsChanged";
 }

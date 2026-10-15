@@ -17,6 +17,7 @@ public partial class ProductListViewModel(
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;
     private bool _sortOptionsStale;
+    private bool _productsStale;
 
     // What the list shows: _all, sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
@@ -52,7 +53,7 @@ public partial class ProductListViewModel(
     [RelayCommand]
     private async Task EnsureLoadedAsync()
     {
-        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id)
+        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id && !_productsStale)
         {
             if (_sortOptionsStale)
             {
@@ -79,6 +80,7 @@ public partial class ProductListViewModel(
         _all = [.. await catalog.GetSummariesAsync()];
         await SyncSortOptionsAsync();
         _loadedForUserId = user?.Id;
+        _productsStale = false;
         ApplySort();
     }
 
@@ -97,6 +99,11 @@ public partial class ProductListViewModel(
             }
 
             ApplySort();
+        }
+
+        if (query.ContainsKey(NavigationKeys.ProductsChanged))
+        {
+            _productsStale = true;
         }
 
         if (query.ContainsKey(NavigationKeys.CharacteristicsChanged))
@@ -120,6 +127,9 @@ public partial class ProductListViewModel(
 
     [RelayCommand]
     private Task OpenSettingsAsync() => navigation.GoToAsync(Routes.Settings);
+
+    [RelayCommand]
+    private Task ScanAsync() => navigation.GoToAsync(Routes.Scanner);
 
     [RelayCommand]
     private Task SignOutAsync()

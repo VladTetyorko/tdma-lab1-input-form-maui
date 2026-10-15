@@ -58,6 +58,7 @@
                     IsVisible="{Binding CanAddProduct}" Margin="0,0,10,6" />
             <Button Text="Characteristics" Command="{Binding OpenCharacteristicsCommand}"
                     IsVisible="{Binding CanManageCharacteristics}" Margin="0,0,10,6" />
+            <Button Text="Scan" Command="{Binding ScanCommand}" Margin="0,0,10,6" />
             <Button Text="Settings" Command="{Binding OpenSettingsCommand}" Margin="0,0,10,6" />
             <Button Text="Sign out" Command="{Binding SignOutCommand}" Margin="0,0,10,6" />
         </FlexLayout>
