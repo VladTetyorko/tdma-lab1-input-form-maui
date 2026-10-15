@@ -5,6 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <!-- The app's icon/splash are processed by the app project; the test project must not repeat it. -->
+        <EnableMauiImageProcessing>false</EnableMauiImageProcessing>
+        <EnableMauiSplashScreenProcessing>false</EnableMauiSplashScreenProcessing>
     </PropertyGroup>
 
     <ItemGroup>
