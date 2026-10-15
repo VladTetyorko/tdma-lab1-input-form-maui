@@ -27,6 +27,23 @@ public class InMemoryUserRepositoryTests
     }
 
     [Fact]
+    public async Task GetByIdAsync_ReturnsTheUserWithThatId()
+    {
+        var storekeeper = new User { FullName = "Petro Bondarenko", Role = Role.Storekeeper };
+        await _repository.AddAsync(storekeeper);
+
+        Assert.Same(storekeeper, await _repository.GetByIdAsync(storekeeper.Id));
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_UnknownId_ReturnsNull()
+    {
+        await _repository.AddAsync(new User { FullName = "Ivan Shevchenko", Role = Role.Driver });
+
+        Assert.Null(await _repository.GetByIdAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
     public async Task AddAsync_RejectsNull()
     {
         await Assert.ThrowsAsync<ArgumentNullException>(() => _repository.AddAsync(null!));
