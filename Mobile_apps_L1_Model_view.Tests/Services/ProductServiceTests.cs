@@ -195,4 +195,52 @@ public class ProductServiceTests
         _currentUser.SignIn(manager);
         return manager;
     }
+
+    [Fact]
+    public async Task UpdateAsync_UnknownProduct_Fails()
+    {
+        SignInAsManager();
+
+        var result = await _service.UpdateAsync(Guid.NewGuid(), "Saw", ValidBarcode);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Product not found.", result.Error);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_InvalidBarcode_FailsAndLeavesTheProductAsItWas()
+    {
+        var manager = SignInAsManager();
+        var saw = new Product { Name = "Saw", Barcode = ValidBarcode, CreatedByUserId = manager.Id };
+        await _products.AddAsync(saw);
+
+        var result = await _service.UpdateAsync(saw.Id, "Saw", "4006381333932");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ValidBarcode, (await _products.GetByIdAsync(saw.Id))!.Barcode);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_BlankName_Fails()
+    {
+        var manager = SignInAsManager();
+        var saw = new Product { Name = "Saw", Barcode = ValidBarcode, CreatedByUserId = manager.Id };
+        await _products.AddAsync(saw);
+
+        var result = await _service.UpdateAsync(saw.Id, "  ", ValidBarcode);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Saw", (await _products.GetByIdAsync(saw.Id))!.Name);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_UnknownProduct_Fails()
+    {
+        SignInAsManager();
+
+        var result = await _service.DeleteAsync(Guid.NewGuid());
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Product not found.", result.Error);
+    }
 }

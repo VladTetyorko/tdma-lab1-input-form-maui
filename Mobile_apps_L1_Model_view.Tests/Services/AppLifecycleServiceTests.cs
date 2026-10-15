@@ -152,4 +152,30 @@ public class AppLifecycleServiceTests
         Assert.Equal("Ivan Shevchenko", _currentUser.CurrentUser!.FullName);
         Assert.Null(_state.SignedInUserId);
     }
+
+    [Fact]
+    public async Task RestoreAsync_StartsSynchronisation()
+    {
+        await _lifecycle.RestoreAsync();
+
+        Assert.Equal(1, _sync.StartCalls);
+    }
+
+    [Fact]
+    public void OnResumed_AsksForASync()
+    {
+        _lifecycle.OnResumed();
+
+        Assert.Equal(1, _sync.RequestCalls);
+    }
+
+    [Fact]
+    public void OnStoppedAndOtherEvents_DoNotAskForASync()
+    {
+        _lifecycle.OnStopped();
+        _lifecycle.OnDeactivated();
+        _lifecycle.OnActivated();
+
+        Assert.Equal(0, _sync.RequestCalls);
+    }
 }

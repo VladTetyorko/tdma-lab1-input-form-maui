@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
@@ -153,5 +154,69 @@ public class SyncServiceTests : IDisposable
 
         Assert.Equal(SyncPushOutcome.Applied, await Server.PushAsync(item));
         Assert.Equal(SyncPushOutcome.Applied, await Server.PushAsync(item));
+    }
+
+    [Fact]
+    public async Task SyncNow_WhileAnotherSyncIsRunning_ReturnsBusy_AndDoesNotPushTwice()
+    {
+        await AddProductAsync();
+        var api = new GatedApi();
+        var sync = new SyncService(Queue, api, Network, _provider.GetRequiredService<IOfflineSimulator>(),
+            _provider.GetRequiredService<IClock>(), NullLogger<SyncService>.Instance);
+
+        var first = sync.SyncNowAsync();
+        await Eventually.WaitAsync(() => api.Pushes == 1);
+
+        var second = await sync.SyncNowAsync();
+        Assert.Equal(SyncStatus.Busy, second.Status);
+        Assert.Equal(1, await Queue.CountAsync());
+
+        api.Release();
+        var finished = await first;
+        Assert.Equal(new SyncResult(SyncStatus.Synced, 1, 0), finished);
+        Assert.Equal(1, api.Pushes);
+    }
+
+    [Fact]
+    public async Task SimulateOfflineSwitchedOff_SendsTheQueueWithoutAskingAgain()
+    {
+        var offline = _provider.GetRequiredService<IOfflineSimulator>();
+        var sync = Sync;
+        sync.Start();
+        offline.IsOffline = true;
+        await AddProductAsync();
+        Assert.Empty(Server.Records);
+
+        offline.IsOffline = false;
+
+        await Eventually.WaitAsync(() => Server.Records.Count == 1);
+        await Eventually.WaitAsync(() => Queue.CountAsync().GetAwaiter().GetResult() == 0);
+    }
+
+    [Fact]
+    public async Task GetPendingCount_CountsEveryQueuedChange()
+    {
+        await AddProductAsync("Saw", "4006381333931");
+        await AddProductAsync("Drill", "4006381333948");
+
+        Assert.Equal(2, await Sync.GetPendingCountAsync());
+    }
+
+    // Blocks inside the first push until the test releases it, so a second sync can start meanwhile
+    private sealed class GatedApi : ISyncApi
+    {
+        private readonly TaskCompletionSource _gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _pushes;
+
+        public int Pushes => Volatile.Read(ref _pushes);
+
+        public void Release() => _gate.TrySetResult();
+
+        public async Task<SyncPushOutcome> PushAsync(SyncQueueItem item, CancellationToken cancellationToken = default)
+        {
+            Interlocked.Increment(ref _pushes);
+            await _gate.Task;
+            return SyncPushOutcome.Applied;
+        }
     }
 }

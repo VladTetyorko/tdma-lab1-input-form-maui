@@ -95,4 +95,71 @@ public class AesFieldEncryptorTests
 
         await Assert.ThrowsAsync<EncryptionException>(() => Create().EncryptAsync("Acme Ltd"));
     }
+
+    [Fact]
+    public async Task Decrypt_SecureStorageUnavailable_ThrowsEncryptionException()
+    {
+        var cipher = await Create().EncryptAsync("Acme Ltd");
+        _secrets.Failing = true;
+
+        await Assert.ThrowsAsync<EncryptionException>(() => Create().DecryptAsync(cipher));
+    }
+
+    [Fact]
+    public async Task EmptyText_RoundTrips()
+    {
+        var encryptor = Create();
+
+        var cipher = await encryptor.EncryptAsync(string.Empty);
+
+        Assert.NotEqual(string.Empty, cipher);
+        Assert.Equal(string.Empty, await encryptor.DecryptAsync(cipher));
+    }
+
+    [Fact]
+    public async Task UnicodeText_RoundTrips()
+    {
+        const string text = "Склад Київ — “quoted” 'name'; 100% ✓";
+        var encryptor = Create();
+
+        Assert.Equal(text, await encryptor.DecryptAsync(await encryptor.EncryptAsync(text)));
+    }
+
+    [Fact]
+    public async Task Null_IsRejectedByBothDirections()
+    {
+        var encryptor = Create();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => encryptor.EncryptAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => encryptor.DecryptAsync(null!));
+    }
+
+    [Fact]
+    public async Task Ciphertext_HasTheDocumentedLayout()
+    {
+        // version(1) + IV(16) + whole AES blocks + HMAC(32)
+        var bytes = Convert.FromBase64String(await Create().EncryptAsync("Acme Ltd"));
+
+        Assert.Equal(1, bytes[0]);
+        Assert.Equal(0, (bytes.Length - 1 - 16 - 32) % 16);
+        Assert.True(bytes.Length >= 1 + 16 + 16 + 32);
+    }
+
+    [Fact]
+    public async Task TruncatedCiphertext_ThrowsEncryptionException()
+    {
+        var cipher = await Create().EncryptAsync("Acme Ltd");
+        var truncated = Convert.ToBase64String(Convert.FromBase64String(cipher)[..40]);
+
+        await Assert.ThrowsAsync<EncryptionException>(() => Create().DecryptAsync(truncated));
+    }
+
+    [Fact]
+    public async Task ChangedHmac_ThrowsEncryptionException()
+    {
+        var bytes = Convert.FromBase64String(await Create().EncryptAsync("Acme Ltd"));
+        bytes[^1] ^= 0x01;
+
+        await Assert.ThrowsAsync<EncryptionException>(() => Create().DecryptAsync(Convert.ToBase64String(bytes)));
+    }
 }
