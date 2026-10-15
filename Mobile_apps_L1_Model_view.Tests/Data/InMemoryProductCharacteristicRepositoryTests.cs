@@ -41,4 +41,63 @@ public class InMemoryProductCharacteristicRepositoryTests
 
         Assert.Empty(await _repository.GetByProductAsync(Guid.NewGuid()));
     }
+
+    [Fact]
+    public async Task UpdateAsync_ReplacesTheStoredRowWithTheSameId()
+    {
+        var id = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var characteristicId = Guid.NewGuid();
+        await _repository.AddAsync(new ProductCharacteristic
+        {
+            Id = id, ProductId = productId, CharacteristicId = characteristicId, Value = "1.5"
+        });
+        var replacement = new ProductCharacteristic
+        {
+            Id = id, ProductId = productId, CharacteristicId = characteristicId, Value = "2"
+        };
+
+        await _repository.UpdateAsync(replacement);
+
+        var stored = Assert.Single(await _repository.GetByProductAsync(productId));
+        Assert.Same(replacement, stored);
+        Assert.Equal("2", stored.Value);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_UnknownId_Throws()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _repository.UpdateAsync(new ProductCharacteristic
+        {
+            ProductId = Guid.NewGuid(),
+            CharacteristicId = Guid.NewGuid(),
+            Value = "2"
+        }));
+
+        Assert.Empty(await _repository.GetAllAsync());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_RemovesOnlyTheGivenValue()
+    {
+        var kept = new ProductCharacteristic { ProductId = Guid.NewGuid(), CharacteristicId = Guid.NewGuid(), Value = "A" };
+        var removed = new ProductCharacteristic { ProductId = Guid.NewGuid(), CharacteristicId = Guid.NewGuid(), Value = "B" };
+        await _repository.AddAsync(kept);
+        await _repository.AddAsync(removed);
+
+        await _repository.DeleteAsync(removed.Id);
+
+        Assert.Same(kept, Assert.Single(await _repository.GetAllAsync()));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_UnknownId_IsNoOp()
+    {
+        var kept = new ProductCharacteristic { ProductId = Guid.NewGuid(), CharacteristicId = Guid.NewGuid(), Value = "A" };
+        await _repository.AddAsync(kept);
+
+        await _repository.DeleteAsync(Guid.NewGuid());
+
+        Assert.Same(kept, Assert.Single(await _repository.GetAllAsync()));
+    }
 }
