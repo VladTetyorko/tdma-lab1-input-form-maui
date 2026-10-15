@@ -18,6 +18,11 @@ roles, about ten products. It does four things:
   **number of units**. A barcode identifies a product (a kind of unit), so
   one scan can record many units.
 
+Around these it behaves like a real mobile app: it **keeps unsaved forms and the
+signed-in user** when minimised or killed, has a **System/Light/Dark theme**,
+opens a product from a **deep link** (`stockroom://product/{barcode}`), and
+scans with the **camera** on Android and iOS (manual entry on Windows).
+
 Entities use UUID keys, `CreatedAt`/`UpdatedAt` and an owner (`CreatedByUserId`),
 and are designed in third normal form. Until Lab 4 data lives in memory; in
 Lab 4 it moves to **SQLite**, a single file that is easy to export.
@@ -77,7 +82,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 00 | — | [Project vision and domain model](docs/steps/00-vision-and-roles.md) | in review |
 | 01 | 1 | [Warehouse domain, MVVM, validation](docs/steps/01-warehouse-entities.md) | done (145 tests) |
 | 02 | 2 | [Shell navigation, parameters, characteristics, sorting, In/Out page](docs/steps/02-navigation.md) | done (310 tests) |
-| 03 | 3 | Lifecycle, DI, state, theme, deep links, scanner | planned |
+| 03 | 3 | [App and page lifecycle, saved state, theme, deep links, barcode scanner](docs/steps/03-lifecycle.md) | in progress |
 | 04 | 4 | SQLite, repositories, sync queue, encryption | planned |
 
 ## Decision log
@@ -108,6 +113,14 @@ Every architectural decision, newest last. Details are in the step documents.
 | 20 | 2 | Characteristic rules in `ICharacteristicService` / `ICharacteristicValidator`; numbers parsed with the invariant culture in one helper | Testable; one definition of a valid number |
 | 21 | 2 | Sorting in the pure `ProductSorter`; missing values always last | Testable; useful rows stay on top when descending |
 | 22 | 2 | `OperationPage` takes the product from navigation parameters | Lab 3's scanner opens it the same way |
+| 23 | 3 | `App` only forwards the six window events to `IAppLifecycleService`; state is saved on `Stopped`/`Destroying` and restored once at start | Testable without `Application`; warm resume needs no restore because memory is intact |
+| 24 | 3 | `IAppStateService` (singleton) over `IPreferencesStore`: user id, last route, one JSON draft per draft type | ViewModels never touch `Preferences`; no key constants |
+| 25 | 3 | Drafts for the product form, operation form and detail edits; cleared by save/cancel/back/sign-out, not by `OnDisappearing`; products in drafts are named by barcode; seeded users have fixed ids | `OnDisappearing` also fires on minimise; ids of in-memory data change on every start, barcodes do not |
+| 26 | 3 | `IPageLifecycleAware` + `PageLifecycleBehavior` attached in XAML instead of `OnAppearing` overrides | DRY; code-behind free of lifecycle code |
+| 27 | 3 | `IThemeService` (preferences) + `IThemeApplier` (`UserAppTheme`); applied before the first page | Testable logic, one class touches `Application` |
+| 28 | 3 | Deep link `stockroom://product/{barcode}`: pure `DeepLinkParser`, `IDeepLinkHandler` (`HandleAsync`/`Defer`/`HandlePendingAsync`); Android intent filter, Windows command line, "Open a link" box in Settings | Works before Shell exists and before sign-in; testable on every platform |
+| 29 | 3 | `IBarcodeScanner` = camera capability + permission; the camera is a `CameraScannerView` control (ZXing.Net.Maui.Controls, android/ios TFMs only), Windows uses manual entry | The library is control-based; Windows stays fully usable and free of the camera package |
+| 30 | 3 | No background work in Lab 3 (documented); Lab 4's sync decides on WorkManager | Nothing to refresh in an in-memory single-writer app |
 
 ## Architecture
 
@@ -121,6 +134,10 @@ graph TD
         ProductDetailPage
         CharacteristicsPage
         OperationPage
+        SettingsPage
+        ScannerPage
+        CameraScannerView
+        PageLifecycleBehavior
     end
     subgraph ViewModels
         LoginViewModel
@@ -129,6 +146,9 @@ graph TD
         ProductDetailViewModel
         CharacteristicsViewModel
         OperationViewModel
+        SettingsViewModel
+        ScannerViewModel
+        IPageLifecycleAware
     end
     subgraph Converters
         QuantityToColorConverter
@@ -146,6 +166,16 @@ graph TD
         IClock
         RolePermissions
         Ean13
+        IAppStateService
+        IPreferencesStore
+        IAppLifecycleService
+        IThemeService
+        IThemeApplier
+        IDeepLinkHandler
+        DeepLinkParser
+        IStartupNavigator
+        IBarcodeScanner
+        IAlertService
     end
     subgraph Data
         IUserRepository
@@ -197,6 +227,37 @@ graph TD
     InMemory -.implements.-> IProductRepository
     IDataSeeder --> InMemory
     IProductRepository --> Entities
+    SettingsPage --> SettingsViewModel
+    ScannerPage --> ScannerViewModel
+    ScannerPage --> CameraScannerView
+    ScannerPage --> PageLifecycleBehavior
+    PageLifecycleBehavior -.calls.-> IPageLifecycleAware
+    ProductListViewModel -.implements.-> IPageLifecycleAware
+    ScannerViewModel -.implements.-> IPageLifecycleAware
+    CameraScannerView -- "DetectedCommand" --> ScannerViewModel
+    SettingsViewModel --> IThemeService
+    SettingsViewModel --> IDeepLinkHandler
+    ScannerViewModel --> IBarcodeScanner
+    ScannerViewModel --> IProductCatalog
+    ScannerViewModel --> INavigationService
+    ProductListViewModel --> IStartupNavigator
+    ProductListViewModel --> IAppStateService
+    ProductFormViewModel --> IAppStateService
+    OperationViewModel --> IAppStateService
+    ProductDetailViewModel --> IAppStateService
+    App["App (window events)"] --> IAppLifecycleService
+    IAppLifecycleService --> IAppStateService
+    IAppLifecycleService --> IThemeService
+    IAppLifecycleService --> ICurrentUserService
+    IAppStateService --> IPreferencesStore
+    IThemeService --> IPreferencesStore
+    IThemeService --> IThemeApplier
+    IStartupNavigator --> IDeepLinkHandler
+    IStartupNavigator --> IAppStateService
+    IDeepLinkHandler --> DeepLinkParser
+    IDeepLinkHandler --> IProductCatalog
+    IDeepLinkHandler --> IAlertService
+    IDeepLinkHandler --> INavigationService
 ```
 
 ## Repository layout
