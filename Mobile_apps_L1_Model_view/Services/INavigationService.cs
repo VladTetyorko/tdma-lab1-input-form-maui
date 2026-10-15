@@ -3,6 +3,9 @@ namespace Mobile_apps_L1_Model_view.Services;
 // Keeps ViewModels free of Shell: the only way a ViewModel navigates
 public interface INavigationService
 {
+    // Leaf route of the page that is open now ("products", "productform"), empty before the first page
+    string CurrentRoute { get; }
+
     // Shell route: "//login" (absolute), "productform" (push), ".." (back)
     Task GoToAsync(string route);
 

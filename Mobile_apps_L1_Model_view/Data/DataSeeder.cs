@@ -16,6 +16,12 @@ public sealed class DataSeeder(
     private sealed record Seed(string Name, string BarcodeBase, double WeightKg, string Color, string Category,
         double VolumeLitres, int Received, int Shipped);
 
+    // Fixed ids: the saved session (IAppStateService) names the signed-in user by id, and the
+    // in-memory data is rebuilt on every start. Lab 4 seeds the same ids in its migration.
+    public static readonly Guid ManagerId = Guid.Parse("0196a000-0000-7000-8000-000000000001");
+    public static readonly Guid StorekeeperId = Guid.Parse("0196a000-0000-7000-8000-000000000002");
+    public static readonly Guid DriverId = Guid.Parse("0196a000-0000-7000-8000-000000000003");
+
     private static readonly Seed[] ProductSeeds =
     [
         new("Cordless Drill 18V", "482000100001", 1.6, "Blue", "Tools", 3.2, 25, 4),
@@ -37,9 +43,9 @@ public sealed class DataSeeder(
             return;
         }
 
-        var manager = await AddUserAsync("Olena Kovalenko", Role.Manager);
-        var storekeeper = await AddUserAsync("Petro Bondarenko", Role.Storekeeper);
-        var driver = await AddUserAsync("Ivan Shevchenko", Role.Driver);
+        var manager = await AddUserAsync(ManagerId, "Olena Kovalenko", Role.Manager);
+        var storekeeper = await AddUserAsync(StorekeeperId, "Petro Bondarenko", Role.Storekeeper);
+        var driver = await AddUserAsync(DriverId, "Ivan Shevchenko", Role.Driver);
 
         var weight = await AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number, manager);
         var volume = await AddCharacteristicAsync("Volume (l)", CharacteristicValueType.Number, manager);
@@ -76,9 +82,9 @@ public sealed class DataSeeder(
     // Invariant culture: values are stored as text and parsed back as numbers later
     private static string FormatNumber(double number) => number.ToString(CultureInfo.InvariantCulture);
 
-    private async Task<User> AddUserAsync(string fullName, Role role)
+    private async Task<User> AddUserAsync(Guid id, string fullName, Role role)
     {
-        var user = new User { FullName = fullName, Role = role };
+        var user = new User { Id = id, FullName = fullName, Role = role };
         await users.AddAsync(user);
         return user;
     }

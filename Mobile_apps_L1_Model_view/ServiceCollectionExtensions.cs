@@ -11,9 +11,11 @@ public static class ServiceCollectionExtensions
     // so tests can build the same container with fake platform services
     public static IServiceCollection AddStockRoomCore(this IServiceCollection services)
     {
+        services.AddLogging();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IAppStateService, AppStateService>();
+        services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
 
         services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         services.AddSingleton<IProductRepository, InMemoryProductRepository>();

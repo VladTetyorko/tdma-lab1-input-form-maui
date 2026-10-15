@@ -11,6 +11,10 @@ public static class Routes
     public const string Operation = "operation";
     public const string Back = "..";
 
+    // "//products/productform" -> "productform": the page that is open, without the route path to it
+    public static string Leaf(string? location) =>
+        location is null ? string.Empty : location[(location.LastIndexOf('/') + 1)..];
+
     // Absolute navigation (replaces the page stack)
     public static string Absolute(string route) => "//" + route;
 }
