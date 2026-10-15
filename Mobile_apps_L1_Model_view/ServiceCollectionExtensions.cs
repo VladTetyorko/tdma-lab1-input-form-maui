@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Mobile_apps_L1_Model_view.Data;
+using Mobile_apps_L1_Model_view.Data.Migrations;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.ViewModels;
 
@@ -20,12 +21,25 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IStartupNavigator, StartupNavigator>();
         services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
 
-        services.AddSingleton<IUserRepository, InMemoryUserRepository>();
-        services.AddSingleton<IProductRepository, InMemoryProductRepository>();
-        services.AddSingleton<ICharacteristicRepository, InMemoryCharacteristicRepository>();
-        services.AddSingleton<IProductCharacteristicRepository, InMemoryProductCharacteristicRepository>();
-        services.AddSingleton<IOperationRepository, InMemoryOperationRepository>();
-        services.AddSingleton<IDataSeeder, DataSeeder>();
+        // Storage: one SQLite database, opened and migrated on first use. The file path, secret store,
+        // connectivity and file sharing are platform services registered by the host (MauiProgram or tests)
+        services.AddSingleton<IMigrationSource, EmbeddedMigrationSource>();
+        services.AddSingleton<MigrationRunner>();
+        services.AddSingleton<IDatabase, SqliteDatabase>();
+        services.AddSingleton<SyncJournal>();
+        services.AddSingleton<ISyncQueue, SqliteSyncQueue>();
+        services.AddSingleton<IUserRepository, SqliteUserRepository>();
+        services.AddSingleton<IProductRepository, SqliteProductRepository>();
+        services.AddSingleton<ICharacteristicRepository, SqliteCharacteristicRepository>();
+        services.AddSingleton<IProductCharacteristicRepository, SqliteProductCharacteristicRepository>();
+        services.AddSingleton<IOperationRepository, SqliteOperationRepository>();
+        services.AddSingleton<IFieldEncryptor, AesFieldEncryptor>();
+
+        services.AddSingleton<StubSyncApi>();
+        services.AddSingleton<ISyncApi>(provider => provider.GetRequiredService<StubSyncApi>());
+        services.AddSingleton<IOfflineSimulator, OfflineSimulator>();
+        services.AddSingleton<ISyncService, SyncService>();
+        services.AddSingleton<IDatabaseExporter, DatabaseExporter>();
 
         services.AddSingleton<IProductValidator, ProductValidator>();
         services.AddSingleton<IProductService, ProductService>();

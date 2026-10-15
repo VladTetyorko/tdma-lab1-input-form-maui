@@ -5,7 +5,7 @@ namespace Mobile_apps_L1_Model_view.Services;
 public interface IAppLifecycleService
 {
     // Called once, before the first page exists: loads the saved state and, if a user was signed in,
-    // signs them in again; applies the saved theme. Returns the route to start on (Routes.Products or Routes.Login)
+    // signs them in again; applies the saved theme; starts synchronisation. Returns the route to start on (Routes.Products or Routes.Login)
     Task<string> RestoreAsync();
 
     void OnCreated();
@@ -17,6 +17,7 @@ public interface IAppLifecycleService
     // Window.Stopped: the app is in the background and may be killed without further warning
     void OnStopped();
 
+    // Window.Resumed: also asks the sync service to push queued changes
     void OnResumed();
 
     // Window.Destroying

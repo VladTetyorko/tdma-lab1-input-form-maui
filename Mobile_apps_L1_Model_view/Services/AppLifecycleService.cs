@@ -9,12 +9,16 @@ public sealed class AppLifecycleService(
     IThemeService theme,
     IUserRepository users,
     INavigationService navigation,
+    ISyncService sync,
     ILogger<AppLifecycleService> logger) : IAppLifecycleService
 {
     public async Task<string> RestoreAsync()
     {
         theme.Load();
         state.Restore();
+
+        // Start listening for network changes; changes made offline in an earlier run are pushed now
+        sync.Start();
 
         if (state.SignedInUserId is { } userId && await users.GetByIdAsync(userId) is { } user)
         {
@@ -42,8 +46,12 @@ public sealed class AppLifecycleService(
     }
 
     // The process was alive the whole time, so the in-memory state is still correct:
-    // restoring happens only at start (RestoreAsync)
-    public void OnResumed() => logger.LogInformation("Window resumed");
+    // restoring happens only at start (RestoreAsync). Coming back is a good moment to push queued changes
+    public void OnResumed()
+    {
+        logger.LogInformation("Window resumed");
+        sync.RequestSync();
+    }
 
     public void OnDestroying()
     {

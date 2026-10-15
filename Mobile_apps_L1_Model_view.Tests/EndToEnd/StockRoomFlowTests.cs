@@ -15,12 +15,11 @@ public class StockRoomFlowTests : IDisposable
 
     public StockRoomFlowTests()
     {
-        var services = new ServiceCollection().AddStockRoomCore();
+        var services = new ServiceCollection().AddStockRoomCore().AddFakePlatform();
         services.AddSingleton<INavigationService>(_navigation);
         services.AddSingleton<IPreferencesStore>(new FakePreferencesStore());
         services.AddSingleton<IAlertService>(new FakeAlertService());
         _provider = services.BuildServiceProvider();
-        _provider.GetRequiredService<IDataSeeder>().SeedAsync().GetAwaiter().GetResult();
     }
 
     public void Dispose() => _provider.Dispose();

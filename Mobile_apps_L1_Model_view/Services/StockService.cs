@@ -58,7 +58,17 @@ public sealed class StockService(
             CreatedAt = now,
             UpdatedAt = now
         };
-        await operations.AddAsync(operation);
+
+        try
+        {
+            await operations.AddAsync(operation);
+        }
+        catch (EncryptionException ex)
+        {
+            // The counterparty is personal data and is never stored unprotected
+            return Result<Operation>.Failure($"The operation was not saved. {ex.Message}");
+        }
+
         return Result<Operation>.Success(operation);
     }
 

@@ -1,8 +1,8 @@
 using Mobile_apps_L1_Model_view.Models;
 
-namespace Mobile_apps_L1_Model_view.Data;
+namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 
-// Shared storage for the in-memory repositories (replaced by SQLite in Lab 4)
+// Shared storage for the in-memory repositories: fast test doubles for the SQLite repositories of the app
 public abstract class InMemoryRepository<T> where T : Entity
 {
     private readonly List<T> _items = [];

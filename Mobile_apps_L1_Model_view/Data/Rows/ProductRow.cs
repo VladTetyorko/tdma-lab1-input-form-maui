@@ -1,0 +1,10 @@
+using SQLite;
+
+namespace Mobile_apps_L1_Model_view.Data.Rows;
+
+[Table("Products")]
+public sealed class ProductRow : OwnedRow
+{
+    public string Name { get; set; } = string.Empty;
+    public string Barcode { get; set; } = string.Empty;
+}

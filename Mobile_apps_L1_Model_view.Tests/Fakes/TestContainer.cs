@@ -1,10 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
-using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
 
 namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 
-// The real DI container (AddStockRoomCore) with fake platform services and seeded demo data.
+// The real DI container (AddStockRoomCore) with fake platform services and a fresh, seeded temporary SQLite database.
 // Passing the same preferences to two containers simulates the app being killed and started again.
 // Every fake is also resolvable by its concrete type (FakeAlertService, FakeThemeApplier, ...).
 public static class TestContainer
@@ -14,7 +13,7 @@ public static class TestContainer
         FakeNavigationService navigation,
         FakeBarcodeScanner? scanner = null)
     {
-        var services = new ServiceCollection().AddStockRoomCore();
+        var services = new ServiceCollection().AddStockRoomCore().AddFakePlatform();
         var alerts = new FakeAlertService();
         var applier = new FakeThemeApplier();
 
@@ -29,8 +28,7 @@ public static class TestContainer
         services.AddSingleton(scanner ?? new FakeBarcodeScanner());
         services.AddSingleton<IBarcodeScanner>(provider => provider.GetRequiredService<FakeBarcodeScanner>());
 
-        var provider = services.BuildServiceProvider();
-        provider.GetRequiredService<IDataSeeder>().SeedAsync().GetAwaiter().GetResult();
-        return provider;
+        // The database is created, migrated and seeded by the first query
+        return services.BuildServiceProvider();
     }
 }
