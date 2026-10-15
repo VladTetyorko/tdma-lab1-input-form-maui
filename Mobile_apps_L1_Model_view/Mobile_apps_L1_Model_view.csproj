@@ -61,6 +61,23 @@
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+        <!-- SQLite: sqlite-net-pcl is the thin ORM; the bundle ships the native sqlite3 library per platform -->
+        <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+        <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
+    </ItemGroup>
+
+    <!-- Numbered schema scripts are read by MigrationRunner; the logical name is the file name -->
+    <ItemGroup>
+        <EmbeddedResource Include="Data\Migrations\*.sql" LogicalName="Migrations/%(Filename)%(Extension)" />
+    </ItemGroup>
+
+    <!-- The bundle's native sqlite3 (2.1.11) has a known vulnerability (GHSA-2m69-gcr7-jv3q); 2.1.14 fixes it.
+         Android has its own native package, the other platforms share the desktop one -->
+    <ItemGroup Condition="$(TargetFramework.StartsWith('net10.0-android'))">
+        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3.android" Version="2.1.14" />
+    </ItemGroup>
+    <ItemGroup Condition="!$(TargetFramework.StartsWith('net10.0-android'))">
+        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
     </ItemGroup>
 
     <!-- Camera barcode scanning exists on Android and iOS only; Windows uses manual entry -->

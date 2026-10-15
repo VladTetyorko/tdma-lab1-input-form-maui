@@ -24,7 +24,7 @@ public class ProductFormViewModelTests
     private ProductFormViewModel CreateViewModel(AppStateService appState)
     {
         var validator = new ProductValidator(_products);
-        var service = new ProductService(_products, validator, _currentUser, new FakeClock());
+        var service = new ProductService(_products, new InMemoryOperationRepository(), validator, _currentUser, new FakeClock());
         return new ProductFormViewModel(validator, service, _currentUser, appState, _navigation);
     }
 
@@ -235,5 +235,82 @@ public class ProductFormViewModelTests
     {
         _viewModel.Name = "Cordless Saw";
         _viewModel.Barcode = ValidBarcode;
+    }
+
+    [Fact]
+    public async Task Edit_SavesNewNameWithTheSameBarcode_AndReturnsTheRowWithItsQuantity()
+    {
+        var manager = new User { FullName = "Olena", Role = Role.Manager };
+        _currentUser.SignIn(manager);
+        var saw = new Product { Name = "Saw", Barcode = ValidBarcode, CreatedByUserId = manager.Id };
+        await _products.AddAsync(saw);
+        var row = new ProductSummary(saw.Id, "Saw", ValidBarcode, 7);
+
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = row });
+        Assert.Equal("Edit product", _viewModel.PageTitle);
+        Assert.Equal("Saw", _viewModel.Name);
+        _viewModel.Name = "Circular Saw";
+        await _viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal("Circular Saw", (await _products.GetByIdAsync(saw.Id))!.Name);
+        var returned = (ProductSummary)_navigation.RequestedParameters.Last()![NavigationKeys.UpdatedProduct];
+        Assert.Equal(("Circular Saw", 7), (returned.Name, returned.Quantity));
+    }
+
+    [Fact]
+    public async Task Edit_DoesNotTouchTheNewProductDraft()
+    {
+        var manager = new User { FullName = "Olena", Role = Role.Manager };
+        _currentUser.SignIn(manager);
+        _appState.SetDraft(new ProductFormDraft("Half typed", "123"));
+        var saw = new Product { Name = "Saw", Barcode = ValidBarcode, CreatedByUserId = manager.Id };
+        await _products.AddAsync(saw);
+
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.SelectedProduct] = new ProductSummary(saw.Id, "Saw", ValidBarcode, 0)
+        });
+        _viewModel.Name = "Other";
+        await _viewModel.CancelCommand.ExecuteAsync(null);
+
+        Assert.Equal(new ProductFormDraft("Half typed", "123"), _appState.GetDraft<ProductFormDraft>());
+    }
+
+    [Fact]
+    public async Task Edit_BarcodeOfAnotherProduct_ShowsTheErrorAndKeepsThePage()
+    {
+        var manager = new User { FullName = "Olena", Role = Role.Manager };
+        _currentUser.SignIn(manager);
+        var saw = new Product { Name = "Saw", Barcode = ValidBarcode, CreatedByUserId = manager.Id };
+        var drillBarcode = Ean13.WithCheckDigit("400638133394");
+        await _products.AddAsync(saw);
+        await _products.AddAsync(new Product { Name = "Drill", Barcode = drillBarcode, CreatedByUserId = manager.Id });
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.SelectedProduct] = new ProductSummary(saw.Id, "Saw", ValidBarcode, 7)
+        });
+
+        _viewModel.Barcode = drillBarcode;
+        await _viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Contains("already exists", _viewModel.BarcodeError);
+        Assert.Equal(ValidBarcode, (await _products.GetByIdAsync(saw.Id))!.Barcode);
+        Assert.DoesNotContain(_navigation.RequestedRoutes, route => route == Routes.Back);
+    }
+
+    [Fact]
+    public void Edit_BlankName_DisablesSave()
+    {
+        var manager = new User { FullName = "Olena", Role = Role.Manager };
+        _currentUser.SignIn(manager);
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.SelectedProduct] = new ProductSummary(Guid.NewGuid(), "Saw", ValidBarcode, 0)
+        });
+
+        _viewModel.Name = "  ";
+
+        Assert.Equal("Name is required.", _viewModel.NameError);
+        Assert.False(_viewModel.SaveCommand.CanExecute(null));
     }
 }

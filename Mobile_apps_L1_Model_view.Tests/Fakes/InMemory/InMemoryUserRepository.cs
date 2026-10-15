@@ -1,6 +1,7 @@
+using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 
-namespace Mobile_apps_L1_Model_view.Data;
+namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 
 public sealed class InMemoryUserRepository : InMemoryRepository<User>, IUserRepository
 {

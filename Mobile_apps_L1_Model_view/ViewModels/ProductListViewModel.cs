@@ -9,9 +9,11 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 public partial class ProductListViewModel(
     IProductCatalog catalog,
     ICharacteristicService characteristics,
+    IProductService productService,
     ICurrentUserService currentUser,
     IAppStateService appState,
     IStartupNavigator startup,
+    IAlertService alerts,
     INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
@@ -37,6 +39,16 @@ public partial class ProductListViewModel(
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AddProductCommand))]
     public partial bool CanAddProduct { get; set; }
+
+    // Edit and delete buttons on the rows (Manager)
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(EditProductCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteProductCommand))]
+    public partial bool CanManageProducts { get; set; }
+
+    // Why a delete was refused, or empty
+    [ObservableProperty]
+    public partial string StatusMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenCharacteristicsCommand))]
@@ -76,6 +88,8 @@ public partial class ProductListViewModel(
         CurrentUserName = user is null ? string.Empty : $"{user.FullName} ({user.Role})";
         CanAddProduct = user is not null && RolePermissions.CanManageProducts(user.Role);
         CanManageCharacteristics = CanAddProduct;
+        CanManageProducts = CanAddProduct;
+        StatusMessage = string.Empty;
 
         _all = [.. await catalog.GetSummariesAsync()];
         await SyncSortOptionsAsync();
@@ -121,6 +135,41 @@ public partial class ProductListViewModel(
 
     [RelayCommand(CanExecute = nameof(CanAddProduct))]
     private Task AddProductAsync() => navigation.GoToAsync(Routes.ProductForm);
+
+    [RelayCommand(CanExecute = nameof(CanManageProducts))]
+    private Task EditProductAsync(ProductSummary? product) =>
+        product is null
+            ? Task.CompletedTask
+            : navigation.GoToAsync(Routes.ProductForm,
+                new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = product });
+
+    // Only a product without operations can go: the history of In/Out must stay complete
+    [RelayCommand(CanExecute = nameof(CanManageProducts))]
+    private async Task DeleteProductAsync(ProductSummary? product)
+    {
+        StatusMessage = string.Empty;
+        if (product is null)
+        {
+            return;
+        }
+
+        // A product with history is not worth a question: the service refuses it and says why
+        if (product.CanDelete
+            && !await alerts.ConfirmAsync("Delete product", $"Delete \"{product.Name}\"?", "Delete", "Cancel"))
+        {
+            return;
+        }
+
+        var result = await productService.DeleteAsync(product.Id);
+        if (!result.IsSuccess)
+        {
+            StatusMessage = result.Error!;
+            return;
+        }
+
+        _all.RemoveAll(p => p.Id == product.Id);
+        ApplySort();
+    }
 
     [RelayCommand(CanExecute = nameof(CanManageCharacteristics))]
     private Task OpenCharacteristicsAsync() => navigation.GoToAsync(Routes.Characteristics);

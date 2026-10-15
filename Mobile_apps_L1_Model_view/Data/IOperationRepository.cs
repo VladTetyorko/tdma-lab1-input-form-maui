@@ -9,5 +9,8 @@ public interface IOperationRepository
 
     Task<IReadOnlyList<Operation>> GetByProductAsync(Guid productId);
 
+    // Cheaper than GetByProductAsync when only existence matters
+    Task<bool> AnyForProductAsync(Guid productId);
+
     Task AddAsync(Operation operation);
 }

@@ -6,7 +6,7 @@
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
              x:Class="Mobile_apps_L1_Model_view.Views.ProductFormPage"
              x:DataType="viewModels:ProductFormViewModel"
-             Title="New product">
+             Title="{Binding PageTitle}">
 
     <ContentPage.Behaviors>
         <views:PageLifecycleBehavior />

@@ -33,8 +33,8 @@ Read this file, [`README.md`](README.md), [`docs/plan.md`](docs/plan.md) and
 
 ```
 Models/        entities and enums — no dependencies
-Services/      domain services and abstractions over the platform (navigation, current user, clock, preferences, scanner)
-Data/          repositories (in-memory until Lab 4, SQLite from Lab 4), migrations
+Services/      domain services and abstractions over the platform (navigation, current user, clock, preferences, scanner, secure storage, connectivity, sharing), sync, encryption
+Data/          SQLite repositories, migrations (numbered SQL scripts), sync queue storage
 ViewModels/    state + commands, depend on Services/Data interfaces only
 Views/         XAML pages, no logic in code-behind except lifecycle forwarding
 Converters/    value converters

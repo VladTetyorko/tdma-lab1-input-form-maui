@@ -4,9 +4,12 @@ The catalogue of StockRoom's domain entities: what each one is, its fields,
 how it relates to the others, who can do what with it, and how it can grow.
 The overview, roles and computed values are in [`domain-model.md`](domain-model.md).
 
-Until Lab 4 the entities live in memory as plain C# classes in
-`Mobile_apps_L1_Model_view/Models`. In Lab 4 the same classes are mapped to
-SQLite tables with the same names and columns.
+The entities are plain C# classes in `Mobile_apps_L1_Model_view/Models`, free of
+storage attributes. Since Lab 4 they are stored in SQLite tables with the same
+names and columns: each repository converts an entity to a *row* class
+(`Data/Rows`, text ids, enum names and ISO-8601 timestamps) and back. The
+schema is the SQL in `Data/Migrations/0001_initial.sql`; see
+[`docs/steps/04-sqlite.md`](../steps/04-sqlite.md).
 
 ## Diagram
 
@@ -139,8 +142,12 @@ descriptive data lives in characteristics.
   (see [`domain-model.md`](domain-model.md#what-is-computed-not-stored)).
 - **Who can do what:** the Manager creates and renames products. Everyone views
   them. Scanning looks a product up by `Barcode`.
-- **Not deleted** once it has operations, because history must stay complete.
-  An `IsArchived` flag can be added if needed.
+- **Edited and deleted by the Manager.** An edit keeps the barcode unique
+  (the product's own barcode does not count as a duplicate).
+- **Not deleted** once it has operations, because history must stay complete:
+  the `Operations → Products` foreign key has no cascade, and `ProductService`
+  refuses with an explanation. Deleting a product without operations also
+  removes its characteristic values. An `IsArchived` flag can be added if needed.
 - **Scaling:** more barcode formats (Code-128, QR), a unit of measure, a
   minimum stock level for low-stock alerts, photos.
 
@@ -191,7 +198,7 @@ out). The **only** way quantity changes.
 | `ProductId` | `Guid` → `Product.Id` | Required |
 | `Direction` | `OperationDirection` | `In` or `Out` |
 | `Quantity` | `int` | `> 0`; for `Out`, ≤ quantity on hand |
-| `Counterparty` | `string?` | Who it was received from / given to |
+| `Counterparty` | `string?` | Who it was received from / given to. Personal data: **stored AES-encrypted** (base64), plain in the app |
 | `Reason` | `string?` | Why: "delivery", "order #12", "damaged" |
 | `CreatedByUserId` | inherited | Who recorded it |
 | `CreatedAt` | inherited | When it happened |
@@ -222,7 +229,7 @@ added at runtime.
 | Entity | Storekeeper | Driver | Manager |
 |--------|-------------|--------|---------|
 | `User` | pick self | pick self | pick self |
-| `Product` | view | view | create, edit |
+| `Product` | view | view | create, edit, delete (no operations) |
 | `Characteristic` | view, sort by | view, sort by | create |
 | `ProductCharacteristic` | view | view | set, change, remove |
 | `Operation` | create In/Out, view | create In, view own | create In/Out, view |
@@ -235,4 +242,4 @@ added at runtime.
 | Low-stock alerts | `Product.MinQuantity` |
 | Delivery documents | New `Delivery : OwnedEntity`; `Operation.DeliveryId?` |
 | Edit history for products | Audit table, or `UpdatedByUserId` on `OwnedEntity` |
-| Sync between devices (Lab 4) | Already prepared: UUID keys never clash, and `UpdatedAt` gives "last write wins" |
+| Sync between devices (Lab 4) | Done for the push direction: UUID keys never clash, every write is queued in `SyncQueue`, and the server applies "last write wins" by change time. Pulling other devices' changes is future work |

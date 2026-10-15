@@ -31,6 +31,10 @@ public static class MauiProgram
 
         builder.Services.AddStockRoomCore();
         builder.Services.AddSingleton<IPreferencesStore, MauiPreferencesStore>();
+        builder.Services.AddSingleton<IDatabasePathProvider, MauiDatabasePathProvider>();
+        builder.Services.AddSingleton<ISecretStore, MauiSecretStore>();
+        builder.Services.AddSingleton<IConnectivityMonitor, MauiConnectivityMonitor>();
+        builder.Services.AddSingleton<IFileSharer, MauiFileSharer>();
         builder.Services.AddSingleton<IAlertService, ShellAlertService>();
         builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
@@ -47,11 +51,6 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        var app = builder.Build();
-
-        // In-memory seeding completes synchronously; Lab 4 replaces it with migrations
-        app.Services.GetRequiredService<IDataSeeder>().SeedAsync().GetAwaiter().GetResult();
-
-        return app;
+        return builder.Build();
     }
 }

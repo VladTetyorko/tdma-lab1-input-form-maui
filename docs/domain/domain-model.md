@@ -24,18 +24,22 @@ separate decision.
 | View / sort product list | ✔ | ✔ | ✔ |
 | Scan → In | ✔ | ✔ | ✔ |
 | Scan → Out | ✔ | — | ✔ |
-| Add / edit product | — | — | ✔ |
+| Add / edit / delete product (delete only without operations) | — | — | ✔ |
 | Add characteristic, set its value on a product | — | — | ✔ |
 | View operation history | ✔ | own only | ✔ |
 
 There is no real authentication. On start the user picks one of the three
 seeded accounts.
 
-## Database (SQLite, Lab 4)
+## Database (SQLite, implemented in Lab 4)
 
-The schema is designed now, so the C# entities match it from the start
-(see [`entities.md`](entities.md)). Until Lab 4 the data is kept in memory;
-in Lab 4 it moves to SQLite.
+The C# entities match this schema one to one (see [`entities.md`](entities.md)).
+It is created by `Data/Migrations/0001_initial.sql` and seeded by
+`0002_seed.sql`; the full column and constraint listing, the migration
+mechanism, the sync queue and the encryption are in
+[`docs/steps/04-sqlite.md`](../steps/04-sqlite.md). Foreign keys are switched on
+for every connection, so the constraints below are enforced by the database,
+not only by the services.
 
 Conventions for **every** table:
 
@@ -107,9 +111,10 @@ erDiagram
 |-------|---------|-------------|
 | `Users` | The three people | `Role` ∈ {Storekeeper, Driver, Manager} |
 | `Products` | What is stored: only name and barcode | `Barcode` unique |
-| `Characteristics` | The list of possible characteristics (id + name) | `Name` unique |
+| `Characteristics` | The list of possible characteristics (id + name) | `Name` unique, case-insensitive (`COLLATE NOCASE`); `ValueType` ∈ {Text, Number} |
 | `ProductCharacteristics` | The value of one characteristic for one product | unique (`ProductId`, `CharacteristicId`) |
-| `Operations` | Every In / Out: the only way quantity changes | `Quantity > 0`, `Direction` ∈ {In, Out} |
+| `Operations` | Every In / Out: the only way quantity changes | `Quantity > 0`, `Direction` ∈ {In, Out}; `Counterparty` stored encrypted |
+| `SyncQueue` | Infrastructure, not domain: changes not yet sent to the server (offline-first outbox) | `Operation` ∈ {Insert, Update, Delete}; see step 04 for why it is outside 3NF |
 
 ### What is computed, not stored
 
@@ -157,10 +162,14 @@ sequenceDiagram
 
 One warehouse (implicit), three users (one per role), about ten products,
 three to four characteristics (e.g. *Weight, kg* — Number; *Color* — Text;
-*Category* — Text), and a few operations so quantities are not zero.
+*Category* — Text), and a few operations so quantities are not zero. It is
+migration `0002_seed.sql`, with fixed ids, applied once when the database is
+created.
 
 ## Export
 
-The whole database is one SQLite file in the app's data folder. A **Share
-database** action copies it out through the system share sheet, so it can be
-opened on a PC (DB Browser for SQLite, DBeaver).
+The whole database is one SQLite file (`stockroom.db3`) in the app's data
+folder. **Settings → Share database** checkpoints the write-ahead log, copies
+the file and hands the copy to the system share sheet, so it can be opened on a
+PC (DB Browser for SQLite, DBeaver). Only `Operations.Counterparty` is
+encrypted; everything else is readable.

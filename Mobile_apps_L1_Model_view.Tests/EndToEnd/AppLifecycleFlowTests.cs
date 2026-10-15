@@ -17,10 +17,11 @@ public class AppLifecycleFlowTests
     public async Task KilledWhileRecordingAnOperation_RestartSignsInAndResumesTheDraft()
     {
         var preferences = new FakePreferencesStore();
+        var secrets = new FakeSecretStore();
         var firstNavigation = new FakeNavigationService();
 
         // First run: sign in, open a product, start an Out operation and leave it unsaved
-        using (var first = TestContainer.Create(preferences, firstNavigation))
+        using (var first = TestContainer.Create(preferences, firstNavigation, secrets: secrets))
         {
             var lifecycle = first.GetRequiredService<IAppLifecycleService>();
             await lifecycle.RestoreAsync();
@@ -41,16 +42,18 @@ public class AppLifecycleFlowTests
             await operation.LoadCommand.ExecuteAsync(null);
             operation.SelectedDirection = OperationDirection.Out;
             operation.Quantity = 4;
+            operation.Counterparty = "Acme Ltd";
             operation.Reason = "Site 7";
 
             // The app is stopped (sent to the background and possibly killed)
             firstNavigation.CurrentRoute = Routes.Operation;
             lifecycle.OnStopped();
+            Assert.DoesNotContain("Acme Ltd", string.Concat(preferences.Values.Values));
         }
 
         // Second run: a new process reads the same preferences
         var secondNavigation = new FakeNavigationService();
-        using var second = TestContainer.Create(preferences, secondNavigation);
+        using var second = TestContainer.Create(preferences, secondNavigation, secrets: secrets);
         var restart = second.GetRequiredService<IAppLifecycleService>();
 
         var startRoute = await restart.RestoreAsync();
@@ -69,6 +72,7 @@ public class AppLifecycleFlowTests
         Assert.Equal("Cordless Drill 18V", operation2.ProductName);
         Assert.Equal(OperationDirection.Out, operation2.SelectedDirection);
         Assert.Equal(4, operation2.Quantity);
+        Assert.Equal("Acme Ltd", operation2.Counterparty);
         Assert.Equal("Site 7", operation2.Reason);
         Assert.Equal(21, operation2.QuantityOnHand);
     }

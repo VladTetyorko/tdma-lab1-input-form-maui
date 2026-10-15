@@ -29,7 +29,7 @@ public sealed class ProductValidator(IProductRepository products) : IProductVali
         return Ean13.IsValid(code) ? null : "Barcode must be a valid EAN-13 (13 digits with a correct check digit).";
     }
 
-    public async Task<string?> ValidateBarcodeAsync(string? barcode)
+    public async Task<string?> ValidateBarcodeAsync(string? barcode, Guid? excludeProductId = null)
     {
         var formatError = ValidateBarcodeFormat(barcode);
         if (formatError is not null)
@@ -37,7 +37,8 @@ public sealed class ProductValidator(IProductRepository products) : IProductVali
             return formatError;
         }
 
-        return await products.GetByBarcodeAsync(barcode!.Trim()) is null
+        var owner = await products.GetByBarcodeAsync(barcode!.Trim());
+        return owner is null || owner.Id == excludeProductId
             ? null
             : "A product with this barcode already exists.";
     }

@@ -8,4 +8,9 @@ public sealed record ProductSummary(Guid Id, string Name, string Barcode, int Qu
     private static readonly IReadOnlyDictionary<Guid, string> NoValues = new Dictionary<Guid, string>();
 
     public IReadOnlyDictionary<Guid, string> Values { get; init; } = NoValues;
+
+    // At least one In/Out has been recorded. Such a product is kept for good: its history must stay complete
+    public bool HasOperations { get; init; }
+
+    public bool CanDelete => !HasOperations;
 }

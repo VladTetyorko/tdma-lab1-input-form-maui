@@ -26,13 +26,13 @@ public class PageLifecycleAwareTests : IDisposable
     }
 
     [Fact]
-    public void LoginPage_OnAppearing_LoadsTheUsers()
+    public async Task LoginPage_OnAppearing_LoadsTheUsers()
     {
         var login = _provider.GetRequiredService<LoginViewModel>();
 
         ((IPageLifecycleAware)login).OnAppearing();
 
-        Assert.Equal(3, login.Users.Count);
+        await Eventually.WaitAsync(() => login.Users.Count == 3);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class PageLifecycleAwareTests : IDisposable
 
         ((IPageLifecycleAware)list).OnAppearing();
 
-        Assert.Equal(10, list.Products.Count);
+        await Eventually.WaitAsync(() => list.Products.Count == 10);
     }
 
     [Fact]

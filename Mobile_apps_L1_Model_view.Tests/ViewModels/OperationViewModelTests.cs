@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
@@ -15,7 +16,7 @@ public class OperationViewModelTests
 
     public OperationViewModelTests()
     {
-        _viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.AppState, _store.Navigation);
+        _viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Drafts, _store.Navigation);
     }
 
     [Fact]
@@ -186,7 +187,7 @@ public class OperationViewModelTests
         _viewModel.Counterparty = "Acme Ltd";
         _viewModel.Reason = "Site 7";
 
-        var draft = _store.AppState.GetDraft<OperationDraft>();
+        var draft = await _store.Drafts.LoadAsync(DrillBarcode);
         Assert.Equal(new OperationDraft(DrillBarcode, OperationDirection.Out, 4, "Acme Ltd", "Site 7"), draft);
     }
 
@@ -194,9 +195,10 @@ public class OperationViewModelTests
     public async Task ApplyQueryAttributes_RestoresTheDraftForTheSameProduct()
     {
         await SeedDrillWithTenUnitsAsync();
-        _store.AppState.SetDraft(new OperationDraft(DrillBarcode, OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
+        await _store.Drafts.SaveAsync(new OperationDraft(DrillBarcode, OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
 
         ApplyDrill();
+        await _viewModel.LoadCommand.ExecuteAsync(null);
 
         Assert.Equal(OperationDirection.Out, _viewModel.SelectedDirection);
         Assert.Equal(4, _viewModel.Quantity);
@@ -208,7 +210,7 @@ public class OperationViewModelTests
     public async Task ApplyQueryAttributes_DraftForAnotherProduct_IsNotRestored()
     {
         await SeedDrillWithTenUnitsAsync();
-        _store.AppState.SetDraft(new OperationDraft("4820001000016", OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
+        await _store.Drafts.SaveAsync(new OperationDraft("4820001000016", OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
 
         ApplyDrill();
 
@@ -227,7 +229,7 @@ public class OperationViewModelTests
 
         await _viewModel.SaveCommand.ExecuteAsync(null);
 
-        Assert.Null(_store.AppState.GetDraft<OperationDraft>());
+        Assert.Null(await _store.Drafts.LoadAsync(DrillBarcode));
     }
 
     [Fact]
@@ -241,7 +243,7 @@ public class OperationViewModelTests
 
         await _viewModel.SaveCommand.ExecuteAsync(null);
 
-        Assert.Equal(11, _store.AppState.GetDraft<OperationDraft>()!.Quantity);
+        Assert.Equal(11, (await _store.Drafts.LoadAsync(DrillBarcode))!.Quantity);
     }
 
     [Fact]
@@ -253,7 +255,40 @@ public class OperationViewModelTests
 
         await _viewModel.GoBackCommand.ExecuteAsync(null);
 
-        Assert.Null(_store.AppState.GetDraft<OperationDraft>());
+        Assert.Null(await _store.Drafts.LoadAsync(DrillBarcode));
+    }
+
+    [Fact]
+    public async Task Draft_IsPersistedWithoutThePlainCounterparty()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        ApplyDrill();
+
+        _viewModel.Counterparty = "Acme Ltd";
+        _store.AppState.Save();
+
+        Assert.DoesNotContain("Acme Ltd", string.Concat(_store.Preferences.Values.Values));
+    }
+
+    [Fact]
+    public async Task ApplyQueryAttributes_DraftWithLostKey_RestoresTheRestWithoutCounterparty()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        await _store.Drafts.SaveAsync(new OperationDraft(DrillBarcode, OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
+        _store.Secrets.Values.Clear();
+        var viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, new OperationDraftStore(
+            _store.AppState, new AesFieldEncryptor(_store.Secrets), NullLogger<OperationDraftStore>.Instance),
+            _store.Navigation);
+
+        viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.SelectedProduct] = new ProductSummary(_drill.Id, _drill.Name, _drill.Barcode, 10)
+        });
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(4, viewModel.Quantity);
+        Assert.Equal("Site 7", viewModel.Reason);
+        Assert.Equal(string.Empty, viewModel.Counterparty);
     }
 
     private async Task SeedDrillWithTenUnitsAsync()

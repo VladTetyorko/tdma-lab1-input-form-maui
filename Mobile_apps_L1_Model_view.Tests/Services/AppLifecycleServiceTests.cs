@@ -13,6 +13,7 @@ public class AppLifecycleServiceTests
     private readonly InMemoryUserRepository _users = new();
     private readonly CurrentUserService _currentUser = new();
     private readonly FakeNavigationService _navigation = new();
+    private readonly FakeSyncService _sync = new();
     private readonly AppStateService _state;
     private readonly AppLifecycleService _lifecycle;
 
@@ -20,7 +21,7 @@ public class AppLifecycleServiceTests
     {
         _state = new AppStateService(_preferences);
         var theme = new ThemeService(_preferences, _applier);
-        _lifecycle = new AppLifecycleService(_state, _currentUser, theme, _users, _navigation,
+        _lifecycle = new AppLifecycleService(_state, _currentUser, theme, _users, _navigation, _sync,
             NullLogger<AppLifecycleService>.Instance);
     }
 
@@ -150,5 +151,31 @@ public class AppLifecycleServiceTests
         Assert.Empty(_preferences.Values);
         Assert.Equal("Ivan Shevchenko", _currentUser.CurrentUser!.FullName);
         Assert.Null(_state.SignedInUserId);
+    }
+
+    [Fact]
+    public async Task RestoreAsync_StartsSynchronisation()
+    {
+        await _lifecycle.RestoreAsync();
+
+        Assert.Equal(1, _sync.StartCalls);
+    }
+
+    [Fact]
+    public void OnResumed_AsksForASync()
+    {
+        _lifecycle.OnResumed();
+
+        Assert.Equal(1, _sync.RequestCalls);
+    }
+
+    [Fact]
+    public void OnStoppedAndOtherEvents_DoNotAskForASync()
+    {
+        _lifecycle.OnStopped();
+        _lifecycle.OnDeactivated();
+        _lifecycle.OnActivated();
+
+        Assert.Equal(0, _sync.RequestCalls);
     }
 }

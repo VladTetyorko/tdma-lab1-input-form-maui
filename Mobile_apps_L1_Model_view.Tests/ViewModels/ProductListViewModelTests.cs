@@ -15,7 +15,7 @@ public class ProductListViewModelTests
 
     public ProductListViewModelTests()
     {
-        _viewModel = new ProductListViewModel(_store.Catalog, _store.CharacteristicService, _store.CurrentUser, _store.AppState, _store.Startup, _store.Navigation);
+        _viewModel = new ProductListViewModel(_store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.AppState, _store.Startup, _store.Alerts, _store.Navigation);
     }
 
     [Fact]
@@ -344,6 +344,77 @@ public class ProductListViewModelTests
         await _viewModel.OpenSettingsCommand.ExecuteAsync(null);
 
         Assert.Equal(Routes.Settings, Assert.Single(_store.Navigation.RequestedRoutes));
+    }
+
+    [Fact]
+    public async Task EditProduct_OpensTheFormWithTheProduct()
+    {
+        await _store.SignInAsync(Role.Manager);
+        await _store.AddProductAsync("Drill", DrillBarcode);
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        var row = _viewModel.Products.Single();
+
+        await _viewModel.EditProductCommand.ExecuteAsync(row);
+
+        Assert.Equal(Routes.ProductForm, _store.Navigation.RequestedRoutes.Last());
+        Assert.Same(row, _store.Navigation.RequestedParameters.Last()![NavigationKeys.SelectedProduct]);
+    }
+
+    [Fact]
+    public async Task DeleteProduct_Confirmed_RemovesTheRow()
+    {
+        await _store.SignInAsync(Role.Manager);
+        await _store.AddProductAsync("Drill", DrillBarcode);
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        await _viewModel.DeleteProductCommand.ExecuteAsync(_viewModel.Products.Single());
+
+        Assert.Empty(_viewModel.Products);
+        Assert.Empty(await _store.Products.GetAllAsync());
+        Assert.Single(_store.Alerts.Confirmations);
+    }
+
+    [Fact]
+    public async Task DeleteProduct_NotConfirmed_KeepsTheRow()
+    {
+        await _store.SignInAsync(Role.Manager);
+        await _store.AddProductAsync("Drill", DrillBarcode);
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        _store.Alerts.ConfirmAnswer = false;
+
+        await _viewModel.DeleteProductCommand.ExecuteAsync(_viewModel.Products.Single());
+
+        Assert.Single(_viewModel.Products);
+    }
+
+    [Fact]
+    public async Task DeleteProduct_WithOperations_ShowsWhyAndKeepsTheRow()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        await _store.Operations.AddAsync(new Operation { ProductId = drill.Id, Direction = OperationDirection.In, Quantity = 3 });
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        var row = _viewModel.Products.Single();
+        Assert.False(row.CanDelete);
+
+        await _viewModel.DeleteProductCommand.ExecuteAsync(row);
+
+        Assert.Equal(ProductService.HasOperationsMessage, _viewModel.StatusMessage);
+        Assert.Single(_viewModel.Products);
+        Assert.Empty(_store.Alerts.Confirmations);
+    }
+
+    [Theory]
+    [InlineData(Role.Manager, true)]
+    [InlineData(Role.Storekeeper, false)]
+    public async Task CanManageProducts_OnlyForManager(Role role, bool expected)
+    {
+        await _store.SignInAsync(role);
+
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(expected, _viewModel.CanManageProducts);
+        Assert.Equal(expected, _viewModel.EditProductCommand.CanExecute(null));
     }
 
     private static Dictionary<string, object> Query(string key, object value) => new() { [key] = value };
