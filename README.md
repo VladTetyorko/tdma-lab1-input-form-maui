@@ -76,7 +76,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 |------|-----|----------|--------|
 | 00 | — | [Project vision and domain model](docs/steps/00-vision-and-roles.md) | in review |
 | 01 | 1 | [Warehouse domain, MVVM, validation](docs/steps/01-warehouse-entities.md) | done (145 tests) |
-| 02 | 2 | Shell navigation, parameters, characteristics, sorting | planned |
+| 02 | 2 | [Shell navigation, parameters, characteristics, sorting, In/Out page](docs/steps/02-navigation.md) | in progress |
 | 03 | 3 | Lifecycle, DI, state, theme, deep links, scanner | planned |
 | 04 | 4 | SQLite, repositories, sync queue, encryption | planned |
 
@@ -101,6 +101,13 @@ Every architectural decision, newest last. Details are in the step documents.
 | 13 | 1 | `IStockService` computes quantity on hand and records operations, returns `Result` | One place for stock rules (role, quantity above 0, Out not above on hand) |
 | 14 | 1 | `AddStockRoomCore` DI extension; pages and navigation registered in `MauiProgram` | Tests build the same container with fake platform services |
 | 15 | 1 | Minimal `INavigationService` and `Routes` introduced in Lab 1 | ViewModels must not use `Shell`; Lab 2 extends it |
+| 16 | 2 | `INavigationService.GoToAsync(route, parameters)`; objects travel in a dictionary and arrive through `IQueryAttributable` | Rich objects without serialisation; navigation stays fakeable |
+| 17 | 2 | Data returns with `GoToAsync("..", parameters)` handled by the list's `IQueryAttributable`, not a messenger | Neighbouring pages; the link is visible; no hidden subscriptions |
+| 18 | 2 | The list loads once per signed-in user and is updated by returned parameters; back arrow is bound to `GoBackCommand` | No reload workaround; every back path returns the data |
+| 19 | 2 | `ProductSummary` (Services) replaces `ProductListItem`; `IProductCatalog` is the read side | Sorter and catalog must not depend on ViewModels; one join for list and detail |
+| 20 | 2 | Characteristic rules in `ICharacteristicService` / `ICharacteristicValidator`; numbers parsed with the invariant culture in one helper | Testable; one definition of a valid number |
+| 21 | 2 | Sorting in the pure `ProductSorter`; missing values always last | Testable; useful rows stay on top when descending |
+| 22 | 2 | `OperationPage` takes the product from navigation parameters | Lab 3's scanner opens it the same way |
 
 ## Architecture
 
@@ -111,11 +118,17 @@ graph TD
         LoginPage
         ProductsPage
         ProductFormPage
+        ProductDetailPage
+        CharacteristicsPage
+        OperationPage
     end
     subgraph ViewModels
         LoginViewModel
         ProductListViewModel
         ProductFormViewModel
+        ProductDetailViewModel
+        CharacteristicsViewModel
+        OperationViewModel
     end
     subgraph Converters
         QuantityToColorConverter
@@ -124,6 +137,10 @@ graph TD
         IStockService
         IProductService
         IProductValidator
+        IProductCatalog
+        ICharacteristicService
+        ICharacteristicValidator
+        ProductSorter
         ICurrentUserService
         INavigationService
         IClock
@@ -150,9 +167,25 @@ graph TD
     LoginViewModel --> IUserRepository
     LoginViewModel --> ICurrentUserService
     LoginViewModel --> INavigationService
-    ProductListViewModel --> IProductRepository
-    ProductListViewModel --> IStockService
+    ProductListViewModel --> IProductCatalog
+    ProductListViewModel --> ICharacteristicService
+    ProductListViewModel --> ProductSorter
     ProductListViewModel --> INavigationService
+    ProductDetailPage --> ProductDetailViewModel
+    CharacteristicsPage --> CharacteristicsViewModel
+    OperationPage --> OperationViewModel
+    ProductDetailViewModel --> IProductCatalog
+    ProductDetailViewModel --> ICharacteristicService
+    ProductDetailViewModel --> ICharacteristicValidator
+    ProductDetailViewModel --> INavigationService
+    CharacteristicsViewModel --> ICharacteristicService
+    CharacteristicsViewModel --> INavigationService
+    OperationViewModel --> IStockService
+    OperationViewModel --> INavigationService
+    IProductCatalog --> IStockService
+    IProductCatalog --> IProductRepository
+    ICharacteristicService --> ICharacteristicValidator
+    ICharacteristicService --> IProductCharacteristicRepository
     ProductFormViewModel --> IProductValidator
     ProductFormViewModel --> IProductService
     IProductService --> IProductValidator
