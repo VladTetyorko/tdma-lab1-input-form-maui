@@ -23,7 +23,10 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IProductValidator, ProductValidator>();
         services.AddSingleton<IProductService, ProductService>();
+        services.AddSingleton<ICharacteristicValidator, CharacteristicValidator>();
+        services.AddSingleton<ICharacteristicService, CharacteristicService>();
         services.AddSingleton<IStockService, StockService>();
+        services.AddSingleton<IProductCatalog, ProductCatalog>();
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<ProductListViewModel>();
