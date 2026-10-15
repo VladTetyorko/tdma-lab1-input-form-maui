@@ -35,4 +35,32 @@ public abstract class InMemoryRepository<T> where T : Entity
 
         return Task.CompletedTask;
     }
+
+    protected Task ReplaceAsync(T item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        lock (_gate)
+        {
+            var index = _items.FindIndex(i => i.Id == item.Id);
+            if (index < 0)
+            {
+                throw new InvalidOperationException($"{typeof(T).Name} {item.Id} does not exist.");
+            }
+
+            _items[index] = item;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    // Removing a row that is already gone is not an error
+    protected Task RemoveAsync(Guid id)
+    {
+        lock (_gate)
+        {
+            _items.RemoveAll(i => i.Id == id);
+        }
+
+        return Task.CompletedTask;
+    }
 }

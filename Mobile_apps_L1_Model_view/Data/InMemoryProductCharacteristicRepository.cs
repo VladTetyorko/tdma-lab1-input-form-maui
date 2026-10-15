@@ -11,4 +11,8 @@ public sealed class InMemoryProductCharacteristicRepository
         QueryAsync(v => v.ProductId == productId);
 
     public Task AddAsync(ProductCharacteristic value) => InsertAsync(value);
+
+    public Task UpdateAsync(ProductCharacteristic value) => ReplaceAsync(value);
+
+    public Task DeleteAsync(Guid id) => RemoveAsync(id);
 }

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.ProductDetailPage"
+             x:DataType="viewModels:ProductDetailViewModel"
+             Title="Product">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding GoBackCommand}" />
+    </Shell.BackButtonBehavior>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,10" Spacing="6">
+            <Label Text="{Binding Name}" Style="{StaticResource Headline}" />
+            <Label Text="{Binding Barcode, StringFormat='Barcode {0}'}" Style="{StaticResource CaptionLabel}" />
+            <Label Text="{Binding Quantity, StringFormat='On hand: {0} pcs'}" FontAttributes="Bold" />
+
+            <Label Text="Characteristics" Style="{StaticResource SectionLabel}" />
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Characteristics}" Spacing="4">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:CharacteristicEditItem">
+                        <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto">
+                            <Label Grid.Column="0" Text="{Binding Name}" VerticalOptions="Center" />
+                            <Entry Grid.Column="1"
+                                   Text="{Binding Value, Mode=TwoWay}"
+                                   Placeholder="{Binding Placeholder}"
+                                   IsReadOnly="{Binding IsReadOnly}" />
+                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding Error}"
+                                   Style="{StaticResource ErrorLabel}" />
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Save" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" />
+                <Button Text="Record In/Out" Command="{Binding OpenOperationCommand}" />
+                <Button Text="Back" Command="{Binding GoBackCommand}" />
+            </HorizontalStackLayout>
+
+            <Label Text="History" Style="{StaticResource SectionLabel}" />
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding History}" Spacing="6">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="services:OperationHistoryItem">
+                        <VerticalStackLayout>
+                            <Label FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding Direction}" />
+                                        <Span Text=" " />
+                                        <Span Text="{Binding Quantity}" />
+                                        <Span Text=" pcs" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Text="{Binding At, StringFormat='{0:yyyy-MM-dd HH:mm} UTC'}"
+                                   Style="{StaticResource CaptionLabel}" />
+                            <Label Text="{Binding UserName, StringFormat='By {0}'}"
+                                   Style="{StaticResource CaptionLabel}" />
+                            <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

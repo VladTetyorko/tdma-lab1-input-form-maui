@@ -15,6 +15,6 @@ public partial class ProductsPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        _viewModel.LoadCommand.Execute(null);
+        _viewModel.EnsureLoadedCommand.Execute(null);
     }
 }

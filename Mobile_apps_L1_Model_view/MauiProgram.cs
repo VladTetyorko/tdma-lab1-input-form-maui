@@ -23,6 +23,9 @@ public static class MauiProgram
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<ProductsPage>();
         builder.Services.AddTransient<ProductFormPage>();
+        builder.Services.AddTransient<ProductDetailPage>();
+        builder.Services.AddTransient<CharacteristicsPage>();
+        builder.Services.AddTransient<OperationPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();

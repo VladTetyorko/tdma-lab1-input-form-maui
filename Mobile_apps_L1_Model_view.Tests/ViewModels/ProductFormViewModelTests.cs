@@ -127,6 +127,24 @@ public class ProductFormViewModelTests
         Assert.Empty(await _products.GetAllAsync());
     }
 
+    [Fact]
+    public async Task Save_Success_SendsTheNewProductWithZeroQuantityBackToTheList()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena Kovalenko", Role = Role.Manager });
+        FillValidForm();
+
+        await _viewModel.SaveCommand.ExecuteAsync(null);
+
+        var stored = Assert.Single(await _products.GetAllAsync());
+        Assert.Equal(Routes.Back, _navigation.RequestedRoutes.Last());
+        var parameters = _navigation.RequestedParameters.Last()!;
+        var created = Assert.IsType<ProductSummary>(parameters[NavigationKeys.UpdatedProduct]);
+        Assert.Equal(stored.Id, created.Id);
+        Assert.Equal("Cordless Saw", created.Name);
+        Assert.Equal(ValidBarcode, created.Barcode);
+        Assert.Equal(0, created.Quantity);
+    }
+
     private void FillValidForm()
     {
         _viewModel.Name = "Cordless Saw";
