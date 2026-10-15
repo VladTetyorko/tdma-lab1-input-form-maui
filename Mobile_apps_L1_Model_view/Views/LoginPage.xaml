@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Mobile_apps_L1_Model_view.Models"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.LoginPage"
+             x:DataType="viewModels:LoginViewModel"
+             Title="StockRoom">
+
+    <VerticalStackLayout Padding="30,20" Spacing="16">
+        <Label Text="Who is working?" Style="{StaticResource Headline}" />
+        <Label Text="Pick your account" Style="{StaticResource CaptionLabel}" />
+
+        <CollectionView ItemsSource="{Binding Users}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:User">
+                    <VerticalStackLayout Padding="0,8">
+                        <Label Text="{Binding FullName}" FontAttributes="Bold" />
+                        <Label Text="{Binding Role}" Style="{StaticResource CaptionLabel}" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Text="Sign in" Command="{Binding SignInCommand}" />
+    </VerticalStackLayout>
+</ContentPage>

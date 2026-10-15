@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Mobile_apps_L1_Model_view.Converters"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.ProductsPage"
+             x:DataType="viewModels:ProductListViewModel"
+             Title="Products">
+
+    <ContentPage.Resources>
+        <converters:QuantityToColorConverter x:Key="QuantityToColorConverter" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20,10" RowSpacing="10">
+        <Label Grid.Row="0" Text="{Binding CurrentUserName}" Style="{StaticResource CaptionLabel}" />
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Products}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="viewModels:ProductListItem">
+                    <Grid ColumnDefinitions="*,Auto" Padding="0,8">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="{Binding Name}" FontAttributes="Bold" />
+                            <Label Text="{Binding Barcode}" Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="1"
+                               Text="{Binding Quantity, StringFormat='{0} pcs'}"
+                               Style="{StaticResource QuantityLabel}"
+                               TextColor="{Binding Quantity, Converter={StaticResource QuantityToColorConverter}}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <HorizontalStackLayout Grid.Row="2" Spacing="10">
+            <Button Text="Add product" Command="{Binding AddProductCommand}"
+                    IsVisible="{Binding CanAddProduct}" />
+            <Button Text="Sign out" Command="{Binding SignOutCommand}" />
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

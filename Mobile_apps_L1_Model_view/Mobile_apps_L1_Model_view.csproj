@@ -19,7 +19,7 @@
         <Nullable>enable</Nullable>
 
         <!-- Display name -->
-        <ApplicationTitle>Mobile_apps_L1_Model_view</ApplicationTitle>
+        <ApplicationTitle>StockRoom</ApplicationTitle>
 
         <!-- App Identifier -->
         <ApplicationId>com.companyname.mobile_apps_l1_model_view</ApplicationId>

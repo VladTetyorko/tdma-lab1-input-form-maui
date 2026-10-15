@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using Mobile_apps_L1_Model_view.Data;
+using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.Views;
 
 namespace Mobile_apps_L1_Model_view;
 
@@ -15,10 +18,21 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
+        builder.Services.AddStockRoomCore();
+        builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
+        builder.Services.AddTransient<LoginPage>();
+        builder.Services.AddTransient<ProductsPage>();
+        builder.Services.AddTransient<ProductFormPage>();
+
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
+        var app = builder.Build();
+
+        // In-memory seeding completes synchronously; Lab 4 replaces it with migrations
+        app.Services.GetRequiredService<IDataSeeder>().SeedAsync().GetAwaiter().GetResult();
+
+        return app;
     }
 }

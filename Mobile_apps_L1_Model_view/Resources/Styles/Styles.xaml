@@ -500,4 +500,20 @@
                 Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
     </Style>
 
+    <Style TargetType="Label" x:Key="ErrorLabel">
+        <Setter Property="TextColor" Value="{StaticResource Danger}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="CaptionLabel">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="QuantityLabel">
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
 </ResourceDictionary>
