@@ -274,5 +274,77 @@ public class ProductListViewModelTests
         Assert.Empty(_store.Navigation.RequestedRoutes);
     }
 
+    [Fact]
+    public async Task SignOut_ClearsTheSignedInUserAndTheSavedState()
+    {
+        var manager = await _store.SignInAsync(Role.Manager);
+        _store.AppState.SignedInUserId = manager.Id;
+        _store.AppState.SetDraft(new ProductFormDraft("Saw", DrillBarcode));
+        _store.AppState.Save();
+
+        await _viewModel.SignOutCommand.ExecuteAsync(null);
+
+        Assert.Null(_store.CurrentUser.CurrentUser);
+        Assert.Null(_store.AppState.SignedInUserId);
+        Assert.Null(_store.AppState.GetDraft<ProductFormDraft>());
+        Assert.Empty(_store.Preferences.Values);
+        Assert.Equal(Routes.Absolute(Routes.Login), Assert.Single(_store.Navigation.RequestedRoutes));
+    }
+
+    [Fact]
+    public async Task EnsureLoaded_AfterProductsChanged_ReloadsTheList()
+    {
+        await _store.SignInAsync(Role.Manager);
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        await _store.AddProductAsync("Saw", SawBarcode);
+
+        _viewModel.ApplyQueryAttributes(Query(NavigationKeys.ProductsChanged, true));
+        await _viewModel.EnsureLoadedCommand.ExecuteAsync(null);
+
+        Assert.Contains(_viewModel.Products, p => p.Barcode == SawBarcode);
+    }
+
+    [Fact]
+    public async Task EnsureLoaded_WithoutProductsChanged_KeepsTheLoadedList()
+    {
+        await _store.SignInAsync(Role.Manager);
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        await _store.AddProductAsync("Saw", SawBarcode);
+
+        await _viewModel.EnsureLoadedCommand.ExecuteAsync(null);
+
+        Assert.DoesNotContain(_viewModel.Products, p => p.Barcode == SawBarcode);
+    }
+
+    [Fact]
+    public async Task EnsureLoaded_ForAnotherUser_ReloadsTheList()
+    {
+        await _store.SignInAsync(Role.Manager);
+        await _viewModel.LoadCommand.ExecuteAsync(null);
+        await _store.AddProductAsync("Saw", SawBarcode);
+        _store.CurrentUser.SignOut();
+        await _store.SignInAsync(Role.Storekeeper);
+
+        await _viewModel.EnsureLoadedCommand.ExecuteAsync(null);
+
+        Assert.Equal(new[] { "Saw" }, _viewModel.Products.Select(p => p.Name));
+    }
+
+    [Fact]
+    public async Task Scan_NavigatesToTheScanner()
+    {
+        await _viewModel.ScanCommand.ExecuteAsync(null);
+
+        Assert.Equal(Routes.Scanner, Assert.Single(_store.Navigation.RequestedRoutes));
+    }
+
+    [Fact]
+    public async Task OpenSettings_NavigatesToSettings()
+    {
+        await _viewModel.OpenSettingsCommand.ExecuteAsync(null);
+
+        Assert.Equal(Routes.Settings, Assert.Single(_store.Navigation.RequestedRoutes));
+    }
+
     private static Dictionary<string, object> Query(string key, object value) => new() { [key] = value };
 }

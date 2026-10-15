@@ -175,6 +175,87 @@ public class OperationViewModelTests
         Assert.Equal(Routes.Back, Assert.Single(_store.Navigation.RequestedRoutes));
     }
 
+    [Fact]
+    public async Task ChangingTheForm_SavesADraftForTheProduct()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        ApplyDrill();
+
+        _viewModel.SelectedDirection = OperationDirection.Out;
+        _viewModel.Quantity = 4;
+        _viewModel.Counterparty = "Acme Ltd";
+        _viewModel.Reason = "Site 7";
+
+        var draft = _store.AppState.GetDraft<OperationDraft>();
+        Assert.Equal(new OperationDraft(DrillBarcode, OperationDirection.Out, 4, "Acme Ltd", "Site 7"), draft);
+    }
+
+    [Fact]
+    public async Task ApplyQueryAttributes_RestoresTheDraftForTheSameProduct()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        _store.AppState.SetDraft(new OperationDraft(DrillBarcode, OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
+
+        ApplyDrill();
+
+        Assert.Equal(OperationDirection.Out, _viewModel.SelectedDirection);
+        Assert.Equal(4, _viewModel.Quantity);
+        Assert.Equal("Acme Ltd", _viewModel.Counterparty);
+        Assert.Equal("Site 7", _viewModel.Reason);
+    }
+
+    [Fact]
+    public async Task ApplyQueryAttributes_DraftForAnotherProduct_IsNotRestored()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        _store.AppState.SetDraft(new OperationDraft("4820001000016", OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
+
+        ApplyDrill();
+
+        Assert.Equal(OperationDirection.In, _viewModel.SelectedDirection);
+        Assert.Equal(1, _viewModel.Quantity);
+        Assert.Equal(string.Empty, _viewModel.Counterparty);
+    }
+
+    [Fact]
+    public async Task Save_Success_ClearsTheDraft()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        await _store.SignInAsync(Role.Storekeeper);
+        ApplyDrill();
+        _viewModel.Quantity = 2;
+
+        await _viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Null(_store.AppState.GetDraft<OperationDraft>());
+    }
+
+    [Fact]
+    public async Task Save_Failure_KeepsTheDraft()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        await _store.SignInAsync(Role.Storekeeper);
+        ApplyDrill();
+        _viewModel.SelectedDirection = OperationDirection.Out;
+        _viewModel.Quantity = 11;
+
+        await _viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal(11, _store.AppState.GetDraft<OperationDraft>()!.Quantity);
+    }
+
+    [Fact]
+    public async Task GoBack_ClearsTheDraft()
+    {
+        await SeedDrillWithTenUnitsAsync();
+        ApplyDrill();
+        _viewModel.Quantity = 3;
+
+        await _viewModel.GoBackCommand.ExecuteAsync(null);
+
+        Assert.Null(_store.AppState.GetDraft<OperationDraft>());
+    }
+
     private async Task SeedDrillWithTenUnitsAsync()
     {
         _drill = await _store.AddProductAsync("Drill", DrillBarcode);

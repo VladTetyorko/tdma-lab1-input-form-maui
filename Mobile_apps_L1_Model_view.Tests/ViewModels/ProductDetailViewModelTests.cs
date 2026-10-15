@@ -243,6 +243,140 @@ public class ProductDetailViewModelTests
         Assert.Empty(_store.Navigation.RequestedRoutes);
     }
 
+    [Fact]
+    public async Task Edit_SavesADraftWithOnlyTheChangedValues()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        var color = await _store.AddCharacteristicAsync("Color", CharacteristicValueType.Text);
+        await _store.SetValueAsync(drill, color, "Blue");
+        await ApplyAsync(drill.Id);
+
+        Item(weight.Id).Value = "2";
+        Item(color.Id).Value = "Blue";
+
+        var draft = _store.AppState.GetDraft<ProductDetailDraft>();
+        Assert.Equal(DrillBarcode, draft!.Barcode);
+        var edit = Assert.Single(draft.Values);
+        Assert.Equal(weight.Id, edit.Key);
+        Assert.Equal("2", edit.Value);
+    }
+
+    [Fact]
+    public async Task Edit_BackToTheStoredValue_RemovesTheDraft()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        await _store.SetValueAsync(drill, weight, "1.5");
+        await ApplyAsync(drill.Id);
+        Item(weight.Id).Value = "2";
+
+        Item(weight.Id).Value = "1.5";
+
+        Assert.Null(_store.AppState.GetDraft<ProductDetailDraft>());
+    }
+
+    [Fact]
+    public async Task EditsSurviveOpeningTheOperationPageAndComingBack()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        await ApplyAsync(drill.Id);
+        Item(weight.Id).Value = "2.5";
+
+        await _viewModel.OpenOperationCommand.ExecuteAsync(null);
+        var returned = await ReopenAsync(drill.Id);
+
+        Assert.Equal("2.5", returned.Characteristics.Single(c => c.CharacteristicId == weight.Id).Value);
+        Assert.True(returned.SaveCommand.CanExecute(null));
+        Assert.Empty(await _store.Values.GetAllAsync());
+    }
+
+    [Fact]
+    public async Task Save_ClearsTheDraftAndStoresTheValue()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        await ApplyAsync(drill.Id);
+        Item(weight.Id).Value = "2";
+
+        await _viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Null(_store.AppState.GetDraft<ProductDetailDraft>());
+        Assert.Equal("2", Assert.Single(await _store.Values.GetAllAsync()).Value);
+    }
+
+    [Fact]
+    public async Task GoBack_ClearsTheDraft()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        await ApplyAsync(drill.Id);
+        Item(weight.Id).Value = "2";
+
+        await _viewModel.GoBackCommand.ExecuteAsync(null);
+
+        Assert.Null(_store.AppState.GetDraft<ProductDetailDraft>());
+    }
+
+    [Fact]
+    public async Task NonEditor_EditsAreNotKept()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        await ApplyAsync(drill.Id);
+
+        Item(weight.Id).Value = "2";
+
+        Assert.Null(_store.AppState.GetDraft<ProductDetailDraft>());
+    }
+
+    [Fact]
+    public async Task NonEditor_DraftFromAnEarlierEditIsNotApplied()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        _store.AppState.SetDraft(new ProductDetailDraft(DrillBarcode, new Dictionary<Guid, string> { [weight.Id] = "2" }));
+
+        await ApplyAsync(drill.Id);
+
+        Assert.Equal(string.Empty, Item(weight.Id).Value);
+    }
+
+    [Fact]
+    public async Task Draft_ForAnotherProduct_IsNotApplied()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        _store.AppState.SetDraft(new ProductDetailDraft("4820001000016", new Dictionary<Guid, string> { [weight.Id] = "2" }));
+
+        await ApplyAsync(drill.Id);
+
+        Assert.Equal(string.Empty, Item(weight.Id).Value);
+    }
+
+    private CharacteristicEditItem Item(Guid characteristicId) =>
+        _viewModel.Characteristics.Single(c => c.CharacteristicId == characteristicId);
+
+    // The page is created again when it is shown again: a new ViewModel with the same services
+    private async Task<ProductDetailViewModel> ReopenAsync(Guid productId)
+    {
+        var viewModel = new ProductDetailViewModel(
+            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.AppState, _store.Navigation);
+        var summary = await _store.Catalog.GetSummaryAsync(productId);
+        viewModel.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = summary! });
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        return viewModel;
+    }
+
     private async Task ApplyAsync(Guid productId)
     {
         var summary = await _store.Catalog.GetSummaryAsync(productId);
