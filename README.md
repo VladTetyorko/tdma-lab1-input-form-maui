@@ -33,7 +33,8 @@ available. The counterparty of an operation (personal data) is stored
 have no operations).
 
 Details: [`docs/domain/domain-model.md`](docs/domain/domain-model.md) (overview, roles)
-and [`docs/domain/entities.md`](docs/domain/entities.md) (every entity, its fields and relations).
+and [`docs/domain/entities.md`](docs/domain/entities.md) (every entity, its fields and relations);
+[`docs/domain/open-data.md`](docs/domain/open-data.md) (Open Food Facts seed and lookup, ODbL attribution).
 
 ## Why a warehouse
 
@@ -90,6 +91,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 03 | 3 | [App and page lifecycle, saved state, theme, deep links, barcode scanner](docs/steps/03-lifecycle.md) | done (469 tests) |
 | 04 | 4 | [SQLite, repositories, CRUD, migrations, sync queue, encryption](docs/steps/04-sqlite.md) | done (634 tests) |
 | — | — | [Plan for labs 5–9 and the catalog step](docs/plan.md) | in review |
+| 05a | — | [Catalog: real Open Food Facts seed, QR scanning, product lookup, quick flow](docs/steps/05a-catalog.md) | in review |
 | 05 | 5 | Logging, global error handling, log viewer, crash reporter | planned |
 | 06 | 6 | Login, password hashing, token, roles, biometrics, certificate pinning | planned |
 | 07 | 7 | Permissions, photo, location, map, shake, network indicator | planned |
@@ -146,6 +148,10 @@ Every architectural decision, newest last. Details are in the step documents.
 | 42 | 4 | "Share database": checkpoint WAL, copy the file, `Share.RequestAsync` behind `IFileSharer` | A complete file the user can open on a PC |
 | 43 | 4 | In-memory repositories moved to the test project | Dead code in the app otherwise; still fast test doubles |
 | 44 | 4 | The counterparty in the persisted operation draft is encrypted with `IFieldEncryptor` by `OperationDraftStore`; `IAppStateService` stays generic; undecryptable counterparty is dropped on restore | One encryption mechanism (DRY); personal data is never in `Preferences` in clear text; a lost key must not crash the form |
+| 45 | catalog | The seed `0002_seed.sql` is edited in place (12 real Open Food Facts products, `Brand` replaces `Color`); a dev database is deleted | The app is pre-release, so a new migration would only keep dead demo data; no user data exists yet |
+| 46 | catalog | `ScanPayloadParser` turns any scan (EAN-13, UPC-A, `stockroom://product/{barcode}`) into one barcode; the camera reads 1-D codes and QR; manual entry uses the same parser | One place for input rules (DRY); QR codes can carry a deep link |
+| 47 | catalog | `IProductLookup` / `OpenFoodFactsLookup`: online only, never cached, one `HttpClient` (5 s, generic User-Agent), no pinning; failure becomes an `Offline`/`Failed` result | Third-party data is optional help, not a dependency; pinning is for our own server only |
+| 48 | catalog | "Create from Open Food Facts" is offered to Managers only (`RolePermissions.CanManageProducts`); the form is prefilled with name and barcode | Creating products is a Manager task; characteristic prefill (brand, category) is a next step |
 
 ## Architecture
 
