@@ -30,7 +30,7 @@ public partial class ProductListViewModel(
     // Offline / syncing / waiting changes, shown above the list
     public ConnectivityBannerViewModel Connectivity { get; } = connectivity;
 
-    // What the list shows: _all, sorted
+    // What the list shows: _all, filtered by SearchText, then sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
 
     // Only ever grows (characteristics are never deleted), so the picker keeps its selection
@@ -41,6 +41,14 @@ public partial class ProductListViewModel(
 
     [ObservableProperty]
     public partial bool SortDescending { get; set; }
+
+    // Not persisted: a search is a quick look, not a draft (the list starts unfiltered after a restart)
+    [ObservableProperty]
+    public partial string SearchText { get; set; } = string.Empty;
+
+    // Shown instead of the list when nothing matches
+    [ObservableProperty]
+    public partial string EmptyText { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string CurrentUserName { get; set; } = string.Empty;
@@ -66,6 +74,8 @@ public partial class ProductListViewModel(
     partial void OnSelectedSortOptionChanged(SortOption? value) => ApplySort();
 
     partial void OnSortDescendingChanged(bool value) => ApplySort();
+
+    partial void OnSearchTextChanged(string value) => ApplySort();
 
     // The shake sensor and the banner listen only while the page is visible. Shake opens the scanner ("quick scan")
     public void OnAppearing()
@@ -280,9 +290,12 @@ public partial class ProductListViewModel(
         }
 
         Products.Clear();
-        foreach (var product in ProductSorter.Sort(_all, SelectedSortOption, SortDescending))
+        var matching = ProductSearch.Filter(_all, SearchText);
+        foreach (var product in ProductSorter.Sort(matching, SelectedSortOption, SortDescending))
         {
             Products.Add(product);
         }
+
+        EmptyText = Products.Count == 0 && _all.Count > 0 ? $"No products match \"{SearchText.Trim()}\"." : string.Empty;
     }
 }

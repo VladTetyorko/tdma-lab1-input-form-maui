@@ -210,6 +210,25 @@ public class StockRoomFlowTests : IDisposable
     // Shell hands the parameters of the last navigation to the page that was opened
     private IDictionary<string, object> LastParameters() => _navigation.RequestedParameters.Last()!;
 
+    [Fact]
+    public async Task Storekeeper_SearchesForNutella_AndOnlyNutellaProductsAreListed()
+    {
+        await SignInAsync(Role.Storekeeper);
+        var list = _provider.GetRequiredService<ProductListViewModel>();
+        await list.LoadCommand.ExecuteAsync(null);
+        Assert.True(list.Products.Count > 2);
+
+        list.SearchText = "nutella";
+
+        Assert.NotEmpty(list.Products);
+        Assert.All(list.Products, p => Assert.Contains("nutella", p.Name, StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(list.Products, p => p.Name == "Nutella 400 g");
+
+        list.SearchText = "nutella 400";
+        var only = Assert.Single(list.Products);
+        Assert.Equal(36, only.Quantity);
+    }
+
     private async Task SignInAsync(Role role)
     {
         await DemoAccounts.SignInAsync(_provider, role);

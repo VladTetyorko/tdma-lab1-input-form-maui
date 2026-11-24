@@ -18,7 +18,7 @@
         <converters:QuantityToColorConverter x:Key="QuantityToColorConverter" />
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Padding="20,10" RowSpacing="10">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" Padding="20,10" RowSpacing="10">
         <VerticalStackLayout Grid.Row="0" Spacing="2">
             <Label Text="{Binding CurrentUserName}" Style="{StaticResource CaptionLabel}" />
             <!-- Offline in the error color, every other state in the caption style -->
@@ -28,7 +28,11 @@
                    IsVisible="{Binding Connectivity.IsNotOffline}" AutomationId="ConnectivityBanner" />
         </VerticalStackLayout>
 
-        <HorizontalStackLayout Grid.Row="1" Spacing="10">
+        <!-- Filters by name, barcode and characteristic values; combined with the sort below -->
+        <SearchBar Grid.Row="1" Placeholder="Search by name, barcode or value"
+                   Text="{Binding SearchText, Mode=TwoWay}" AutomationId="SearchEntry" />
+
+        <HorizontalStackLayout Grid.Row="2" Spacing="10">
             <Label Text="Sort by" VerticalOptions="Center" />
             <Picker ItemsSource="{Binding SortOptions}"
                     SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}"
@@ -37,7 +41,7 @@
             <Switch IsToggled="{Binding SortDescending, Mode=TwoWay}" VerticalOptions="Center" />
         </HorizontalStackLayout>
 
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Products}" AutomationId="ProductsCollection">
+        <CollectionView Grid.Row="3" ItemsSource="{Binding Products}" AutomationId="ProductsCollection">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="services:ProductSummary">
                     <Grid ColumnDefinitions="*,Auto,Auto" Padding="0,8" ColumnSpacing="10">
@@ -71,13 +75,14 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <VerticalStackLayout Grid.Row="3" Spacing="4">
+        <VerticalStackLayout Grid.Row="4" Spacing="4">
+            <Label Text="{Binding EmptyText}" Style="{StaticResource CaptionLabel}" AutomationId="EmptyLabel" />
             <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
             <Label Text="A product with stock history cannot be deleted: operations are permanent records."
                    Style="{StaticResource CaptionLabel}" IsVisible="{Binding CanManageProducts}" />
         </VerticalStackLayout>
 
-        <FlexLayout Grid.Row="4" Wrap="Wrap">
+        <FlexLayout Grid.Row="5" Wrap="Wrap">
             <Button Text="Add product" Command="{Binding AddProductCommand}"
                     IsVisible="{Binding CanAddProduct}" Margin="0,0,10,6" AutomationId="AddProductButton" />
             <Button Text="Characteristics" Command="{Binding OpenCharacteristicsCommand}"
