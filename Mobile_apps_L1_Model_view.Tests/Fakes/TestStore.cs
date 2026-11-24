@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.ViewModels;
 
 namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 
@@ -35,6 +36,14 @@ public sealed class TestStore
     public DeepLinkHandler DeepLinks { get; }
     public StartupNavigator Startup { get; }
 
+    // Device capabilities (Lab 7)
+    public FakePhotoService Photos { get; } = new();
+    public FakeLocationService Location { get; } = new();
+    public FakeMapLauncher Maps { get; } = new();
+    public FakeShakeDetector ShakeDetector { get; } = new();
+    public FakeShakeSettings ShakeSettings { get; } = new();
+    public FakeMainThread MainThread { get; } = new();
+
     public InMemoryUserRepository Users { get; } = new();
     public InMemoryProductRepository Products { get; } = new();
     public InMemoryCharacteristicRepository Characteristics { get; } = new();
@@ -54,6 +63,13 @@ public sealed class TestStore
     public ICharacteristicService CharacteristicService =>
         new CharacteristicService(Characteristics, Values, Products, Validator, CurrentUser, Clock,
             Logger<CharacteristicService>());
+
+    public IDeviceFeedback Feedback => new DeviceFeedback(Logger<DeviceFeedback>());
+
+    public ProductPhotoEditor PhotoEditor => new(Photos, Feedback, Guard, Logger<ProductPhotoEditor>());
+
+    public IShakeGesture ShakeGesture =>
+        new ShakeGesture(ShakeDetector, ShakeSettings, CurrentUser, MainThread, Clock, Logger<ShakeGesture>());
 
     public IPermissionGuard Guard => new PermissionGuard(CurrentUser, Alerts, Logger<PermissionGuard>());
 

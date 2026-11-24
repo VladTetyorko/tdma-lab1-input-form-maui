@@ -14,10 +14,12 @@ public class ProductDetailViewModelTests
 
     public ProductDetailViewModelTests()
     {
-        _viewModel = new ProductDetailViewModel(
-            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
-            _store.Logger<ProductDetailViewModel>());
+        _viewModel = NewViewModel();
     }
+
+    private ProductDetailViewModel NewViewModel() => new(
+        _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
+        _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback, _store.Logger<ProductDetailViewModel>());
 
     [Fact]
     public async Task ApplyQueryAttributes_ShowsTheSelectedProductBeforeLoad()
@@ -370,9 +372,7 @@ public class ProductDetailViewModelTests
     // The page is created again when it is shown again: a new ViewModel with the same services
     private async Task<ProductDetailViewModel> ReopenAsync(Guid productId)
     {
-        var viewModel = new ProductDetailViewModel(
-            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
-            _store.Logger<ProductDetailViewModel>());
+        var viewModel = NewViewModel();
         var summary = await _store.Catalog.GetSummaryAsync(productId);
         viewModel.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = summary! });
         await viewModel.LoadCommand.ExecuteAsync(null);

@@ -18,6 +18,10 @@ public partial class ProductDetailViewModel(
     IPermissionGuard guard,
     IAppStateService appState,
     INavigationService navigation,
+    IProductService productService,
+    ProductPhotoEditor photo,
+    IMapLauncher maps,
+    IDeviceFeedback feedback,
     ILogger<ProductDetailViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private ProductSummary? _product;
@@ -29,6 +33,9 @@ public partial class ProductDetailViewModel(
     private bool _rebuilding;
 
     public ObservableCollection<CharacteristicEditItem> Characteristics { get; } = [];
+
+    // The photo of the product; a change is staged and saved with Save (see ProductPhotoEditor)
+    public ProductPhotoEditor Photo { get; } = photo;
 
     // Newest first
     public ObservableCollection<OperationHistoryItem> History { get; } = [];
@@ -82,6 +89,7 @@ public partial class ProductDetailViewModel(
         CanEdit = user is not null && RolePermissions.CanManageProducts(user.Role);
         _product = details.Summary;
         ShowSummary(details.Summary);
+        Photo.Load(details.Summary.PhotoPath);
 
         _rebuilding = true;
         RebuildCharacteristics(details.Characteristics);
@@ -118,13 +126,65 @@ public partial class ProductDetailViewModel(
         }
 
         logger.LogDebug("Characteristic values of product {ProductId} saved, {Changes} changed", _product.Id, result.Value);
+        if (Photo.IsChanged)
+        {
+            var photoResult = await productService.SetPhotoAsync(_product.Id, Photo.Path);
+            if (!photoResult.IsSuccess)
+            {
+                StatusMessage = photoResult.Error!;
+                logger.LogWarning("Photo of product {ProductId} was not saved: {Reason}", _product.Id, photoResult.Error);
+                return;
+            }
+
+            Photo.Commit();
+        }
+
         appState.ClearDraft<ProductDetailDraft>();
         await ReturnToListAsync();
     }
 
     [RelayCommand]
+    private async Task TakePhotoAsync()
+    {
+        StatusMessage = await Photo.TakeAsync(Barcode);
+        SaveDraft();
+    }
+
+    [RelayCommand]
+    private async Task PickPhotoAsync()
+    {
+        StatusMessage = await Photo.PickAsync(Barcode);
+        SaveDraft();
+    }
+
+    [RelayCommand]
+    private async Task RemovePhotoAsync()
+    {
+        StatusMessage = await Photo.RemoveAsync();
+        SaveDraft();
+    }
+
+    // The maps app shows where an operation was recorded
+    [RelayCommand]
+    private async Task OpenLocationAsync(OperationHistoryItem? item)
+    {
+        if (item?.Location is not { } location)
+        {
+            return;
+        }
+
+        var status = await maps.OpenAsync(location, $"{item.Direction} {item.Quantity} x {Name}");
+        StatusMessage = feedback.Report(DeviceFeature.Maps, status);
+        if (status == DeviceStatus.Succeeded)
+        {
+            logger.LogInformation("Maps opened for an operation of product {ProductId}", _product?.Id);
+        }
+    }
+
+    [RelayCommand]
     private Task GoBackAsync()
     {
+        Photo.Discard();
         appState.ClearDraft<ProductDetailDraft>();
         return ReturnToListAsync();
     }
@@ -190,22 +250,27 @@ public partial class ProductDetailViewModel(
         {
             item.Value = draft.Values[item.CharacteristicId];
         }
+
+        if (draft.PhotoChanged)
+        {
+            Photo.Restore(draft.PhotoPath);
+        }
     }
 
-    // The draft is the set of values that differ from the stored ones; none = no draft
+    // The draft is the set of values that differ from the stored ones plus an unsaved photo; none = no draft
     private void SaveDraft()
     {
         var edits = Characteristics
             .Where(c => c.Value != _stored.GetValueOrDefault(c.CharacteristicId, string.Empty))
             .ToDictionary(c => c.CharacteristicId, c => c.Value);
 
-        if (edits.Count == 0)
+        if (edits.Count == 0 && !Photo.IsChanged)
         {
             appState.ClearDraft<ProductDetailDraft>();
         }
         else
         {
-            appState.SetDraft(new ProductDetailDraft(_product!.Barcode, edits));
+            appState.SetDraft(new ProductDetailDraft(_product!.Barcode, edits, Photo.IsChanged, Photo.IsChanged ? Photo.Path : null));
         }
     }
 

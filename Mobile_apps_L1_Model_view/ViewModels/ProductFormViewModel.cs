@@ -16,6 +16,7 @@ public partial class ProductFormViewModel(
     IPermissionGuard guard,
     IAppStateService appState,
     INavigationService navigation,
+    ProductPhotoEditor photo,
     ILogger<ProductFormViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private bool _opened;
@@ -25,6 +26,12 @@ public partial class ProductFormViewModel(
     private ProductSummary? _editing;
 
     public string PageTitle => _editing is null ? "New product" : "Edit product";
+
+    // The photo of the product (staged until Save, see ProductPhotoEditor)
+    public ProductPhotoEditor Photo { get; } = photo;
+
+    // Photo buttons are for the Manager (the form is too, but the check is made here as well)
+    public bool CanManagePhotos => currentUser.CurrentUser is { } user && RolePermissions.CanManagePhotos(user.Role);
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
@@ -69,6 +76,7 @@ public partial class ProductFormViewModel(
             OnPropertyChanged(nameof(PageTitle));
             Name = product.Name;
             Barcode = product.Barcode;
+            Photo.Load(product.PhotoPath);
         }
 
         if (query.TryGetValue(NavigationKeys.Barcode, out var value) && value is string barcode)
@@ -105,6 +113,7 @@ public partial class ProductFormViewModel(
 
         Name = draft.Name;
         Barcode = draft.Barcode;
+        Photo.Restore(draft.PhotoPath);
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
@@ -127,8 +136,8 @@ public partial class ProductFormViewModel(
         }
 
         var result = _editing is null
-            ? await productService.AddAsync(Name, Barcode)
-            : await productService.UpdateAsync(_editing.Id, Name, Barcode);
+            ? await productService.AddAsync(Name, Barcode, Photo.Path)
+            : await productService.UpdateAsync(_editing.Id, Name, Barcode, Photo.Path);
         if (!result.IsSuccess)
         {
             StatusMessage = result.Error!;
@@ -137,6 +146,7 @@ public partial class ProductFormViewModel(
         }
 
         logger.LogDebug("Product form saved product {ProductId} ({Mode})", result.Value!.Id, _editing is null ? "add" : "edit");
+        Photo.Commit();
         if (_editing is null)
         {
             appState.ClearDraft<ProductFormDraft>();
@@ -146,8 +156,8 @@ public partial class ProductFormViewModel(
         // quantity and characteristic values
         var product = result.Value!;
         var summary = _editing is null
-            ? new ProductSummary(product.Id, product.Name, product.Barcode, 0)
-            : _editing with { Name = product.Name, Barcode = product.Barcode };
+            ? new ProductSummary(product.Id, product.Name, product.Barcode, 0) { PhotoPath = product.PhotoPath }
+            : _editing with { Name = product.Name, Barcode = product.Barcode, PhotoPath = product.PhotoPath };
         await navigation.GoToAsync(Routes.Back, new Dictionary<string, object>
         {
             [NavigationKeys.UpdatedProduct] = summary
@@ -155,8 +165,36 @@ public partial class ProductFormViewModel(
     }
 
     [RelayCommand]
+    private async Task TakePhotoAsync() => await ChangePhotoAsync(Photo.TakeAsync);
+
+    [RelayCommand]
+    private async Task PickPhotoAsync() => await ChangePhotoAsync(Photo.PickAsync);
+
+    [RelayCommand]
+    private async Task RemovePhotoAsync()
+    {
+        StatusMessage = await Photo.RemoveAsync();
+        SaveDraft();
+    }
+
+    // The photo file is named after the barcode, so the barcode must be valid first
+    private async Task ChangePhotoAsync(Func<string, Task<string>> change)
+    {
+        if (validator.ValidateBarcodeFormat(Barcode) is not null)
+        {
+            StatusMessage = "Enter a valid barcode first: the photo file is named after it.";
+            logger.LogWarning("Photo not added: the barcode {Barcode} is not valid yet", Barcode);
+            return;
+        }
+
+        StatusMessage = await change(Barcode.Trim());
+        SaveDraft();
+    }
+
+    [RelayCommand]
     private Task CancelAsync()
     {
+        Photo.Discard();
         if (_editing is null)
         {
             appState.ClearDraft<ProductFormDraft>();
@@ -178,13 +216,13 @@ public partial class ProductFormViewModel(
             return;
         }
 
-        if (Name.Length == 0 && Barcode.Length == 0)
+        if (Name.Length == 0 && Barcode.Length == 0 && Photo.Path is null)
         {
             appState.ClearDraft<ProductFormDraft>();
         }
         else
         {
-            appState.SetDraft(new ProductFormDraft(Name, Barcode));
+            appState.SetDraft(new ProductFormDraft(Name, Barcode, Photo.Path));
         }
     }
 }

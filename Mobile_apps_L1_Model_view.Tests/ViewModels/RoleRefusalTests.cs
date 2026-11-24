@@ -86,7 +86,7 @@ public class RoleRefusalTests
     {
         await _store.SignInAsync(role);
         var form = new ProductFormViewModel(new ProductValidator(_store.Products), _store.ProductService, _store.CurrentUser,
-            _store.Guard, _store.AppState, _store.Navigation, NullLogger<ProductFormViewModel>.Instance)
+            _store.Guard, _store.AppState, _store.Navigation, _store.PhotoEditor, NullLogger<ProductFormViewModel>.Instance)
         {
             Name = "Drill",
             Barcode = Barcode
@@ -167,7 +167,8 @@ public class RoleRefusalTests
         await _store.SetValueAsync(product, color, "Red");
         await _store.SignInAsync(role);
         var viewModel = new ProductDetailViewModel(_store.Catalog, _store.CharacteristicService, _store.Validator,
-            _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation, NullLogger<ProductDetailViewModel>.Instance);
+            _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation, _store.ProductService, _store.PhotoEditor,
+            _store.Maps, _store.Feedback, NullLogger<ProductDetailViewModel>.Instance);
         viewModel.ApplyQueryAttributes(new Dictionary<string, object>
         {
             [NavigationKeys.SelectedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
