@@ -22,7 +22,7 @@ public class SettingsViewModelTests
     }
 
     private SettingsViewModel CreateViewModel() => new(_theme, _store.DeepLinks, _sync, _offline, _exporter,
-        _store.Diagnostics, _store.CurrentUser, _store.Navigation, _store.Logger<SettingsViewModel>());
+        _store.Diagnostics, _store.Navigation, _store.Logger<SettingsViewModel>());
 
     [Fact]
     public void ThemeOptions_ListsSystemLightAndDark()

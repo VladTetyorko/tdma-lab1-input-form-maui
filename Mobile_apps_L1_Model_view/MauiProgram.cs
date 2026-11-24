@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Sentry.Maui;
+using Sentry;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Views;
@@ -69,14 +69,14 @@ public static class MauiProgram
             return;
         }
 
-        builder.UseSentry(options =>
+        // The plain Sentry SDK, not Sentry.Maui: Sentry.Maui needs WinRT.Runtime 2.3.1 on Windows, the app ships 2.2.0
+        // and fails to start. Only handled and unhandled exceptions are sent; log lines are not
+        SentrySdk.Init(options =>
         {
             options.Dsn = dsn;
             options.SendDefaultPii = false;
-            options.AttachScreenshot = false;
-            // Log lines are not sent to Sentry: only exceptions reported through ICrashReporter and crashes
-            options.MinimumBreadcrumbLevel = LogLevel.None;
-            options.MinimumEventLevel = LogLevel.None;
+            options.AttachStacktrace = true;
+            options.AutoSessionTracking = false;
         });
         builder.Services.AddSingleton<ICrashReporter, SentryCrashReporter>();
     }

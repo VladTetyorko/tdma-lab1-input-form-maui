@@ -2,7 +2,7 @@ using Sentry;
 
 namespace Mobile_apps_L1_Model_view.Services;
 
-// Sentry behind ICrashReporter. The SDK itself is initialised in MauiProgram (UseSentry) only when a DSN exists.
+// Sentry behind ICrashReporter. The SDK itself is initialised in MauiProgram (SentrySdk.Init) only when a DSN exists.
 // Only the exception and a context tag are sent: no user, no device owner, no personal data.
 public sealed class SentryCrashReporter : ICrashReporter
 {

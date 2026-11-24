@@ -12,7 +12,6 @@ public partial class SettingsViewModel(
     IOfflineSimulator offline,
     IDatabaseExporter exporter,
     IDiagnosticsService diagnostics,
-    ICurrentUserService currentUser,
     INavigationService navigation,
     ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
