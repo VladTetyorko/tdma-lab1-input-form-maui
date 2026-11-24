@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddLogging();
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<UnhandledExceptionLogger>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IAppStateService, AppStateService>();
         services.AddSingleton<IOperationDraftStore, OperationDraftStore>();

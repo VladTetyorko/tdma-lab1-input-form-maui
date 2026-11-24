@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Sentry.Maui;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Views;
@@ -50,8 +51,48 @@ public static class MauiProgram
         builder.Services.AddTransient<ScannerPage>();
 
         ConfigureLogging(builder);
+        ConfigureCrashReporting(builder);
 
-        return builder.Build();
+        var app = builder.Build();
+        app.Services.GetRequiredService<UnhandledExceptionLogger>().Attach();
+        return app;
+    }
+
+    // The only place that decides between Sentry and the null reporter: a DSN exists or it does not
+    private static void ConfigureCrashReporting(MauiAppBuilder builder)
+    {
+        var dsn = SentryDsn.Resolve(Environment.GetEnvironmentVariable(SentryDsn.EnvironmentVariable), ReadSettingsFile());
+        if (dsn is null)
+        {
+            builder.Services.AddSingleton<ICrashReporter, NullCrashReporter>();
+            return;
+        }
+
+        builder.UseSentry(options =>
+        {
+            options.Dsn = dsn;
+            options.SendDefaultPii = false;
+            options.AttachScreenshot = false;
+            // Log lines are not sent to Sentry: only exceptions reported through ICrashReporter and crashes
+            options.MinimumBreadcrumbLevel = LogLevel.None;
+            options.MinimumEventLevel = LogLevel.None;
+        });
+        builder.Services.AddSingleton<ICrashReporter, SentryCrashReporter>();
+    }
+
+    // appsettings.local.json is an untracked app asset (see README); missing = null
+    private static string? ReadSettingsFile()
+    {
+        try
+        {
+            using var stream = FileSystem.OpenAppPackageFileAsync(SentryDsn.SettingsFileName).GetAwaiter().GetResult();
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     // The only place that knows Serilog: everything else logs through ILogger<T>
