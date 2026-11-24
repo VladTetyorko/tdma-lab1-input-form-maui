@@ -23,6 +23,10 @@ Around these it behaves like a real mobile app: it **keeps unsaved forms and the
 signed-in session** when minimised or killed, has a **System/Light/Dark theme**,
 opens a product from a **deep link** (`stockroom://product/{barcode}`), and
 scans with the **camera** on Android and iOS (manual entry on Windows).
+Since Lab 7 it also uses the device: a Manager can attach a **photo** to a product (camera or gallery),
+an In/Out can carry the **location** where it was recorded, a **map page** shows those operations (embedded map on
+Android and iOS, a list with *Open in maps* everywhere), **shaking** the phone opens the scanner, and a **banner**
+on the product list shows offline / syncing / changes waiting.
 
 Entities use UUID keys, `CreatedAt`/`UpdatedAt` and an owner (`CreatedByUserId`),
 and are designed in third normal form. Since Lab 4 data lives in **SQLite**, a
@@ -95,7 +99,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 05a | — | [Catalog: real Open Food Facts seed, QR scanning, product lookup, quick flow](docs/steps/05a-catalog.md) | in review |
 | 05 | 5 | [Logging, global error handling, log viewer, crash reporter](docs/steps/05-logging.md) | done (775 tests) |
 | 06 | 6 | [Login, password hashing, session token, roles, biometrics, certificate pinning](docs/steps/06-auth.md) | done (950 tests) |
-| 07 | 7 | Permissions, photo, location, map, shake, network indicator | planned |
+| 07 | 7 | [Device capabilities: permissions, product photo, operation location, map, shake, connectivity banner](docs/steps/07-device.md) | done (1206 tests) |
 | 08 | 8 | Core library, Moq tests, CI, UI tests | planned |
 | 09 | 9 | Final module: search, access matrix, APK, v1.0 | planned |
 
@@ -169,6 +173,16 @@ Every architectural decision, newest last. Details are in the step documents.
 | 62 | 6 | `IPermissionGuard` (`PermissionGuard`): every restricted ViewModel command asks it first and, when refused, an alert with the reason and a `Warning` log appear and nothing is called; the services still refuse too | Lab 1.4 asks for the check in the command; one class instead of a copy in every ViewModel (DRY); the service stays the layer that counts |
 | 63 | 6 | Certificate pinning is only in `HttpSyncApi` (`PinnedHandlerFactory`): SHA-256 of the SubjectPublicKeyInfo against `Sync:Pins`, **in addition to** the normal chain check, https only, no pins = refuse; `StubSyncApi` stays the default and Open Food Facts never pins | Public-key pins survive certificate renewal; pinning must not weaken TLS; third-party hosts change certificates without telling us |
 | 64 | 6 | `LocalSettings` reads `appsettings.local.json` for both `Sentry:Dsn` and `Sync:BaseUrl` / `Sync:Pins` (`SentryDsn` and `SyncSettings` delegate to it) | One untracked config file, one reader, no duplicated JSON code |
+| 65 | 7 | A product photo is a file in `AppDataDirectory/photos/<barcode>_<yyyyMMdd_HHmmss>.jpg`; the database (`Products.PhotoPath`, migration 0004) and the sync payload carry only the **relative** path, validated by `PhotoPaths`, `ProductService` and a `CHECK`; photo bytes are not synced | A BLOB bloats the shared database and the queue; an absolute path breaks when the data folder moves; a file upload needs a real server (stated limit) |
+| 66 | 7 | `Operation.Location` is an optional immutable `GeoPoint` stored as `Latitude` / `Longitude` `REAL` columns with range `CHECK`s and "both or none"; `Operation` stays immutable and the coordinates are never logged | 3NF: a place is an attribute of the operation; the database can reject bad values (SQLite accepts `CHECK` in `ADD COLUMN`, tested); coordinates are personal data |
+| 67 | 7 | Device capabilities are contracts with `Maui*` implementations over the Essentials **interfaces** (`IMediaPicker`, `IGeolocation`, `IAccelerometer`, `IMap`) registered in `MauiProgram`: `IPermissionService`, `IPhotoService`, `ILocationService`, `IShakeDetector`, `IMapLauncher`, `IMainThread`; the platform-only part of permissions is `IPlatformPermissions` | ViewModels and services are testable with fakes; statics stay in the smallest possible classes (AGENTS 2a) |
+| 68 | 7 | Services return `DeviceStatus` results (never throw); `IDeviceFeedback` turns a status into one user message and one log line (cancel Information, denied / not supported / not enabled Warning, failure Error with the exception); the texts are in `DeviceMessages` | The same eight outcomes in four commands are written once; a command cannot forget the log line; the matrix in step 07 is the test list |
+| 69 | 7 | `IPermissionService` always explains why (rationale via `IAlertService`) before the system prompt; photos need no runtime permission on Android / Windows (system picker), only iOS asks | `ShouldShowRationale` is false on the first request; a broad media permission is not needed and would be refused by the store |
+| 70 | 7 | A photo is staged in `ProductPhotoEditor` (shared by the form and the detail page): the new path is in the draft, Save deletes the replaced file, Cancel / back deletes the new one; photo commands are the Manager's (`CanManagePhotos`, guard + service) | Nothing reaches the database before Save; no orphan files in the normal flow; a photo changes a product, and product changes are the Manager's |
+| 71 | 7 | The map page is a list (every platform, "Open in maps" through `IMapLauncher`) plus `PinMapView`, a `ContentView` that builds a `Microsoft.Maui.Controls.Maps.Map` only `#if ANDROID \|\| IOS` (package referenced for those targets); the Google Maps key is a placeholder in the manifest | Same pattern as `CameraScannerView`: no Map type compiled on Windows, no platform code in XAML or code-behind; Windows keeps a working page; a key must not be committed (owner action) |
+| 72 | 7 | `IShakeDetector` counts `Start` / `Stop`; `IShakeGesture` (one per page) debounces 2 s with `IClock`, runs the action through `IMainThread`, and is off when signed out or switched off in Settings (default on); shake on the list opens the scanner, on the scanner it scans again | The next page can start before the previous one stops; one shake raises several events; a shake must not navigate from the login page or stack scanners |
+| 73 | 7 | `ConnectivityBannerViewModel` shows offline / syncing / N waiting / all synced from existing events; `ISyncService` gains `IsSyncing` and `Started`; nothing polls | Reusable by any page (DRY); polling wakes the radio and the database; only "syncing" had no signal |
+| 74 | 7 | Android: `CAMERA`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`; camera, location, GPS and accelerometer `uses-feature` are `required="false"`; `<queries>` for the camera and `geo:` intents; iOS usage strings for camera, photos and location | The app must install and work without the hardware (manual entry, no location, no shake); Android 11 package visibility |
 
 ## Architecture
 
@@ -186,6 +200,8 @@ graph TD
         ScannerPage
         CameraScannerView
         PageLifecycleBehavior
+        MapPage
+        PinMapView
     end
     subgraph ViewModels
         LoginViewModel
@@ -196,6 +212,9 @@ graph TD
         OperationViewModel
         SettingsViewModel
         ScannerViewModel
+        MapViewModel
+        ProductPhotoEditor
+        ConnectivityBannerViewModel
         IPageLifecycleAware
     end
     subgraph Converters
@@ -232,6 +251,14 @@ graph TD
         ISecretStore
         IDatabaseExporter
         IFileSharer
+        IPermissionService
+        IPhotoService
+        ILocationService
+        IShakeDetector
+        IShakeGesture
+        IMapLauncher
+        IMainThread
+        IDeviceFeedback
     end
     subgraph Data
         IUserRepository
@@ -322,6 +349,24 @@ graph TD
     ProductFormViewModel --> IAppStateService
     OperationViewModel --> IAppStateService
     ProductDetailViewModel --> IAppStateService
+    ProductFormViewModel --> ProductPhotoEditor
+    ProductDetailViewModel --> ProductPhotoEditor
+    ProductPhotoEditor --> IPhotoService
+    ProductPhotoEditor --> IDeviceFeedback
+    IPhotoService --> IPermissionService
+    ILocationService --> IPermissionService
+    OperationViewModel --> ILocationService
+    OperationViewModel --> IDeviceFeedback
+    MapPage --> MapViewModel
+    MapPage --> PinMapView
+    MapViewModel --> IProductCatalog
+    MapViewModel --> IMapLauncher
+    ProductListViewModel --> IShakeGesture
+    ScannerViewModel --> IShakeGesture
+    IShakeGesture --> IShakeDetector
+    IShakeGesture --> IMainThread
+    ProductListViewModel --> ConnectivityBannerViewModel
+    ConnectivityBannerViewModel --> ISyncService
     App["App (window events)"] --> IAppLifecycleService
     IAppLifecycleService --> IAppStateService
     IAppLifecycleService --> IThemeService
@@ -379,6 +424,25 @@ Create the untracked file `Mobile_apps_L1_Model_view/appsettings.local.json` (it
 ```
 
 or set the environment variable `STOCKROOM_SENTRY_DSN` (desktop only). Details: [`docs/steps/05-logging.md`](docs/steps/05-logging.md).
+
+## Device features (Lab 7)
+
+| Feature | Where | Needs |
+|---------|-------|-------|
+| Product photo (camera or gallery) | product form and detail page, Manager | camera permission for *Take photo*; none for *Pick photo* on Android / Windows |
+| Location of an In / Out | *Attach my location* on the operation page | location permission, GPS on |
+| Map of located operations | *Map* on the product list: embedded map on Android and iOS, list + *Open in maps* everywhere | a Google Maps API key for the tiles on Android |
+| Shake to scan | product list (opens the scanner), scanner (scans again); Settings switch | an accelerometer |
+| Connectivity banner | top of the product list | nothing |
+
+Every refused permission, missing sensor, cancel or failure shows one message and writes one log line; the table of
+situations is in [`docs/steps/07-device.md`](docs/steps/07-device.md).
+
+**Google Maps key (owner action, Android only).** Create an Android-restricted key for the *Maps SDK for Android*
+(package `com.companyname.mobile_apps_l1_model_view` and the SHA-1 of the signing key) and replace `YOUR_GOOGLE_MAPS_API_KEY`
+in `Mobile_apps_L1_Model_view/Platforms/Android/AndroidManifest.xml`. Do not commit the real key to a public repository.
+Without a key the map area is blank; the pin list and *Open in maps* still work. Photos are stored under
+`photos/` in the app data folder (only the relative path is in the database).
 
 ## Repository layout
 

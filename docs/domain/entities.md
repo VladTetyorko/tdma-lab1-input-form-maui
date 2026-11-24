@@ -36,6 +36,7 @@ classDiagram
     class Product {
         +string Name
         +string Barcode
+        +string? PhotoPath
     }
     class Characteristic {
         +string Name
@@ -52,6 +53,12 @@ classDiagram
         +int Quantity
         +string? Counterparty
         +string? Reason
+        +GeoPoint? Location
+    }
+    class GeoPoint {
+        <<value>>
+        +double Latitude
+        +double Longitude
     }
     class Role {
         <<enumeration>>
@@ -139,6 +146,7 @@ descriptive data lives in characteristics.
 |-------|------|-------|
 | `Name` | `string` | Required, not blank |
 | `Barcode` | `string` | Required, unique; EAN-13 (13 digits, valid check digit) |
+| `PhotoPath` | `string?` | Photo of the item (Lab 7): path **relative to the app data folder**, `photos/<barcode>_<yyyyMMdd_HHmmss>.jpg`; `NULL` = no photo. Only the path is stored and synced, the file stays on the device. Never rooted, never `..` (`CHECK` in `0004_device.sql` and `PhotoPaths.IsValidRelative`) |
 
 - **Relations:** has many `ProductCharacteristic`s (its description) and many
   `Operation`s (its movement history).
@@ -204,6 +212,7 @@ out). The **only** way quantity changes.
 | `Quantity` | `int` | `> 0`; for `Out`, ≤ quantity on hand |
 | `Counterparty` | `string?` | Who it was received from / given to. Personal data: **stored AES-encrypted** (base64), plain in the app |
 | `Reason` | `string?` | Why: "delivery", "order #12", "damaged" |
+| `Location` | `GeoPoint?` | Where it was recorded (Lab 7, optional, mainly a driver's drop-off point). Stored as two columns `Latitude` / `Longitude` (`REAL`), both set or both `NULL`; latitude -90..90, longitude -180..180 (`CHECK`). Synced with the operation. Never written to the log |
 | `CreatedByUserId` | inherited | Who recorded it |
 | `CreatedAt` | inherited | When it happened |
 
@@ -211,8 +220,8 @@ out). The **only** way quantity changes.
   Driver records `In` only. Everyone sees the history (the Driver only their own).
 - **Immutable:** never edited or deleted. A mistake is fixed by a new
   operation in the opposite direction, so `UpdatedAt` always equals `CreatedAt`.
-- **Scaling:** a `Location` reference (several warehouses or shelves), a link
-  to a delivery document, a `Transfer` direction.
+- **Scaling:** a `Location` entity (several warehouses or shelves, not the same
+  thing as the optional `GeoPoint` above), a link to a delivery document, a `Transfer` direction.
 
 ---
 
