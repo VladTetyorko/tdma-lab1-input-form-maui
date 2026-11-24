@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # ViewModels must stay well covered; the gate below fails the job under this value
+  VIEWMODEL_COVERAGE_MINIMUM: 60
+
+jobs:
+  # Unit, integration and end-to-end flow tests of StockRoom.Core. UI tests (Category=UI) need a device and never run here.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test with coverage
+        run: >
+          dotnet test Mobile_apps_L1_Model_view.Tests
+          --filter "Category!=UI"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Coverage report (all of Core, and ViewModels only)
+        run: |
+          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:CoverageReport \
+            -reporttypes:"Html;TextSummary;Cobertura"
+          reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:CoverageReport-ViewModels \
+            -reporttypes:"Html;TextSummary" -classfilters:"+Mobile_apps_L1_Model_view.ViewModels.*"
+          echo "## Coverage" >> "$GITHUB_STEP_SUMMARY"
+          echo "### StockRoom.Core" >> "$GITHUB_STEP_SUMMARY"
+          sed -n 's/^ *\(Line coverage\|Branch coverage\):/- \1:/p' CoverageReport/Summary.txt >> "$GITHUB_STEP_SUMMARY"
+          echo "### ViewModels" >> "$GITHUB_STEP_SUMMARY"
+          sed -n 's/^ *\(Line coverage\|Branch coverage\):/- \1:/p' CoverageReport-ViewModels/Summary.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Coverage gate (ViewModels line coverage)
+        run: >
+          python3 .github/scripts/check_coverage.py
+          "$(ls TestResults/*/coverage.cobertura.xml | head -n 1)"
+          Mobile_apps_L1_Model_view.ViewModels.
+          "$VIEWMODEL_COVERAGE_MINIMUM"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            CoverageReport
+            CoverageReport-ViewModels
+            TestResults/**/coverage.cobertura.xml
+
+  # The Android build catches MAUI-side breakage (XAML, platform code) that the Core tests cannot see
+  build-android:
+    runs-on: windows-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: "17"
+
+      - name: Install the MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Build for Android
+        run: dotnet build Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-android -c Release
