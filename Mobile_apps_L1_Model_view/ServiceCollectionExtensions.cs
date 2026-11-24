@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Data.Migrations;
 using Mobile_apps_L1_Model_view.Services;
@@ -48,6 +49,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICharacteristicService, CharacteristicService>();
         services.AddSingleton<IStockService, StockService>();
         services.AddSingleton<IProductCatalog, ProductCatalog>();
+
+        // Open product data: one HttpClient (5 s timeout, generic User-Agent) over a replaceable handler,
+        // so tests register a fake HttpMessageHandler instead of touching the network
+        services.AddSingleton<HttpMessageHandler>(_ => new HttpClientHandler());
+        services.AddSingleton<IProductLookup>(provider => new OpenFoodFactsLookup(
+            OpenFoodFactsLookup.CreateClient(provider.GetRequiredService<HttpMessageHandler>()),
+            provider.GetRequiredService<ILogger<OpenFoodFactsLookup>>()));
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<ProductListViewModel>();
