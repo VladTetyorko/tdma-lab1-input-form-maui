@@ -19,8 +19,6 @@ public class AppStateServiceTests
     [Fact]
     public void SaveThenRestore_NewInstanceReadsWhatTheOldOneSaved()
     {
-        var userId = Guid.NewGuid();
-        _state.SignedInUserId = userId;
         _state.LastRoute = Routes.Operation;
         _state.SetDraft(new OperationDraft(Barcode, OperationDirection.Out, 3, "Acme Ltd", "Site 7"));
         _state.Save();
@@ -28,7 +26,6 @@ public class AppStateServiceTests
         var restored = new AppStateService(_preferences);
         restored.Restore();
 
-        Assert.Equal(userId, restored.SignedInUserId);
         Assert.Equal(Routes.Operation, restored.LastRoute);
         Assert.Equal(new OperationDraft(Barcode, OperationDirection.Out, 3, "Acme Ltd", "Site 7"),
             restored.GetDraft<OperationDraft>());
@@ -39,7 +36,6 @@ public class AppStateServiceTests
     {
         _state.Restore();
 
-        Assert.Null(_state.SignedInUserId);
         Assert.Null(_state.LastRoute);
         Assert.Null(_state.GetDraft<ProductFormDraft>());
     }
@@ -141,13 +137,13 @@ public class AppStateServiceTests
     }
 
     [Fact]
-    public void Restore_UnreadableUserId_MeansNobodyIsSignedIn()
+    public void Save_RemovesTheUserIdThatOlderVersionsKept()
     {
-        _preferences.Values["state.user"] = "not-a-guid";
+        _preferences.Values["state.user"] = Guid.NewGuid().ToString();
 
-        _state.Restore();
+        _state.Save();
 
-        Assert.Null(_state.SignedInUserId);
+        Assert.False(_preferences.Values.ContainsKey("state.user"));
     }
 
     [Fact]
@@ -171,14 +167,12 @@ public class AppStateServiceTests
     [Fact]
     public void Clear_EmptiesMemoryAndPreferences()
     {
-        _state.SignedInUserId = Guid.NewGuid();
         _state.LastRoute = Routes.Operation;
         _state.SetDraft(new ProductFormDraft("Saw", Barcode));
         _state.Save();
 
         _state.Clear();
 
-        Assert.Null(_state.SignedInUserId);
         Assert.Null(_state.LastRoute);
         Assert.Null(_state.GetDraft<ProductFormDraft>());
         Assert.Empty(_preferences.Values);
@@ -192,10 +186,9 @@ public class AppStateServiceTests
     [Fact]
     public void Save_WithoutDrafts_WritesNoDraftsKey()
     {
-        _state.SignedInUserId = Guid.NewGuid();
+        _state.LastRoute = Routes.Products;
         _state.Save();
 
-        Assert.True(_preferences.Values.ContainsKey("state.user"));
         Assert.False(_preferences.Values.ContainsKey("state.drafts"));
     }
 }

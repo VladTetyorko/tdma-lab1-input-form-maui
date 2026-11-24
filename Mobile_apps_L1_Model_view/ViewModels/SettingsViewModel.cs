@@ -12,6 +12,8 @@ public partial class SettingsViewModel(
     IOfflineSimulator offline,
     IDatabaseExporter exporter,
     IDiagnosticsService diagnostics,
+    IBiometricSettings biometricSettings,
+    IBiometricAuthenticator biometrics,
     INavigationService navigation,
     ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
@@ -41,6 +43,14 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial string ExportText { get; set; } = string.Empty;
 
+    // "Biometric unlock": on = after a restart the app asks for the fingerprint (or password) instead of opening silently
+    [ObservableProperty]
+    public partial bool BiometricUnlock { get; set; } = biometricSettings.IsEnabled;
+
+    // The switch is shown only on a device that can check a fingerprint / face / Windows Hello
+    [ObservableProperty]
+    public partial bool IsBiometricSupported { get; set; }
+
     // The Diagnostics section is for the Manager (also refused by IDiagnosticsService)
     public bool ShowDiagnostics => diagnostics.IsAvailable;
 
@@ -54,6 +64,12 @@ public partial class SettingsViewModel(
     {
         themeService.Set(value);
         logger.LogInformation("Theme set to {Theme}", value);
+    }
+
+    partial void OnBiometricUnlockChanged(bool value)
+    {
+        biometricSettings.IsEnabled = value;
+        logger.LogInformation("Biometric unlock switched {State}", value ? "on" : "off");
     }
 
     partial void OnSimulateOfflineChanged(bool value)
@@ -70,9 +86,13 @@ public partial class SettingsViewModel(
         OnPropertyChanged(nameof(ShowDiagnostics));
         OnPropertyChanged(nameof(CanSendTestCrash));
         RefreshPendingCommand.Execute(null);
+        CheckBiometricCommand.Execute(null);
     }
 
     public void OnDisappearing() => sync.Completed -= OnSyncCompleted;
+
+    [RelayCommand]
+    private async Task CheckBiometricAsync() => IsBiometricSupported = await biometrics.IsAvailableAsync();
 
     [RelayCommand]
     private async Task RefreshPendingAsync() => PendingCount = await sync.GetPendingCountAsync();

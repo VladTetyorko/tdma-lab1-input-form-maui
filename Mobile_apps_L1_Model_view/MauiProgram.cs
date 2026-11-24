@@ -36,6 +36,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPreferencesStore, MauiPreferencesStore>();
         builder.Services.AddSingleton<IDatabasePathProvider, MauiDatabasePathProvider>();
         builder.Services.AddSingleton<ISecretStore, MauiSecretStore>();
+        builder.Services.AddSingleton<IBiometricAuthenticator, MauiBiometricAuthenticator>();
         builder.Services.AddSingleton<IConnectivityMonitor, MauiConnectivityMonitor>();
         builder.Services.AddSingleton<IFileSharer, MauiFileSharer>();
         builder.Services.AddSingleton<IAlertService, ShellAlertService>();

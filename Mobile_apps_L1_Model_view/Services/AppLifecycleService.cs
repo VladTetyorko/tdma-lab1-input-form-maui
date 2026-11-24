@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Mobile_apps_L1_Model_view.Data;
 
 namespace Mobile_apps_L1_Model_view.Services;
 
@@ -7,7 +6,8 @@ public sealed class AppLifecycleService(
     IAppStateService state,
     ICurrentUserService currentUser,
     IThemeService theme,
-    IUserRepository users,
+    ISessionStore session,
+    IBiometricSettings biometricSettings,
     INavigationService navigation,
     ISyncService sync,
     ILogger<AppLifecycleService> logger) : IAppLifecycleService
@@ -20,14 +20,30 @@ public sealed class AppLifecycleService(
         // Start listening for network changes; changes made offline in an earlier run are pushed now
         sync.Start();
 
-        if (state.SignedInUserId is { } userId && await users.GetByIdAsync(userId) is { } user)
+        try
         {
-            currentUser.SignIn(user);
-            logger.LogInformation("Restored the session of user {UserId}, last page {Route}", user.Id, state.LastRoute);
-            return Routes.Products;
+            // Biometric unlock on: a valid session is not restored silently. The login page offers the
+            // fingerprint button (or the password); the saved state (drafts, last page) waits for it
+            if (biometricSettings.IsEnabled && await session.HasValidSessionAsync())
+            {
+                logger.LogInformation("A session exists but biometric unlock is on: waiting on the login page");
+                return Routes.Login;
+            }
+
+            if (await session.LoadUserAsync() is { } user)
+            {
+                currentUser.SignIn(user);
+                logger.LogInformation("Restored the session of user {UserId}, last page {Route}", user.Id, state.LastRoute);
+                return Routes.Products;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Secure storage can be unavailable (reset device, restored backup): sign in again instead of crashing
+            logger.LogWarning(ex, "The saved session could not be read, signing in again");
         }
 
-        // Nobody to sign in again (first start, signed out, or the user no longer exists)
+        // Nobody to sign in again (first start, signed out, token expired or changed, or the user no longer exists)
         state.Clear();
         logger.LogInformation("No session to restore");
         return Routes.Login;
@@ -61,7 +77,6 @@ public sealed class AppLifecycleService(
 
     private void SaveState()
     {
-        state.SignedInUserId = currentUser.CurrentUser?.Id;
         state.LastRoute = navigation.CurrentRoute;
         state.Save();
     }

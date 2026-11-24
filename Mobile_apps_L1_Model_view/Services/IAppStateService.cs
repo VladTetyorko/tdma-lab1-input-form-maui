@@ -1,13 +1,10 @@
 namespace Mobile_apps_L1_Model_view.Services;
 
-// What must survive the app being stopped or killed: who is signed in, where they were and the
-// unsaved form drafts. Lives in memory while the app runs; Save() writes it to preferences,
+// What must survive the app being stopped or killed: where the user was and the unsaved form drafts
+// (who is signed in is kept as a session token, see ISessionStore). Lives in memory while the app runs; Save() writes it to preferences,
 // Restore() reads it back on the next start.
 public interface IAppStateService
 {
-    // The signed-in user (null = nobody)
-    Guid? SignedInUserId { get; set; }
-
     // Leaf route of the page that was open when the state was saved (see Routes.Leaf)
     string? LastRoute { get; set; }
 
@@ -28,6 +25,6 @@ public interface IAppStateService
     // Route of the page to reopen after Restore(); returned once, then null. Null after a warm start
     string? TakeResumeRoute();
 
-    // Forgets user, route and drafts, in memory and in preferences (sign-out)
+    // Forgets route and drafts, in memory and in preferences (sign-out)
     void Clear();
 }

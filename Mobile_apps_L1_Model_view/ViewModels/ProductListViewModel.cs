@@ -12,6 +12,7 @@ public partial class ProductListViewModel(
     ICharacteristicService characteristics,
     IProductService productService,
     ICurrentUserService currentUser,
+    ISessionStore session,
     IAppStateService appState,
     IStartupNavigator startup,
     IAlertService alerts,
@@ -186,12 +187,22 @@ public partial class ProductListViewModel(
     private Task ScanAsync() => navigation.GoToAsync(Routes.Scanner);
 
     [RelayCommand]
-    private Task SignOutAsync()
+    private async Task SignOutAsync()
     {
         logger.LogInformation("User {UserId} signed out", currentUser.CurrentUser?.Id);
         currentUser.SignOut();
+        try
+        {
+            await session.ClearAsync();
+        }
+        catch (Exception ex)
+        {
+            // Signing out must work even when secure storage does not: the user is signed out in memory anyway
+            logger.LogWarning(ex, "The saved session could not be removed");
+        }
+
         appState.Clear();
-        return navigation.GoToAsync(Routes.Absolute(Routes.Login));
+        await navigation.GoToAsync(Routes.Absolute(Routes.Login));
     }
 
     private async Task SyncSortOptionsAsync()

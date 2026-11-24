@@ -46,6 +46,7 @@ public class SqliteFlowTests : IDisposable
         services.AddSingleton<IAlertService>(_alerts);
         services.AddSingleton<IThemeApplier>(new FakeThemeApplier());
         services.AddSingleton<IBarcodeScanner>(new FakeBarcodeScanner());
+        services.AddSingleton<IBiometricAuthenticator>(new FakeBiometricAuthenticator());
         _app = services.BuildServiceProvider();
         return _app;
     }
@@ -60,10 +61,7 @@ public class SqliteFlowTests : IDisposable
 
     private async Task SignInAsync(Role role)
     {
-        var login = App.GetRequiredService<LoginViewModel>();
-        await login.LoadCommand.ExecuteAsync(null);
-        login.SelectedUser = login.Users.Single(u => u.Role == role);
-        await login.SignInCommand.ExecuteAsync(null);
+        await DemoAccounts.SignInAsync(App, role);
     }
 
     private async Task<Product> DrillAsync() =>

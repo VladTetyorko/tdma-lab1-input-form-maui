@@ -78,6 +78,71 @@ public class AppLifecycleFlowTests
     }
 
     [Fact]
+    public async Task Login_StoresAToken_RestartRestoresTheSession_SignOutClearsIt_NextStartShowsLogin()
+    {
+        var preferences = new FakePreferencesStore();
+        var secrets = new FakeSecretStore();
+
+        using (var first = TestContainer.Create(preferences, new FakeNavigationService(), secrets: secrets))
+        {
+            await first.GetRequiredService<IAppLifecycleService>().RestoreAsync();
+            await SignInAsync(first, Role.Manager);
+
+            // A token, not a user id, is what is kept; the password is nowhere
+            Assert.True(secrets.Values.ContainsKey(SessionStore.TokenKey));
+            Assert.DoesNotContain("Manager#2026", string.Concat(secrets.Values.Values) + string.Concat(preferences.Values.Values));
+            first.GetRequiredService<IAppLifecycleService>().OnStopped();
+        }
+
+        using (var second = TestContainer.Create(preferences, new FakeNavigationService(), secrets: secrets))
+        {
+            Assert.Equal(Routes.Products, await second.GetRequiredService<IAppLifecycleService>().RestoreAsync());
+            Assert.Equal(Role.Manager, second.GetRequiredService<ICurrentUserService>().CurrentRole);
+
+            var list = second.GetRequiredService<ProductListViewModel>();
+            await list.SignOutCommand.ExecuteAsync(null);
+            Assert.False(secrets.Values.ContainsKey(SessionStore.TokenKey));
+        }
+
+        using var third = TestContainer.Create(preferences, new FakeNavigationService(), secrets: secrets);
+        Assert.Equal(Routes.Login, await third.GetRequiredService<IAppLifecycleService>().RestoreAsync());
+        Assert.Null(third.GetRequiredService<ICurrentUserService>().CurrentUser);
+    }
+
+    [Fact]
+    public async Task BiometricUnlockOn_RestartWaitsOnLogin_FingerprintRestoresTheSession_FailureKeepsThePasswordForm()
+    {
+        var preferences = new FakePreferencesStore();
+        var secrets = new FakeSecretStore();
+        using (var first = TestContainer.Create(preferences, new FakeNavigationService(), secrets: secrets))
+        {
+            await first.GetRequiredService<IAppLifecycleService>().RestoreAsync();
+            await SignInAsync(first, Role.Driver);
+            first.GetRequiredService<IBiometricSettings>().IsEnabled = true;
+        }
+
+        var navigation = new FakeNavigationService();
+        using var second = TestContainer.Create(preferences, navigation, secrets: secrets);
+        Assert.Equal(Routes.Login, await second.GetRequiredService<IAppLifecycleService>().RestoreAsync());
+        Assert.Null(second.GetRequiredService<ICurrentUserService>().CurrentUser);
+
+        var login = second.GetRequiredService<LoginViewModel>();
+        await login.LoadCommand.ExecuteAsync(null);
+        Assert.True(login.IsBiometricAvailable);
+
+        var biometrics = second.GetRequiredService<FakeBiometricAuthenticator>();
+        biometrics.Outcome = BiometricOutcome.Failed;
+        await login.BiometricSignInCommand.ExecuteAsync(null);
+        Assert.Null(second.GetRequiredService<ICurrentUserService>().CurrentUser);
+        Assert.True(login.HasError);
+
+        biometrics.Outcome = BiometricOutcome.Success;
+        await login.BiometricSignInCommand.ExecuteAsync(null);
+        Assert.Equal(Role.Driver, second.GetRequiredService<ICurrentUserService>().CurrentRole);
+        Assert.Equal(Routes.Absolute(Routes.Products), navigation.RequestedRoutes.Last());
+    }
+
+    [Fact]
     public async Task DeepLinkWhileSignedOut_OpensTheProductAfterSignIn()
     {
         var navigation = new FakeNavigationService();
@@ -205,9 +270,6 @@ public class AppLifecycleFlowTests
 
     private static async Task SignInAsync(IServiceProvider provider, Role role)
     {
-        var login = provider.GetRequiredService<LoginViewModel>();
-        await login.LoadCommand.ExecuteAsync(null);
-        login.SelectedUser = login.Users.Single(u => u.Role == role);
-        await login.SignInCommand.ExecuteAsync(null);
+        await DemoAccounts.SignInAsync(provider, role);
     }
 }

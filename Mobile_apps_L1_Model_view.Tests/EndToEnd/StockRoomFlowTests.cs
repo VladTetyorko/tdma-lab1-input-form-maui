@@ -212,9 +212,6 @@ public class StockRoomFlowTests : IDisposable
 
     private async Task SignInAsync(Role role)
     {
-        var login = _provider.GetRequiredService<LoginViewModel>();
-        await login.LoadCommand.ExecuteAsync(null);
-        login.SelectedUser = login.Users.Single(u => u.Role == role);
-        await login.SignInCommand.ExecuteAsync(null);
+        await DemoAccounts.SignInAsync(_provider, role);
     }
 }

@@ -20,6 +20,8 @@ public static class TestPlatform
         services.AddSingleton<ICrashReporter>(provider => provider.GetRequiredService<FakeCrashReporter>());
         services.AddSingleton<FakeSecretStore>();
         services.AddSingleton<ISecretStore>(provider => provider.GetRequiredService<FakeSecretStore>());
+        services.AddSingleton<FakeBiometricAuthenticator>();
+        services.AddSingleton<IBiometricAuthenticator>(provider => provider.GetRequiredService<FakeBiometricAuthenticator>());
         services.AddSingleton<FakeConnectivityMonitor>();
         services.AddSingleton<IConnectivityMonitor>(provider => provider.GetRequiredService<FakeConnectivityMonitor>());
         services.AddSingleton<FakeFileSharer>();

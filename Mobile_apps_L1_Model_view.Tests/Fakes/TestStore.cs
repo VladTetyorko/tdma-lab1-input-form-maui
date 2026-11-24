@@ -13,6 +13,7 @@ public sealed class TestStore
     public TestStore()
     {
         AppState = new AppStateService(Preferences);
+        Session = new SessionStore(Secrets, new HmacTokenService(Secrets, Clock), Users, Logger<SessionStore>());
         Drafts = new OperationDraftStore(AppState, new AesFieldEncryptor(Secrets), NullLogger<OperationDraftStore>.Instance);
         DeepLinks = new DeepLinkHandler(Catalog, CurrentUser, Navigation, Alerts);
         Startup = new StartupNavigator(AppState, DeepLinks, Catalog, Navigation);
@@ -28,6 +29,7 @@ public sealed class TestStore
     public FakePreferencesStore Preferences { get; } = new();
     public AppStateService AppState { get; }
     public FakeSecretStore Secrets { get; } = new();
+    public SessionStore Session { get; }
     public OperationDraftStore Drafts { get; }
     public FakeAlertService Alerts { get; } = new();
     public DeepLinkHandler DeepLinks { get; }
