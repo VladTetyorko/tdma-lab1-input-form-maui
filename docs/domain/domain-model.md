@@ -21,15 +21,16 @@ separate decision.
 
 | Action | Storekeeper | Driver | Manager |
 |--------|:-----------:|:------:|:-------:|
-| View / sort product list | ✔ | ✔ | ✔ |
+| View, search and sort the product list | ✔ | ✔ | ✔ |
 | Scan → In | ✔ | ✔ | ✔ |
 | Scan → Out | ✔ | — | ✔ |
 | Add / edit / delete product (delete only without operations) | — | — | ✔ |
 | Add characteristic, set its value on a product | — | — | ✔ |
-| View operation history | ✔ | own only | ✔ |
+| View operation history of a product | ✔ | ✔ | ✔ |
 | Take / pick / remove a product photo (Lab 7) | — | — | ✔ |
 | Attach my location to an In / Out (Lab 7) | ✔ | ✔ | ✔ |
 | Operations map, Open in maps, shake to scan (Lab 7) | ✔ | ✔ | ✔ |
+| Logs viewer, Settings → Diagnostics (Lab 5) | — | — | ✔ |
 
 Authentication is local and minimal (Lab 6): each of the three seeded users has a
 login and a password; the database keeps only a salted PBKDF2 hash. There is no

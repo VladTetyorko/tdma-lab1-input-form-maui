@@ -43,6 +43,26 @@ Details: [`docs/domain/domain-model.md`](docs/domain/domain-model.md) (overview,
 and [`docs/domain/entities.md`](docs/domain/entities.md) (every entity, its fields and relations);
 [`docs/domain/open-data.md`](docs/domain/open-data.md) (Open Food Facts seed and lookup, ODbL attribution).
 
+## Features
+
+Module of **variant 8 (spare-parts warehouse)** of the final lab: Product = part, Operation In / Out = receipt / issue,
+roles Storekeeper, Driver and Manager, camera and accelerometer (plus scanner, location, map).
+
+| Area | What the app does | Where to read |
+|------|-------------------|---------------|
+| Products | list with quantity on hand and colour state; **search** by name, barcode or characteristic value; sort by name, quantity or any characteristic; add, edit, delete (Manager) | steps 01, 02, 09 |
+| Operations | scan or type a barcode, choose **In** or **Out**, enter the number of units, optionally attach the location; Out never exceeds the stock; operations are never edited | steps 01, 02, 07 |
+| Roles | Storekeeper (In and Out), Driver (In only), Manager (everything, photos, logs, diagnostics); checked in the UI, in every command and in the service | step 06, [access matrix](docs/steps/09-final.md) |
+| Offline first | SQLite file, every change queued in `SyncQueue` and pushed to a stub server; last write wins | step 04 |
+| Lifecycle | drafts survive minimising and restarts, signed-in session kept (token in secure storage), System / Light / Dark theme, deep link `stockroom://product/{barcode}` | step 03 |
+| Device | camera scanner (1-D and QR), product photo, operation location, map, shake to scan, connectivity banner | step 07 |
+| Diagnostics | Serilog file log, in-app log viewer, global exception handler, optional Sentry | step 05 |
+| Quality | Core library, 1226 + 42 automated tests, GitHub Actions with a coverage gate and an APK artifact | steps 08, 09 |
+
+The design material (ER diagram, screen map, role matrix, layers, DI lifetimes), the demo script and the answers to the
+control questions are in [`docs/steps/09-final.md`](docs/steps/09-final.md); the release steps are in [`docs/RELEASE.md`](docs/RELEASE.md).
+Rules for contributors: [`AGENTS.md`](AGENTS.md).
+
 ## Why a warehouse
 
 The course's sample domains (a student list, a railway ERP) only show the
@@ -103,7 +123,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 06 | 6 | [Login, password hashing, session token, roles, biometrics, certificate pinning](docs/steps/06-auth.md) | done (950 tests) |
 | 07 | 7 | [Device capabilities: permissions, product photo, operation location, map, shake, connectivity banner](docs/steps/07-device.md) | done (1206 tests) |
 | 08 | 8 | [Core library, Moq tests, integration tests, GitHub Actions CI with coverage gate, AutomationId, Appium UI tests](docs/steps/08-testing-ci.md) | done (1227 tests + 2 UI tests not run; ViewModels 97.4 % coverage) |
-| 09 | 9 | Final module: search, access matrix, APK, v1.0 | planned |
+| 09 | 9 | [Final module: search, ER and screen map, role matrix, DI table, offline scenario, demo script, APK, v1.0](docs/steps/09-final.md) | done (1226 tests + 42 AppTests + 2 UI tests not run; ViewModels 97.4 % coverage; APK artifact in CI; tag by the owner) |
 
 ## Decision log
 
@@ -192,6 +212,11 @@ Every architectural decision, newest last. Details are in the step documents.
 | 79 | 8 | CI: `test` (ubuntu, coverage, ReportGenerator, artifact) then `build-android` (windows, `needs: test`, `maui-android` workload, Release); no Windows build job | Cheap fast feedback first; the Android build compiles XAML and `MauiProgram`; Windows adds minutes for little signal |
 | 80 | 8 | Coverage gate: `.github/scripts/check_coverage.py` fails the job when line coverage of classes under `Mobile_apps_L1_Model_view.ViewModels.` is below 60 % (measured 97.4 %); it counts distinct (file, line) pairs | A readable script that runs locally on the same Cobertura file; compiler-generated classes of one ViewModel are not counted twice |
 | 81 | 8 | UI tests (`Mobile_apps_L1_Model_view.UiTests`, Appium, `[Trait("Category","UI")]`) are a separate project that nothing references; platform chosen by `STOCKROOM_UI_PLATFORM` (`windows` / `android`); they are not run by CI or by `dotnet test <Tests project>` | They need a device and a server; a plain checkout must never fail for lack of an emulator. Written but **not executed** by the agent |
+| 82 | 9 | Search is the pure `ProductSearch` (Core): trimmed, case-insensitive, matches name, barcode and any characteristic value; applied in `ProductListViewModel.ApplySort` before the sorter; the text is not persisted in drafts | Same pattern as `ProductSorter` (testable, no code-behind); values were already on the row; a filter restored after a restart looks like lost data |
+| 83 | 9 | `RolePermissionsMatrixTests` encodes the documented role x action matrix as data and fails when `RolePermissions` gains, loses or changes a rule | A document that can drift is worse than none; a plain theory is the smallest check (no generator) |
+| 84 | 9 | Android builds with `PublishTrimmed`, `RunAOTCompilation`, `AndroidEnableProfiledAot` and `AndroidEnableMarshalMethods` off, and the XAML `xmlns` of `Models` / `Services` / `ViewModels` name `assembly=StockRoom.Core` | Found by the first Release build: the XAML compiler could not resolve types moved to Core in Lab 8, trimming asked for a runtime pack nuget.org does not publish for .NET 10, and a multi-architecture publish failed in marshal methods. Cost: a larger, slower-starting APK |
+| 85 | 9 | Operation history of a product is visible to every role; the domain table no longer says "own only" for the Driver | The code never filtered it and no lab asks for it; a restriction is a new feature |
+| 86 | 9 | Release: CI job `apk` publishes a debug-signed APK and uploads it; the tag `v1.0` is created by the owner after the merge; no keystore or secret in the repository | The course needs an installable package, not a store release; tagging is a release decision |
 
 ## Architecture
 
@@ -237,6 +262,7 @@ graph TD
         ICharacteristicService
         ICharacteristicValidator
         ProductSorter
+        ProductSearch
         ICurrentUserService
         INavigationService
         IClock
@@ -296,6 +322,7 @@ graph TD
     ProductListViewModel --> IProductCatalog
     ProductListViewModel --> ICharacteristicService
     ProductListViewModel --> ProductSorter
+    ProductListViewModel --> ProductSearch
     ProductListViewModel --> INavigationService
     ProductDetailPage --> ProductDetailViewModel
     CharacteristicsPage --> CharacteristicsViewModel
@@ -470,25 +497,58 @@ docs/steps/                       One document per step / PR
 
 ## Build and run
 
-Requires the .NET 10 SDK with the MAUI workload.
+Requires the .NET 10 SDK with the MAUI workloads (`dotnet workload install maui`). When the SDK lives in `%USERPROFILE%\.dotnet`,
+global tools such as ReportGenerator need `DOTNET_ROOT` set to that folder (PowerShell: `$env:DOTNET_ROOT = "$env:USERPROFILE\.dotnet"`),
+otherwise they report ".NET location: Not found".
 
 ```bash
+# Windows (unpackaged exe)
 dotnet build Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-windows10.0.19041.0
-dotnet test Mobile_apps_L1_Model_view.Tests
+dotnet run --project Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-windows10.0.19041.0
+
+# Android: emulator or a phone with USB debugging, Android SDK installed
+dotnet build Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-android -p:AndroidSdkDirectory="$LOCALAPPDATA/Android/Sdk"
+dotnet build Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-android -t:Run     # install and start on the device
+
+# A package you can send to a phone (debug-signed APK, see docs/RELEASE.md)
+dotnet publish Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-android -c Release -p:AndroidPackageFormat=apk
 ```
 
-Android: add `-f net10.0-android -p:AndroidSdkDirectory="$LOCALAPPDATA/Android/Sdk"`.
-
-Other test commands (details in [step 08](docs/steps/08-testing-ci.md)):
+**Tests.**
 
 ```bash
-dotnet test Mobile_apps_L1_Model_view.Tests --filter "Category!=UI" --collect:"XPlat Code Coverage"   # what CI runs (any OS)
-dotnet test Mobile_apps_L1_Model_view.AppTests        # MAUI-bound tests, Windows only
-dotnet test Mobile_apps_L1_Model_view.UiTests         # Appium; needs a running Appium server and an app (see step 08)
+dotnet test Mobile_apps_L1_Model_view.Tests                       # 1226 tests of Core, any OS (the UI tests are a separate project)
+dotnet test Mobile_apps_L1_Model_view.Tests --filter "Category!=UI" --collect:"XPlat Code Coverage" --results-directory ./TestResults   # what CI runs
+python .github/scripts/check_coverage.py TestResults/<guid>/coverage.cobertura.xml Mobile_apps_L1_Model_view.ViewModels. 60            # the 60 % ViewModel gate
+dotnet tool install -g dotnet-reportgenerator-globaltool
+reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:CoverageReport -reporttypes:Html
+dotnet test Mobile_apps_L1_Model_view.AppTests                    # 42 tests of MAUI-bound classes, Windows only, not in CI
+dotnet test Mobile_apps_L1_Model_view.UiTests                     # 2 Appium tests: need Appium and a device, never run by CI (step 08)
+dotnet build Mobile_apps_L1_Model_view.slnx                       # every project
 ```
+
+**CI.** [`ci.yml`](.github/workflows/ci.yml) runs on every push and pull request: `test` (ubuntu, coverage report, ViewModel gate
+at 60 %), `build-android` (Release build) and `apk` (debug-signed package uploaded as the artifact `stockroom-apk`).
 
 **Database.** The first start creates and seeds `stockroom.db3` in the app data
 folder (Windows, unpackaged: `%LOCALAPPDATA%/User Name/com.companyname.mobile_apps_l1_model_view/Data`).
-To start over, close the app and delete that file. The Settings page shows the
+**To reset it:** close the app and delete that file (on Android: clear the storage of the app). The Settings page shows the
 sync queue, has the **Simulate offline** switch and **Share database**.
 Tests never touch it: each test container uses its own temporary file.
+
+## Data attribution
+
+Seed products and the "Create from Open Food Facts" lookup use data from [Open Food Facts](https://world.openfoodfacts.org/),
+available under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/) (individual contents under
+the Database Contents License). The scanner page shows the attribution; details in [`docs/domain/open-data.md`](docs/domain/open-data.md).
+
+## Known limits
+
+- **Local accounts only.** Three fixed demo users, no registration or password recovery; roles are read from the local database, so someone who controls the device can edit it. A real deployment would check on a server.
+- **Sync is push only** and goes to an in-memory stub server unless `Sync:BaseUrl` is configured; the app never pulls changes of other devices, so after a lost conflict the phone keeps its own value (step 09, section 6).
+- **Photos are not synced** (only the relative path is); a file upload needs a real server.
+- **The APK is debug-signed**, not trimmed and not AOT-compiled: it sideloads, it is not a store build.
+- **Windows has no camera scanner** (manual entry), no shake and no embedded map; Android and iOS have them. iOS and Mac Catalyst are configured but were never built or run.
+- **Google Maps tiles need a key** (owner action) and **Sentry needs a DSN**; without them the map area is blank and the test crash is disabled.
+- **The Appium UI tests and the Android and hardware behaviour were not executed by the authoring tooling**; they are checked by hand with the smoke checklist in step 09.
+- The history of a product is visible to every role.

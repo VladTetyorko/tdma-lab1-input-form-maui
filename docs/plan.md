@@ -239,6 +239,8 @@ of a green run, run Appium.
 
 ## Lab 9 — Final module (`lab9` → `lab8`, tag `v1.0`)
 
+Status: **done** (see `docs/steps/09-final.md`; the tag `v1.0` is the owner's).
+
 Variant 8, **Spare-parts warehouse** (Part, Receipt, Issue → our Product and
 Operation In / Out; roles storekeeper / administrator → our Storekeeper and
 Manager, plus Driver; camera + accelerometer; we also have scanner and location).
