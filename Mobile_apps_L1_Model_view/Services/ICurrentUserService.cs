@@ -7,6 +7,11 @@ public interface ICurrentUserService
 {
     User? CurrentUser { get; }
 
+    // Role of the signed-in user; null when nobody is signed in
+    Role? CurrentRole { get; }
+
+    bool IsInRole(Role role);
+
     void SignIn(User user);
 
     void SignOut();

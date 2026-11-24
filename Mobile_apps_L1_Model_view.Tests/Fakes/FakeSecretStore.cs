@@ -22,6 +22,13 @@ public sealed class FakeSecretStore : ISecretStore
         return Task.CompletedTask;
     }
 
+    public Task RemoveAsync(string key)
+    {
+        ThrowIfFailing();
+        Values.Remove(key);
+        return Task.CompletedTask;
+    }
+
     private void ThrowIfFailing()
     {
         if (Failing)

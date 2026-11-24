@@ -17,6 +17,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<UnhandledExceptionLogger>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
+
+        // Local accounts: PBKDF2 hashes, login with lockout, signed session token kept in the secret store
+        services.AddSingleton<IPasswordHasher>(_ => new Pbkdf2PasswordHasher());
+        services.AddSingleton<IAuthService, AuthService>();
+        services.AddSingleton<ITokenService, HmacTokenService>();
+        services.AddSingleton<ISessionStore, SessionStore>();
         services.AddSingleton<IAppStateService, AppStateService>();
         services.AddSingleton<IOperationDraftStore, OperationDraftStore>();
         services.AddSingleton<IThemeService, ThemeService>();
