@@ -42,8 +42,8 @@ public class MigrationRunnerTests : IDisposable
 
         var version = await StockRoomRunner().MigrateAsync(connection);
 
-        Assert.Equal(3, version);
-        Assert.Equal(3, await connection.ExecuteScalarAsync<int>("PRAGMA user_version"));
+        Assert.Equal(4, version);
+        Assert.Equal(4, await connection.ExecuteScalarAsync<int>("PRAGMA user_version"));
         var tables = await connection.QueryScalarsAsync<string>(
             "SELECT name FROM sqlite_master WHERE type = 'table'");
         foreach (var table in StockRoomTables)
@@ -62,7 +62,7 @@ public class MigrationRunnerTests : IDisposable
 
         var version = await runner.MigrateAsync(connection);
 
-        Assert.Equal(3, version);
+        Assert.Equal(4, version);
         Assert.Equal(3, usersAfterFirstRun);
         Assert.Equal(usersAfterFirstRun, await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Users"));
     }
@@ -133,8 +133,8 @@ public class MigrationRunnerTests : IDisposable
     {
         var migrations = new EmbeddedMigrationSource().GetMigrations();
 
-        Assert.Equal([1, 2, 3], migrations.Select(m => m.Version));
-        Assert.Equal(["0001_initial", "0002_seed", "0003_auth"], migrations.Select(m => m.Name));
+        Assert.Equal([1, 2, 3, 4], migrations.Select(m => m.Version));
+        Assert.Equal(["0001_initial", "0002_seed", "0003_auth", "0004_device"], migrations.Select(m => m.Name));
         Assert.All(migrations, m => Assert.False(string.IsNullOrWhiteSpace(m.Sql)));
     }
 

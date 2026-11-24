@@ -20,7 +20,7 @@ public sealed class StockService(
         .ToDictionary(g => g.Key, Sum);
 
     public async Task<Result<Operation>> RecordAsync(Guid productId, OperationDirection direction, int quantity,
-        string? counterparty = null, string? reason = null)
+        string? counterparty = null, string? reason = null, GeoPoint? location = null)
     {
         var user = currentUser.CurrentUser;
         if (user is null)
@@ -62,6 +62,7 @@ public sealed class StockService(
             Quantity = quantity,
             Counterparty = counterparty,
             Reason = reason,
+            Location = location,
             CreatedByUserId = user.Id,
             CreatedAt = now,
             UpdatedAt = now
@@ -78,8 +79,8 @@ public sealed class StockService(
             return Result<Operation>.Failure($"The operation was not saved. {ex.Message}");
         }
 
-        logger.LogInformation("Recorded {Direction} of {Quantity} units of product {ProductId} as operation {OperationId} by user {UserId}",
-            direction, quantity, productId, operation.Id, user.Id);
+        logger.LogInformation("Recorded {Direction} of {Quantity} units of product {ProductId} as operation {OperationId} by user {UserId} (location: {HasLocation})",
+            direction, quantity, productId, operation.Id, user.Id, location is not null);
         return Result<Operation>.Success(operation);
     }
 

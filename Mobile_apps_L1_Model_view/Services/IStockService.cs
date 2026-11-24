@@ -10,7 +10,7 @@ public interface IStockService
     // Quantity on hand for every product that has operations; the others are absent (zero)
     Task<IReadOnlyDictionary<Guid, int>> GetQuantitiesAsync();
 
-    // Records "quantity units of the product moved In/Out" as the current user
+    // Records "quantity units of the product moved In/Out" as the current user; location is optional
     Task<Result<Operation>> RecordAsync(Guid productId, OperationDirection direction, int quantity,
-        string? counterparty = null, string? reason = null);
+        string? counterparty = null, string? reason = null, GeoPoint? location = null);
 }

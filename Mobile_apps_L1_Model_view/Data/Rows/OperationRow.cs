@@ -12,4 +12,8 @@ public sealed class OperationRow : OwnedRow
     // Encrypted (base64) when the operation has a counterparty
     public string? Counterparty { get; set; }
     public string? Reason { get; set; }
+
+    // Both set or both null (CHECK in 0004_device.sql)
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }
