@@ -2,4 +2,5 @@
     <Project Path="StockRoom.Core/StockRoom.Core.csproj"/>
     <Project Path="Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj"/>
     <Project Path="Mobile_apps_L1_Model_view.Tests/Mobile_apps_L1_Model_view.Tests.csproj"/>
+    <Project Path="Mobile_apps_L1_Model_view.AppTests/Mobile_apps_L1_Model_view.AppTests.csproj"/>
 </Solution>

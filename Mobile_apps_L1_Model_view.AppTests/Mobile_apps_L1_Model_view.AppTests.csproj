@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Tests of the classes that need MAUI types (Maui* services, converters). Windows only; not part of the CI test job.
+         It reuses the fakes of the Core test project. -->
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <!-- The app's icon/splash are processed by the app project; this project must not repeat it. -->
+        <EnableMauiImageProcessing>false</EnableMauiImageProcessing>
+        <EnableMauiSplashScreenProcessing>false</EnableMauiSplashScreenProcessing>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.4"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Mobile_apps_L1_Model_view\Mobile_apps_L1_Model_view.csproj"/>
+        <ProjectReference Include="..\Mobile_apps_L1_Model_view.Tests\Mobile_apps_L1_Model_view.Tests.csproj"/>
+    </ItemGroup>
+
+</Project>

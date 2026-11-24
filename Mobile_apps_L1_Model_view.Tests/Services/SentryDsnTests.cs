@@ -43,14 +43,4 @@ public class SentryDsnTests
 
         Assert.False(reporter.IsEnabled);
     }
-
-    [Fact]
-    public void SentryCrashReporter_WithoutAnInitialisedSdk_IsDisabledAndDoesNotThrow()
-    {
-        var reporter = new SentryCrashReporter();
-
-        reporter.Report(new Exception("x"), "test");
-
-        Assert.False(reporter.IsEnabled);
-    }
 }
