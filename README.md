@@ -89,6 +89,12 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 02 | 2 | [Shell navigation, parameters, characteristics, sorting, In/Out page](docs/steps/02-navigation.md) | done (310 tests) |
 | 03 | 3 | [App and page lifecycle, saved state, theme, deep links, barcode scanner](docs/steps/03-lifecycle.md) | done (469 tests) |
 | 04 | 4 | [SQLite, repositories, CRUD, migrations, sync queue, encryption](docs/steps/04-sqlite.md) | done (634 tests) |
+| — | — | [Plan for labs 5–9 and the catalog step](docs/plan.md) | in review |
+| 05 | 5 | Logging, global error handling, log viewer, crash reporter | planned |
+| 06 | 6 | Login, password hashing, token, roles, biometrics, certificate pinning | planned |
+| 07 | 7 | Permissions, photo, location, map, shake, network indicator | planned |
+| 08 | 8 | Core library, Moq tests, CI, UI tests | planned |
+| 09 | 9 | Final module: search, access matrix, APK, v1.0 | planned |
 
 ## Decision log
 
