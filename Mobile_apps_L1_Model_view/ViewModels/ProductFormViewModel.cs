@@ -41,6 +41,10 @@ public partial class ProductFormViewModel(
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
+    // Attribution for prefilled open data (empty when the user typed everything)
+    [ObservableProperty]
+    public partial string DataSource { get; set; } = string.Empty;
+
     partial void OnNameChanged(string value)
     {
         NameError = validator.ValidateName(value) ?? string.Empty;
@@ -68,6 +72,17 @@ public partial class ProductFormViewModel(
         {
             _prefilled = true;
             Barcode = barcode;
+        }
+
+        if (query.TryGetValue(NavigationKeys.ProductName, out var name) && name is string productName)
+        {
+            _prefilled = true;
+            Name = productName;
+        }
+
+        if (query.TryGetValue(NavigationKeys.DataSource, out var source) && source is string dataSource)
+        {
+            DataSource = dataSource;
         }
     }
 

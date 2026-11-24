@@ -11,12 +11,13 @@ public class ScannerViewModelTests
 
     private readonly TestStore _store = new();
     private readonly FakeBarcodeScanner _scanner = new();
+    private readonly FakeProductLookup _lookup = new();
     private readonly string _drillBarcode = Ean13.WithCheckDigit("482000100001");
     private readonly ScannerViewModel _viewModel;
 
     public ScannerViewModelTests()
     {
-        _viewModel = new ScannerViewModel(_scanner, _store.Catalog, _store.CurrentUser, _store.Navigation);
+        _viewModel = new ScannerViewModel(_scanner, _store.Catalog, _store.CurrentUser, _store.Navigation, _lookup);
     }
 
     [Fact]
@@ -108,6 +109,55 @@ public class ScannerViewModelTests
     }
 
     [Fact]
+    public async Task LookUp_NotAStockRoomCode_SaysSoAndDoesNotSearch()
+    {
+        await _store.SignInAsync(Role.Manager);
+        _viewModel.ManualBarcode = "hello";
+
+        await _viewModel.LookUpCommand.ExecuteAsync(null);
+
+        Assert.Equal(ScanPayloadParser.NotStockRoomCodeMessage, _viewModel.StatusMessage);
+        Assert.False(_viewModel.HasUnknownBarcode);
+        Assert.Empty(_store.Navigation.RequestedRoutes);
+    }
+
+    [Fact]
+    public async Task LookUp_DeepLinkText_OpensTheProduct()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        var drill = await _store.AddProductAsync("Drill", _drillBarcode);
+        _viewModel.ManualBarcode = DeepLinkParser.ForProduct(_drillBarcode);
+
+        await _viewModel.LookUpCommand.ExecuteAsync(null);
+
+        Assert.Equal(drill.Id, SelectedProduct().Id);
+    }
+
+    [Fact]
+    public async Task BarcodeDetected_QrCodeWithADeepLink_OpensTheProduct()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        var drill = await _store.AddProductAsync("Drill", _drillBarcode);
+        _viewModel.OnAppearing();
+
+        await _viewModel.BarcodeDetectedCommand.ExecuteAsync($"stockroom://product/{_drillBarcode}");
+
+        Assert.Equal(drill.Id, SelectedProduct().Id);
+    }
+
+    [Fact]
+    public async Task BarcodeDetected_UpcA_FindsTheProductByItsEan13()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        var product = await _store.AddProductAsync("Tissues", "0036000291452");
+        _viewModel.OnAppearing();
+
+        await _viewModel.BarcodeDetectedCommand.ExecuteAsync("036000291452");
+
+        Assert.Equal(product.Id, SelectedProduct().Id);
+    }
+
+    [Fact]
     public async Task LookUp_KnownBarcode_OpensOperationWithTheProduct()
     {
         await _store.SignInAsync(Role.Storekeeper);
@@ -163,6 +213,79 @@ public class ScannerViewModelTests
         Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
         Assert.Equal(UnknownBarcode, _store.Navigation.RequestedParameters.Last()![NavigationKeys.Barcode]);
         Assert.False(_viewModel.HasUnknownBarcode);
+    }
+
+    [Fact]
+    public async Task CreateFromLookup_Manager_OpensTheFormPrefilledWithNameAndBarcode()
+    {
+        await _store.SignInAsync(Role.Manager);
+        _lookup.Result = LookupResult.Found("Nutella", "Ferrero", "400 g", "Spreads");
+        _viewModel.ManualBarcode = UnknownBarcode;
+        await _viewModel.LookUpCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.CreateFromLookupCommand.CanExecute(null));
+
+        await _viewModel.CreateFromLookupCommand.ExecuteAsync(null);
+
+        Assert.Equal([UnknownBarcode], _lookup.Asked);
+        Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
+        var parameters = _store.Navigation.RequestedParameters.Last()!;
+        Assert.Equal(UnknownBarcode, parameters[NavigationKeys.Barcode]);
+        Assert.Equal("Nutella", parameters[NavigationKeys.ProductName]);
+        Assert.Equal("Data: Fake (test)", parameters[NavigationKeys.DataSource]);
+        Assert.False(_viewModel.HasUnknownBarcode);
+    }
+
+    [Fact]
+    public async Task CreateFromLookup_AfterwardsTheListIsToldToReload()
+    {
+        await _store.SignInAsync(Role.Manager);
+        _lookup.Result = LookupResult.Found("Nutella", "Ferrero", "400 g", "Spreads");
+        _viewModel.ManualBarcode = UnknownBarcode;
+        await _viewModel.LookUpCommand.ExecuteAsync(null);
+        await _viewModel.CreateFromLookupCommand.ExecuteAsync(null);
+
+        await _viewModel.GoBackCommand.ExecuteAsync(null);
+
+        Assert.True((bool)_store.Navigation.RequestedParameters.Last()![NavigationKeys.ProductsChanged]);
+    }
+
+    [Theory]
+    [InlineData(Role.Storekeeper)]
+    [InlineData(Role.Driver)]
+    public async Task CreateFromLookup_NonManager_CannotRunAndNeverAsksTheInternet(Role role)
+    {
+        await _store.SignInAsync(role);
+        _viewModel.ManualBarcode = UnknownBarcode;
+        await _viewModel.LookUpCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.CreateFromLookupCommand.CanExecute(null));
+        Assert.Empty(_lookup.Asked);
+        Assert.Equal($"No product has barcode {UnknownBarcode}. Ask a manager to add it.", _viewModel.StatusMessage);
+    }
+
+    [Theory]
+    [InlineData(LookupStatus.NotFound, "Open Food Facts does not know barcode 4006381333931. You can add the product by hand.")]
+    [InlineData(LookupStatus.Offline, "Cannot reach Open Food Facts (offline or too slow). Try again later or add the product by hand.")]
+    [InlineData(LookupStatus.Failed, "Open Food Facts gave no usable answer. Try again later or add the product by hand.")]
+    public async Task CreateFromLookup_NoData_ShowsAClearMessageAndStaysOnThePage(LookupStatus status, string message)
+    {
+        await _store.SignInAsync(Role.Manager);
+        _lookup.Result = new LookupResult(status);
+        _viewModel.ManualBarcode = UnknownBarcode;
+        await _viewModel.LookUpCommand.ExecuteAsync(null);
+
+        await _viewModel.CreateFromLookupCommand.ExecuteAsync(null);
+
+        Assert.Equal(message, _viewModel.StatusMessage);
+        Assert.Empty(_store.Navigation.RequestedRoutes);
+        Assert.Equal(UnknownBarcode, _viewModel.UnknownBarcode);
+        Assert.True(_viewModel.CreateProductCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void LookupAttribution_ComesFromTheLookup()
+    {
+        Assert.Equal("Data: Fake (test)", _viewModel.LookupAttribution);
     }
 
     [Fact]

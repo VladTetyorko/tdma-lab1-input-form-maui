@@ -211,6 +211,25 @@ public class ProductFormViewModelTests
     }
 
     [Fact]
+    public void ApplyQueryAttributes_FromTheLookup_PrefillsNameBarcodeAndAttribution()
+    {
+        _appState.SetDraft(new ProductFormDraft("Old draft", ValidBarcode));
+        var viewModel = CreateViewModel(_appState);
+        viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.Barcode] = "3017620422003",
+            [NavigationKeys.ProductName] = "Nutella",
+            [NavigationKeys.DataSource] = "Data: Open Food Facts (ODbL)"
+        });
+
+        viewModel.OnAppearing();
+
+        Assert.Equal("Nutella", viewModel.Name);
+        Assert.Equal("3017620422003", viewModel.Barcode);
+        Assert.Equal("Data: Open Food Facts (ODbL)", viewModel.DataSource);
+    }
+
+    [Fact]
     public async Task Save_Success_ClearsTheDraft()
     {
         _currentUser.SignIn(new User { FullName = "Olena Kovalenko", Role = Role.Manager });

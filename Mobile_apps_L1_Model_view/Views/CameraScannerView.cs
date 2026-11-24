@@ -51,7 +51,7 @@ public sealed class CameraScannerView : ContentView
 
         _reader = new CameraBarcodeReaderView
         {
-            Options = new BarcodeReaderOptions { Formats = BarcodeFormats.OneDimensional, AutoRotate = true, Multiple = false },
+            Options = new BarcodeReaderOptions { Formats = BarcodeFormats.OneDimensional | BarcodeFormats.QrCode, AutoRotate = true, Multiple = false },
             IsDetecting = true
         };
         _reader.BarcodesDetected += OnBarcodesDetected;

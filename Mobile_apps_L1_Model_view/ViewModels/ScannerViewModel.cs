@@ -4,13 +4,15 @@ using Mobile_apps_L1_Model_view.Services;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
-// Scan (camera) or type a barcode: a known product opens the operation page, an unknown barcode
-// offers a Manager to add the product. The camera runs only while the page is visible.
+// Scan (camera: barcode or QR) or type a barcode: a known product opens the operation page, an unknown barcode
+// offers a Manager to add the product, by hand or prefilled from Open Food Facts.
+// The camera runs only while the page is visible.
 public partial class ScannerViewModel(
     IBarcodeScanner scanner,
     IProductCatalog catalog,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject, IPageLifecycleAware
+    INavigationService navigation,
+    IProductLookup lookup) : ObservableObject, IPageLifecycleAware
 {
     // Set when this page sent the user to a page that can change products or stock
     private bool _changed;
@@ -35,6 +37,7 @@ public partial class ScannerViewModel(
     [NotifyPropertyChangedFor(nameof(CanScanAgain))]
     [NotifyPropertyChangedFor(nameof(CanCreateProduct))]
     [NotifyCanExecuteChangedFor(nameof(CreateProductCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CreateFromLookupCommand))]
     public partial string UnknownBarcode { get; set; } = string.Empty;
 
     public bool HasUnknownBarcode => UnknownBarcode.Length > 0;
@@ -44,6 +47,9 @@ public partial class ScannerViewModel(
 
     public bool CanCreateProduct =>
         HasUnknownBarcode && currentUser.CurrentUser is { } user && RolePermissions.CanManageProducts(user.Role);
+
+    // Attribution for the open data the lookup button uses
+    public string LookupAttribution => lookup.Attribution;
 
     public void OnAppearing() => StartCommand.Execute(null);
 
@@ -97,6 +103,37 @@ public partial class ScannerViewModel(
         return navigation.GoToAsync(Routes.ProductForm, new Dictionary<string, object> { [NavigationKeys.Barcode] = barcode });
     }
 
+    // Manager only: asks Open Food Facts about the unknown barcode and opens the form prefilled with the answer.
+    // One request per tap; offline, a timeout or a bad answer only show a message
+    [RelayCommand(CanExecute = nameof(CanCreateProduct))]
+    private async Task CreateFromLookupAsync()
+    {
+        var barcode = UnknownBarcode;
+        var result = await lookup.FindAsync(barcode);
+        if (!result.IsFound)
+        {
+            StatusMessage = LookupFailureMessage(result.Status, barcode);
+            return;
+        }
+
+        _changed = true;
+        UnknownBarcode = string.Empty;
+        StatusMessage = string.Empty;
+        await navigation.GoToAsync(Routes.ProductForm, new Dictionary<string, object>
+        {
+            [NavigationKeys.Barcode] = barcode,
+            [NavigationKeys.ProductName] = result.Name,
+            [NavigationKeys.DataSource] = lookup.Attribution
+        });
+    }
+
+    private static string LookupFailureMessage(LookupStatus status, string barcode) => status switch
+    {
+        LookupStatus.NotFound => $"Open Food Facts does not know barcode {barcode}. You can add the product by hand.",
+        LookupStatus.Offline => "Cannot reach Open Food Facts (offline or too slow). Try again later or add the product by hand.",
+        _ => "Open Food Facts gave no usable answer. Try again later or add the product by hand."
+    };
+
     // Tells the list to reload only when something may have changed
     [RelayCommand]
     private Task GoBackAsync() =>
@@ -106,12 +143,14 @@ public partial class ScannerViewModel(
 
     private async Task LookUpBarcodeAsync(string? text)
     {
-        var barcode = text?.Trim() ?? string.Empty;
-        if (barcode.Length == 0)
+        var parsed = ScanPayloadParser.Parse(text);
+        if (!parsed.IsSuccess)
         {
-            StatusMessage = "Enter a barcode.";
+            StatusMessage = parsed.Error!;
             return;
         }
+
+        var barcode = parsed.Value!;
 
         var product = await catalog.GetSummaryByBarcodeAsync(barcode);
         if (product is not null)
