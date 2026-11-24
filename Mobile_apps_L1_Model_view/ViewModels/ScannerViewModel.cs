@@ -12,6 +12,7 @@ public partial class ScannerViewModel(
     IBarcodeScanner scanner,
     IProductCatalog catalog,
     ICurrentUserService currentUser,
+    IPermissionGuard guard,
     INavigationService navigation,
     IProductLookup lookup,
     ILogger<ScannerViewModel> logger) : ObservableObject, IPageLifecycleAware
@@ -98,12 +99,18 @@ public partial class ScannerViewModel(
     private Task ScanAgainAsync() => StartAsync();
 
     [RelayCommand(CanExecute = nameof(CanCreateProduct))]
-    private Task CreateProductAsync()
+    private async Task CreateProductAsync()
     {
+        if (await guard.CheckAsync(RolePermissions.CanManageProducts, "add products") is { } refusal)
+        {
+            StatusMessage = refusal;
+            return;
+        }
+
         _changed = true;
         var barcode = UnknownBarcode;
         UnknownBarcode = string.Empty;
-        return navigation.GoToAsync(Routes.ProductForm, new Dictionary<string, object> { [NavigationKeys.Barcode] = barcode });
+        await navigation.GoToAsync(Routes.ProductForm, new Dictionary<string, object> { [NavigationKeys.Barcode] = barcode });
     }
 
     // Manager only: asks Open Food Facts about the unknown barcode and opens the form prefilled with the answer.
@@ -111,6 +118,12 @@ public partial class ScannerViewModel(
     [RelayCommand(CanExecute = nameof(CanCreateProduct))]
     private async Task CreateFromLookupAsync()
     {
+        if (await guard.CheckAsync(RolePermissions.CanManageProducts, "add products") is { } refusal)
+        {
+            StatusMessage = refusal;
+            return;
+        }
+
         var barcode = UnknownBarcode;
         var result = await lookup.FindAsync(barcode);
         if (!result.IsFound)

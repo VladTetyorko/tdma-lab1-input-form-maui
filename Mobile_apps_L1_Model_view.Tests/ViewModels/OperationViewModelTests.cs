@@ -16,7 +16,7 @@ public class OperationViewModelTests
 
     public OperationViewModelTests()
     {
-        _viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Drafts, _store.Navigation,
+        _viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Guard, _store.Drafts, _store.Navigation,
             _store.Logger<OperationViewModel>());
     }
 
@@ -277,7 +277,7 @@ public class OperationViewModelTests
         await SeedDrillWithTenUnitsAsync();
         await _store.Drafts.SaveAsync(new OperationDraft(DrillBarcode, OperationDirection.Out, 4, "Acme Ltd", "Site 7"));
         _store.Secrets.Values.Clear();
-        var viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, new OperationDraftStore(
+        var viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Guard, new OperationDraftStore(
             _store.AppState, new AesFieldEncryptor(_store.Secrets), NullLogger<OperationDraftStore>.Instance),
             _store.Navigation, NullLogger<OperationViewModel>.Instance);
 

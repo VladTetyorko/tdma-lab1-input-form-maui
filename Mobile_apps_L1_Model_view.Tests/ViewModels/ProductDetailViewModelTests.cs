@@ -15,7 +15,7 @@ public class ProductDetailViewModelTests
     public ProductDetailViewModelTests()
     {
         _viewModel = new ProductDetailViewModel(
-            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.AppState, _store.Navigation,
+            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
             _store.Logger<ProductDetailViewModel>());
     }
 
@@ -371,7 +371,7 @@ public class ProductDetailViewModelTests
     private async Task<ProductDetailViewModel> ReopenAsync(Guid productId)
     {
         var viewModel = new ProductDetailViewModel(
-            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.AppState, _store.Navigation,
+            _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
             _store.Logger<ProductDetailViewModel>());
         var summary = await _store.Catalog.GetSummaryAsync(productId);
         viewModel.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = summary! });

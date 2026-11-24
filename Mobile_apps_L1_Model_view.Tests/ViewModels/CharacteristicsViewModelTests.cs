@@ -13,7 +13,7 @@ public class CharacteristicsViewModelTests
     public CharacteristicsViewModelTests()
     {
         _viewModel = new CharacteristicsViewModel(
-            _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Navigation);
+            _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.Navigation);
     }
 
     [Fact]

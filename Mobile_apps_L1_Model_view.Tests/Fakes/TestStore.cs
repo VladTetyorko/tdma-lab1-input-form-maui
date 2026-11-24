@@ -55,6 +55,8 @@ public sealed class TestStore
         new CharacteristicService(Characteristics, Values, Products, Validator, CurrentUser, Clock,
             Logger<CharacteristicService>());
 
+    public IPermissionGuard Guard => new PermissionGuard(CurrentUser, Alerts, Logger<PermissionGuard>());
+
     public IDiagnosticsService Diagnostics => new DiagnosticsService(CurrentUser, CrashReporter, Logger<DiagnosticsService>());
 
     public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock);

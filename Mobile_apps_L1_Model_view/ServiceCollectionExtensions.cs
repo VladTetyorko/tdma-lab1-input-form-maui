@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ITokenService, HmacTokenService>();
         services.AddSingleton<ISessionStore, SessionStore>();
         services.AddSingleton<IBiometricSettings, BiometricSettings>();
+        services.AddSingleton<IPermissionGuard, PermissionGuard>();
         services.AddSingleton<IAppStateService, AppStateService>();
         services.AddSingleton<IOperationDraftStore, OperationDraftStore>();
         services.AddSingleton<IThemeService, ThemeService>();

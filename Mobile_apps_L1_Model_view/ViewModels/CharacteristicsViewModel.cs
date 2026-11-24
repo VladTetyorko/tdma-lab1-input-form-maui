@@ -10,6 +10,7 @@ public partial class CharacteristicsViewModel(
     ICharacteristicService characteristics,
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
+    IPermissionGuard guard,
     INavigationService navigation) : ObservableObject, IPageLifecycleAware
 {
     private bool _changed;
@@ -55,6 +56,12 @@ public partial class CharacteristicsViewModel(
     [RelayCommand(CanExecute = nameof(CanAdd))]
     private async Task AddAsync()
     {
+        if (await guard.CheckAsync(RolePermissions.CanManageProducts, "add characteristics") is { } refusal)
+        {
+            StatusMessage = refusal;
+            return;
+        }
+
         // Uniqueness needs the repository, so it is checked on Add, not on every keystroke
         var error = await validator.ValidateNameAsync(NewName);
         if (error is not null)

@@ -14,6 +14,7 @@ public class ProductFormViewModelTests
     private readonly InMemoryProductRepository _products = new();
     private readonly CurrentUserService _currentUser = new();
     private readonly FakeNavigationService _navigation = new();
+    private readonly FakeAlertService _alerts = new();
     private readonly AppStateService _appState = new(new FakePreferencesStore());
     private readonly ProductFormViewModel _viewModel;
 
@@ -27,7 +28,7 @@ public class ProductFormViewModelTests
         var validator = new ProductValidator(_products);
         var service = new ProductService(_products, new InMemoryOperationRepository(), validator, _currentUser, new FakeClock(),
             NullLogger<ProductService>.Instance);
-        return new ProductFormViewModel(validator, service, _currentUser, appState, _navigation,
+        return new ProductFormViewModel(validator, service, _currentUser, new PermissionGuard(_currentUser, _alerts, NullLogger<PermissionGuard>.Instance), appState, _navigation,
             NullLogger<ProductFormViewModel>.Instance);
     }
 

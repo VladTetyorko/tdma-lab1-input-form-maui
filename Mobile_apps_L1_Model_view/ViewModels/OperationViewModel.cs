@@ -13,6 +13,7 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 public partial class OperationViewModel(
     IStockService stock,
     ICurrentUserService currentUser,
+    IPermissionGuard guard,
     IOperationDraftStore drafts,
     INavigationService navigation,
     ILogger<OperationViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
@@ -91,6 +92,13 @@ public partial class OperationViewModel(
     [RelayCommand]
     private async Task SaveAsync()
     {
+        var direction = SelectedDirection;
+        if (await guard.CheckAsync(role => RolePermissions.CanRecord(role, direction), $"record {direction} operations") is { } refusal)
+        {
+            ErrorMessage = refusal;
+            return;
+        }
+
         var result = await stock.RecordAsync(
             _productId, SelectedDirection, Quantity, Blank(Counterparty), Blank(Reason));
         if (!result.IsSuccess)

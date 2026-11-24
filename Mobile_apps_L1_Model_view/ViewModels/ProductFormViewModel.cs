@@ -13,6 +13,7 @@ public partial class ProductFormViewModel(
     IProductValidator validator,
     IProductService productService,
     ICurrentUserService currentUser,
+    IPermissionGuard guard,
     IAppStateService appState,
     INavigationService navigation,
     ILogger<ProductFormViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
@@ -109,6 +110,12 @@ public partial class ProductFormViewModel(
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
+        if (await guard.CheckAsync(RolePermissions.CanManageProducts, _editing is null ? "add products" : "edit products") is { } refusal)
+        {
+            StatusMessage = refusal;
+            return;
+        }
+
         // Uniqueness needs the repository, so it is checked on save, not on every keystroke.
         // When editing, the product's own barcode is not a duplicate
         var barcodeError = await validator.ValidateBarcodeAsync(Barcode, _editing?.Id);
