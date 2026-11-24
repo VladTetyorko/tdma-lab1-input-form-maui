@@ -22,6 +22,7 @@ public sealed class TestStore
     public List<LogRecord> Logs { get; } = [];
 
     public FakeClock Clock { get; } = new();
+    public FakeCrashReporter CrashReporter { get; } = new();
     public CurrentUserService CurrentUser { get; } = new();
     public FakeNavigationService Navigation { get; } = new();
     public FakePreferencesStore Preferences { get; } = new();
@@ -51,6 +52,8 @@ public sealed class TestStore
     public ICharacteristicService CharacteristicService =>
         new CharacteristicService(Characteristics, Values, Products, Validator, CurrentUser, Clock,
             Logger<CharacteristicService>());
+
+    public IDiagnosticsService Diagnostics => new DiagnosticsService(CurrentUser, CrashReporter, Logger<DiagnosticsService>());
 
     public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock);
 

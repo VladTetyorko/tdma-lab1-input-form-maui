@@ -11,6 +11,9 @@ public partial class SettingsViewModel(
     ISyncService sync,
     IOfflineSimulator offline,
     IDatabaseExporter exporter,
+    IDiagnosticsService diagnostics,
+    ICurrentUserService currentUser,
+    INavigationService navigation,
     ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
     public IReadOnlyList<ThemeSetting> ThemeOptions { get; } = Enum.GetValues<ThemeSetting>();
@@ -39,6 +42,15 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial string ExportText { get; set; } = string.Empty;
 
+    // The Diagnostics section is for the Manager (also refused by IDiagnosticsService)
+    public bool ShowDiagnostics => diagnostics.IsAvailable;
+
+    // "Send test crash" needs a configured crash service
+    public bool CanSendTestCrash => diagnostics.CanSendTestCrash;
+
+    [ObservableProperty]
+    public partial string DiagnosticsText { get; set; } = string.Empty;
+
     partial void OnSelectedThemeChanged(ThemeSetting value)
     {
         themeService.Set(value);
@@ -56,6 +68,8 @@ public partial class SettingsViewModel(
     {
         sync.Completed += OnSyncCompleted;
         NetworkText = DescribeNetwork();
+        OnPropertyChanged(nameof(ShowDiagnostics));
+        OnPropertyChanged(nameof(CanSendTestCrash));
         RefreshPendingCommand.Execute(null);
     }
 
@@ -83,6 +97,18 @@ public partial class SettingsViewModel(
     }
 
     [RelayCommand]
+    private Task OpenLogsAsync() => navigation.GoToAsync(Routes.Logs);
+
+    [RelayCommand]
+    private void WriteTestEntries() => DiagnosticsText = Describe(diagnostics.WriteTestEntries());
+
+    [RelayCommand]
+    private async Task ThrowInBackgroundTaskAsync() => DiagnosticsText = Describe(await diagnostics.ThrowInBackgroundTaskAsync());
+
+    [RelayCommand(CanExecute = nameof(CanSendTestCrash))]
+    private void SendTestCrash() => DiagnosticsText = Describe(diagnostics.SendTestCrash());
+
+    [RelayCommand]
     private Task OpenLinkAsync() => deepLinks.HandleAsync(LinkText);
 
     // A sync can finish on any thread (network change, app resume): bindings marshal property changes to the UI
@@ -98,6 +124,8 @@ public partial class SettingsViewModel(
             _ => "A sync is already running."
         };
     }
+
+    private static string Describe(Result<string> result) => result.IsSuccess ? result.Value! : result.Error!;
 
     private string DescribeNetwork() => sync.IsOnline ? "Online" : "Offline";
 }
