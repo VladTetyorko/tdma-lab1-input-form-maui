@@ -38,6 +38,7 @@ public class SqliteFlowTests : IDisposable
         var services = new ServiceCollection().AddStockRoomCore();
         services.AddSingleton<IDatabasePathProvider>(_files);
         services.AddSingleton<ISecretStore>(_secrets);
+        services.AddSingleton<ICrashReporter, NullCrashReporter>();
         services.AddSingleton<IConnectivityMonitor>(_network);
         services.AddSingleton<IFileSharer>(_sharer);
         services.AddSingleton<IPreferencesStore>(_preferences);

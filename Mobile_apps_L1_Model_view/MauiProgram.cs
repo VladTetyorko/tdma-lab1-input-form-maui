@@ -49,6 +49,7 @@ public static class MauiProgram
         builder.Services.AddTransient<OperationPage>();
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<ScannerPage>();
+        builder.Services.AddTransient<LogsPage>();
 
         ConfigureLogging(builder);
         ConfigureCrashReporting(builder);

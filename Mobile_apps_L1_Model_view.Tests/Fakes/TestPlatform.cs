@@ -14,6 +14,10 @@ public static class TestPlatform
     {
         services.AddSingleton<TempDatabasePath>();
         services.AddSingleton<IDatabasePathProvider>(provider => provider.GetRequiredService<TempDatabasePath>());
+        services.AddSingleton<TempLogPath>();
+        services.AddSingleton<ILogPathProvider>(provider => provider.GetRequiredService<TempLogPath>());
+        services.AddSingleton<FakeCrashReporter>();
+        services.AddSingleton<ICrashReporter>(provider => provider.GetRequiredService<FakeCrashReporter>());
         services.AddSingleton<FakeSecretStore>();
         services.AddSingleton<ISecretStore>(provider => provider.GetRequiredService<FakeSecretStore>());
         services.AddSingleton<FakeConnectivityMonitor>();
