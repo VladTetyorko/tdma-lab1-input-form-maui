@@ -39,6 +39,20 @@ public static class MauiProgram
         builder.Services.AddSingleton<IBiometricAuthenticator, MauiBiometricAuthenticator>();
         builder.Services.AddSingleton<IConnectivityMonitor, MauiConnectivityMonitor>();
         builder.Services.AddSingleton<IFileSharer, MauiFileSharer>();
+
+        // Device capabilities (Lab 7). The Essentials interfaces are registered here, so only the Maui* classes
+        // below touch them; everything else asks for IPhotoService, ILocationService, IShakeDetector, ...
+        builder.Services.AddSingleton<IMediaPicker>(MediaPicker.Default);
+        builder.Services.AddSingleton<IGeolocation>(Geolocation.Default);
+        builder.Services.AddSingleton<IAccelerometer>(Accelerometer.Default);
+        builder.Services.AddSingleton<IMap>(Map.Default);
+        builder.Services.AddSingleton<IAppDataPathProvider, MauiAppDataPathProvider>();
+        builder.Services.AddSingleton<IPlatformPermissions, MauiPlatformPermissions>();
+        builder.Services.AddSingleton<IPhotoService, MauiPhotoService>();
+        builder.Services.AddSingleton<ILocationService, MauiLocationService>();
+        builder.Services.AddSingleton<IShakeDetector, MauiShakeDetector>();
+        builder.Services.AddSingleton<IMapLauncher, MauiMapLauncher>();
+        builder.Services.AddSingleton<IMainThread, MauiMainThread>();
         builder.Services.AddSingleton<IAlertService, ShellAlertService>();
         builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
