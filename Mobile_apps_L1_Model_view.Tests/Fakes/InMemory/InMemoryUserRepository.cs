@@ -9,5 +9,8 @@ public sealed class InMemoryUserRepository : InMemoryRepository<User>, IUserRepo
 
     public Task<User?> GetByIdAsync(Guid id) => FindAsync(u => u.Id == id);
 
+    public Task<User?> GetByLoginAsync(string login) =>
+        FindAsync(u => string.Equals(u.Login, login, StringComparison.OrdinalIgnoreCase));
+
     public Task AddAsync(User item) => InsertAsync(item);
 }

@@ -8,5 +8,8 @@ public interface IUserRepository
 
     Task<User?> GetByIdAsync(Guid id);
 
+    // Case-insensitive; null when no user has that login
+    Task<User?> GetByLoginAsync(string login);
+
     Task AddAsync(User user);
 }
