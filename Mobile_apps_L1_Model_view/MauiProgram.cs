@@ -2,6 +2,7 @@
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Views;
+using Serilog;
 #if ANDROID || IOS
 using ZXing.Net.Maui.Controls;
 #endif
@@ -30,6 +31,7 @@ public static class MauiProgram
 #endif
 
         builder.Services.AddStockRoomCore();
+        builder.Services.AddSingleton<ILogPathProvider, MauiLogPathProvider>();
         builder.Services.AddSingleton<IPreferencesStore, MauiPreferencesStore>();
         builder.Services.AddSingleton<IDatabasePathProvider, MauiDatabasePathProvider>();
         builder.Services.AddSingleton<ISecretStore, MauiSecretStore>();
@@ -47,10 +49,34 @@ public static class MauiProgram
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<ScannerPage>();
 
+        ConfigureLogging(builder);
+
+        return builder.Build();
+    }
+
+    // The only place that knows Serilog: everything else logs through ILogger<T>
+    private static void ConfigureLogging(MauiAppBuilder builder)
+    {
+        var logDirectory = new MauiLogPathProvider().LogDirectory;
+        var configuration = new LoggerConfiguration()
+#if DEBUG
+            .MinimumLevel.Debug()
+            .WriteTo.Console(outputTemplate: LogFormat.OutputTemplate)
+#else
+            .MinimumLevel.Information()
+#endif
+            .Enrich.FromLogContext()
+            .WriteTo.File(
+                Path.Combine(logDirectory, LogFormat.FileNamePattern),
+                outputTemplate: LogFormat.OutputTemplate,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: LogFormat.RetainedFiles,
+                shared: true);
+
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog(configuration.CreateLogger(), dispose: true);
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-
-        return builder.Build();
     }
 }
