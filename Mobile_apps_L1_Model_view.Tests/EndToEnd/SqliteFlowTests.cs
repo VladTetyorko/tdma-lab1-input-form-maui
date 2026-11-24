@@ -76,8 +76,14 @@ public class SqliteFlowTests : IDisposable
         var sync = app.GetRequiredService<ISyncService>();
         var server = app.GetRequiredService<StubSyncApi>();
         var queue = app.GetRequiredService<ISyncQueue>();
+        var startupSync = false;
+        sync.Completed += (_, _) => startupSync = true;
         await app.GetRequiredService<IAppLifecycleService>().RestoreAsync();
         var settings = app.GetRequiredService<SettingsViewModel>();
+
+        // Restoring starts a first sync in the background. It must be over before a change is queued, or the
+        // "back online" request is answered with Busy by a run that has already read an empty queue
+        await Eventually.WaitAsync(() => startupSync);
 
         settings.SimulateOffline = true;
         Assert.False(sync.IsOnline);
