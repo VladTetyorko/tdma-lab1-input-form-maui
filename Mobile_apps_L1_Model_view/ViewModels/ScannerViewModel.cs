@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Services;
@@ -12,7 +13,8 @@ public partial class ScannerViewModel(
     IProductCatalog catalog,
     ICurrentUserService currentUser,
     INavigationService navigation,
-    IProductLookup lookup) : ObservableObject, IPageLifecycleAware
+    IProductLookup lookup,
+    ILogger<ScannerViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
     // Set when this page sent the user to a page that can change products or stock
     private bool _changed;
@@ -72,6 +74,7 @@ public partial class ScannerViewModel(
         if (!IsCameraActive)
         {
             StatusMessage = "Camera access was denied. Type the barcode instead.";
+            logger.LogWarning("Camera access was denied, the barcode must be typed");
         }
     }
 
@@ -113,6 +116,7 @@ public partial class ScannerViewModel(
         if (!result.IsFound)
         {
             StatusMessage = LookupFailureMessage(result.Status, barcode);
+            logger.LogWarning("Lookup of barcode {Barcode} gave {Status}", barcode, result.Status);
             return;
         }
 
@@ -147,6 +151,7 @@ public partial class ScannerViewModel(
         if (!parsed.IsSuccess)
         {
             StatusMessage = parsed.Error!;
+            logger.LogWarning("Scanned text was not a barcode: {Reason}", parsed.Error);
             return;
         }
 
@@ -155,6 +160,7 @@ public partial class ScannerViewModel(
         var product = await catalog.GetSummaryByBarcodeAsync(barcode);
         if (product is not null)
         {
+            logger.LogInformation("Barcode {Barcode} matched product {ProductId}", barcode, product.Id);
             _changed = true;
             StatusMessage = string.Empty;
             await navigation.GoToAsync(Routes.Operation,
@@ -162,6 +168,7 @@ public partial class ScannerViewModel(
             return;
         }
 
+        logger.LogInformation("Barcode {Barcode} matched no product", barcode);
         UnknownBarcode = barcode;
         StatusMessage = CanCreateProduct
             ? $"No product has barcode {barcode}. You can add it."

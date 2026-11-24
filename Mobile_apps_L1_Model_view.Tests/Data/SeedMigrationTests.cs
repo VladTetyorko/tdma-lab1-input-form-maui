@@ -102,7 +102,8 @@ public class SeedMigrationTests : IDisposable
 
         var paths = _provider.GetRequiredService<IDatabasePathProvider>();
         var reopened = new SqliteDatabase(paths, _provider.GetRequiredService<MigrationRunner>());
-        var products = new SqliteProductRepository(reopened, _provider.GetRequiredService<SyncJournal>());
+        var products = new SqliteProductRepository(reopened, _provider.GetRequiredService<SyncJournal>(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SqliteProductRepository>.Instance);
 
         Assert.Equal(before, (await products.GetAllAsync()).Count);
         reopened.Dispose();

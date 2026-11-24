@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 
@@ -9,7 +10,8 @@ public sealed class CharacteristicService(
     IProductRepository products,
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
-    IClock clock) : ICharacteristicService
+    IClock clock,
+    ILogger<CharacteristicService> logger) : ICharacteristicService
 {
     public Task<IReadOnlyList<Characteristic>> GetAllAsync() => characteristics.GetAllAsync();
 
@@ -18,12 +20,14 @@ public sealed class CharacteristicService(
         var denied = CheckManager("add characteristics");
         if (denied is not null)
         {
+            logger.LogWarning("Adding a characteristic denied: {Reason}", denied);
             return Result<Characteristic>.Failure(denied);
         }
 
         var error = await validator.ValidateNameAsync(name);
         if (error is not null)
         {
+            logger.LogWarning("Adding a characteristic rejected: {Reason}", error);
             return Result<Characteristic>.Failure(error);
         }
 
@@ -37,6 +41,7 @@ public sealed class CharacteristicService(
             UpdatedAt = now
         };
         await characteristics.AddAsync(characteristic);
+        logger.LogInformation("Added characteristic {CharacteristicId} ({ValueType})", characteristic.Id, characteristic.ValueType);
         return Result<Characteristic>.Success(characteristic);
     }
 
@@ -45,11 +50,13 @@ public sealed class CharacteristicService(
         var denied = CheckManager("edit characteristic values");
         if (denied is not null)
         {
+            logger.LogWarning("Editing characteristic values of product {ProductId} denied: {Reason}", productId, denied);
             return Result<int>.Failure(denied);
         }
 
         if (await products.GetByIdAsync(productId) is null)
         {
+            logger.LogWarning("Editing characteristic values rejected: product {ProductId} not found", productId);
             return Result<int>.Failure("Product not found.");
         }
 
@@ -58,12 +65,16 @@ public sealed class CharacteristicService(
         {
             if (!known.TryGetValue(characteristicId, out var characteristic))
             {
+                logger.LogWarning("Editing values of product {ProductId} rejected: characteristic {CharacteristicId} not found",
+                    productId, characteristicId);
                 return Result<int>.Failure("Characteristic not found.");
             }
 
             var error = validator.ValidateValue(characteristic.ValueType, value);
             if (error is not null)
             {
+                logger.LogWarning("Value of characteristic {CharacteristicId} on product {ProductId} rejected: {Reason}",
+                    characteristicId, productId, error);
                 return Result<int>.Failure($"{characteristic.Name}: {error}");
             }
         }
@@ -77,6 +88,7 @@ public sealed class CharacteristicService(
             changes += await ApplyAsync(productId, characteristicId, current, text);
         }
 
+        logger.LogInformation("Saved characteristic values of product {ProductId}: {Changes} changed", productId, changes);
         return Result<int>.Success(changes);
     }
 

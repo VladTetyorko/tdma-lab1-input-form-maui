@@ -1,10 +1,11 @@
+﻿using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data.Rows;
 using Mobile_apps_L1_Model_view.Models;
 
 namespace Mobile_apps_L1_Model_view.Data;
 
-public sealed class SqliteProductRepository(IDatabase database, SyncJournal journal)
-    : SqliteRepository<Product, ProductRow>(database, journal), IProductRepository
+public sealed class SqliteProductRepository(IDatabase database, SyncJournal journal, ILogger<SqliteProductRepository> logger)
+    : SqliteRepository<Product, ProductRow>(database, journal, logger), IProductRepository
 {
     public Task<IReadOnlyList<Product>> GetAllAsync() => QueryAsync();
 

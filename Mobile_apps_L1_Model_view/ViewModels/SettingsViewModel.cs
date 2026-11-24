@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Services;
@@ -9,7 +10,8 @@ public partial class SettingsViewModel(
     IDeepLinkHandler deepLinks,
     ISyncService sync,
     IOfflineSimulator offline,
-    IDatabaseExporter exporter) : ObservableObject, IPageLifecycleAware
+    IDatabaseExporter exporter,
+    ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
     public IReadOnlyList<ThemeSetting> ThemeOptions { get; } = Enum.GetValues<ThemeSetting>();
 
@@ -37,11 +39,16 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial string ExportText { get; set; } = string.Empty;
 
-    partial void OnSelectedThemeChanged(ThemeSetting value) => themeService.Set(value);
+    partial void OnSelectedThemeChanged(ThemeSetting value)
+    {
+        themeService.Set(value);
+        logger.LogInformation("Theme set to {Theme}", value);
+    }
 
     partial void OnSimulateOfflineChanged(bool value)
     {
         offline.IsOffline = value;
+        logger.LogInformation("Simulated offline mode switched {State}", value ? "on" : "off");
         NetworkText = DescribeNetwork();
     }
 
@@ -71,6 +78,7 @@ public partial class SettingsViewModel(
         catch (Exception ex)
         {
             ExportText = $"The database could not be shared: {ex.Message}";
+            logger.LogWarning("The database export was not shared, the user was told");
         }
     }
 

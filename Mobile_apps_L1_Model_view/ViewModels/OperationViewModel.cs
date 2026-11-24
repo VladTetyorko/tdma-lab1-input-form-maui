@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Models;
@@ -13,7 +14,8 @@ public partial class OperationViewModel(
     IStockService stock,
     ICurrentUserService currentUser,
     IOperationDraftStore drafts,
-    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    INavigationService navigation,
+    ILogger<OperationViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private Guid _productId;
     private string _barcode = string.Empty;
@@ -94,9 +96,11 @@ public partial class OperationViewModel(
         if (!result.IsSuccess)
         {
             ErrorMessage = result.Error!;
+            logger.LogWarning("Operation on product {ProductId} was not recorded: {Reason}", _productId, result.Error);
             return;
         }
 
+        logger.LogDebug("Operation {OperationId} recorded from the operation page", result.Value!.Id);
         drafts.Clear();
 
         // The detail page reloads when it appears again

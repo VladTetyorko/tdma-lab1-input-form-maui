@@ -84,7 +84,7 @@ public sealed class SyncService(
             try
             {
                 var outcome = await api.PushAsync(item);
-                logger.LogInformation("Pushed {Operation} of {Type} {Id}: {Outcome}",
+                logger.LogDebug("Pushed {Operation} of {Type} {Id}: {Outcome}",
                     item.Operation, item.EntityType, item.EntityId, outcome);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -101,6 +101,24 @@ public sealed class SyncService(
         return new SyncResult(SyncStatus.Synced, pushed, await queue.CountAsync());
     }
 
+    // One line per run, never per item
+    private void LogResult(SyncResult result)
+    {
+        switch (result.Status)
+        {
+            case SyncStatus.Synced:
+                logger.LogInformation("Sync pushed {Pushed} changes, {Remaining} remaining", result.Pushed, result.Remaining);
+                break;
+            case SyncStatus.Offline:
+                logger.LogWarning("Sync skipped: offline, {Remaining} changes stay queued", result.Remaining);
+                break;
+            case SyncStatus.Failed:
+                logger.LogWarning("Sync failed after {Pushed} changes, {Remaining} remaining and will be retried",
+                    result.Pushed, result.Remaining);
+                break;
+        }
+    }
+
     private async Task RunSafelyAsync()
     {
         try
@@ -115,6 +133,7 @@ public sealed class SyncService(
 
     private SyncResult Publish(SyncResult result)
     {
+        LogResult(result);
         Completed?.Invoke(this, result);
         return result;
     }

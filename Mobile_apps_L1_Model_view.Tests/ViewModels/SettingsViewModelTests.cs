@@ -18,7 +18,7 @@ public class SettingsViewModelTests
     public SettingsViewModelTests()
     {
         _theme = new ThemeService(_store.Preferences, _applier);
-        _viewModel = new SettingsViewModel(_theme, _store.DeepLinks, _sync, _offline, _exporter);
+        _viewModel = new SettingsViewModel(_theme, _store.DeepLinks, _sync, _offline, _exporter, _store.Logger<SettingsViewModel>());
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class SettingsViewModelTests
     {
         _theme.Set(ThemeSetting.Dark);
 
-        var viewModel = new SettingsViewModel(_theme, _store.DeepLinks, _sync, _offline, _exporter);
+        var viewModel = new SettingsViewModel(_theme, _store.DeepLinks, _sync, _offline, _exporter, _store.Logger<SettingsViewModel>());
 
         Assert.Equal(ThemeSetting.Dark, viewModel.SelectedTheme);
     }

@@ -13,11 +13,13 @@ public class ProductServiceTests
     private readonly InMemoryOperationRepository _operations = new();
     private readonly CurrentUserService _currentUser = new();
     private readonly FakeClock _clock = new();
+    private readonly List<LogRecord> _logs = [];
     private readonly ProductService _service;
 
     public ProductServiceTests()
     {
-        _service = new ProductService(_products, _operations, new ProductValidator(_products), _currentUser, _clock);
+        _service = new ProductService(_products, _operations, new ProductValidator(_products), _currentUser, _clock,
+            new CapturingLogger<ProductService>(_logs));
     }
 
     [Fact]

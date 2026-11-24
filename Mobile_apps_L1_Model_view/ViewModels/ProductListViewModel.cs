@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -14,7 +15,8 @@ public partial class ProductListViewModel(
     IAppStateService appState,
     IStartupNavigator startup,
     IAlertService alerts,
-    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    INavigationService navigation,
+    ILogger<ProductListViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;
@@ -96,6 +98,7 @@ public partial class ProductListViewModel(
         _loadedForUserId = user?.Id;
         _productsStale = false;
         ApplySort();
+        logger.LogInformation("Product list loaded: {Count} products for user {UserId}", _all.Count, user?.Id);
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -164,9 +167,11 @@ public partial class ProductListViewModel(
         if (!result.IsSuccess)
         {
             StatusMessage = result.Error!;
+            logger.LogWarning("Delete of product {ProductId} was refused", product.Id);
             return;
         }
 
+        logger.LogDebug("Product {ProductId} removed from the list", product.Id);
         _all.RemoveAll(p => p.Id == product.Id);
         ApplySort();
     }
@@ -183,6 +188,7 @@ public partial class ProductListViewModel(
     [RelayCommand]
     private Task SignOutAsync()
     {
+        logger.LogInformation("User {UserId} signed out", currentUser.CurrentUser?.Id);
         currentUser.SignOut();
         appState.Clear();
         return navigation.GoToAsync(Routes.Absolute(Routes.Login));

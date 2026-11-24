@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
@@ -15,7 +16,7 @@ public class LoginViewModelTests
 
     public LoginViewModelTests()
     {
-        _viewModel = new LoginViewModel(_users, _currentUser, _navigation);
+        _viewModel = new LoginViewModel(_users, _currentUser, _navigation, NullLogger<LoginViewModel>.Instance);
     }
 
     [Fact]
