@@ -31,14 +31,14 @@
             <Entry Text="{Binding ManualBarcode, Mode=TwoWay}"
                    Placeholder="EAN-13 or UPC-A"
                    Keyboard="Numeric"
-                   ReturnCommand="{Binding LookUpCommand}" />
-            <Button Text="Find product" Command="{Binding LookUpCommand}" HorizontalOptions="Start" />
+                   ReturnCommand="{Binding LookUpCommand}" AutomationId="ManualBarcodeEntry" />
+            <Button Text="Find product" Command="{Binding LookUpCommand}" HorizontalOptions="Start" AutomationId="FindProductButton" />
 
-            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="ScannerStatusLabel" />
 
             <HorizontalStackLayout Spacing="10">
                 <Button Text="Add this product" Command="{Binding CreateProductCommand}"
-                        IsVisible="{Binding CanCreateProduct}" />
+                        IsVisible="{Binding CanCreateProduct}" AutomationId="AddThisProductButton" />
                 <Button Text="Create from Open Food Facts" Command="{Binding CreateFromLookupCommand}"
                         IsVisible="{Binding CanCreateProduct}" />
                 <Button Text="Scan again" Command="{Binding ScanAgainCommand}"

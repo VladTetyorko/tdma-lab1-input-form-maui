@@ -25,18 +25,18 @@
 
             <Label Text="Direction" />
             <Picker ItemsSource="{Binding AvailableDirections}"
-                    SelectedItem="{Binding SelectedDirection, Mode=TwoWay}" />
+                    SelectedItem="{Binding SelectedDirection, Mode=TwoWay}" AutomationId="DirectionPicker" />
 
             <Label Text="Units" />
-            <Entry x:Name="QuantityEntry" Text="{Binding Quantity, Mode=TwoWay}" Keyboard="Numeric"
+            <Entry x:Name="QuantityEntry" Text="{Binding Quantity, Mode=TwoWay}" Keyboard="Numeric" AutomationId="QuantityEntry"
                    ReturnCommand="{Binding SaveCommand}" />
             <Stepper Minimum="1" Maximum="10000" Increment="1" Value="{Binding Quantity, Mode=TwoWay}" />
 
             <Label Text="Counterparty (optional)" />
-            <Entry Text="{Binding Counterparty, Mode=TwoWay}" Placeholder="Supplier or customer" />
+            <Entry Text="{Binding Counterparty, Mode=TwoWay}" Placeholder="Supplier or customer" AutomationId="CounterpartyEntry" />
 
             <Label Text="Reason (optional)" />
-            <Entry Text="{Binding Reason, Mode=TwoWay}" Placeholder="Why" />
+            <Entry Text="{Binding Reason, Mode=TwoWay}" Placeholder="Why" AutomationId="ReasonEntry" />
 
             <Label Text="Location (optional)" />
             <HorizontalStackLayout Spacing="10">
@@ -49,11 +49,11 @@
             <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}" AutomationId="LocationLabel" />
             <Label Text="{Binding LocationMessage}" Style="{StaticResource ErrorLabel}" />
 
-            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabel}" />
+            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabel}" AutomationId="ErrorLabel" />
 
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Save" Command="{Binding SaveCommand}" />
-                <Button Text="Cancel" Command="{Binding GoBackCommand}" />
+                <Button Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveOperationButton" />
+                <Button Text="Cancel" Command="{Binding GoBackCommand}" AutomationId="CancelOperationButton" />
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
