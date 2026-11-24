@@ -18,7 +18,7 @@ public class ScannerViewModelTests
     public ScannerViewModelTests()
     {
         _viewModel = new ScannerViewModel(_scanner, _store.Catalog, _store.CurrentUser, _store.Guard, _store.Navigation, _lookup,
-            _store.Logger<ScannerViewModel>());
+            _store.ShakeGesture, _store.Logger<ScannerViewModel>());
     }
 
     [Fact]

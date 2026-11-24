@@ -43,6 +43,9 @@ public sealed class TestStore
     public FakeShakeDetector ShakeDetector { get; } = new();
     public FakeShakeSettings ShakeSettings { get; } = new();
     public FakeMainThread MainThread { get; } = new();
+    public FakeSyncService Sync { get; } = new();
+    public OfflineSimulator Offline { get; } = new();
+    public FakeConnectivityMonitor Connectivity { get; } = new();
 
     public InMemoryUserRepository Users { get; } = new();
     public InMemoryProductRepository Products { get; } = new();
@@ -67,6 +70,8 @@ public sealed class TestStore
     public IDeviceFeedback Feedback => new DeviceFeedback(Logger<DeviceFeedback>());
 
     public ProductPhotoEditor PhotoEditor => new(Photos, Feedback, Guard, Logger<ProductPhotoEditor>());
+
+    public ConnectivityBannerViewModel Banner => new(Sync, Offline, Connectivity, Logger<ConnectivityBannerViewModel>());
 
     public IShakeGesture ShakeGesture =>
         new ShakeGesture(ShakeDetector, ShakeSettings, CurrentUser, MainThread, Clock, Logger<ShakeGesture>());

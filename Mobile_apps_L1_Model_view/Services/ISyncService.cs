@@ -6,6 +6,12 @@ public interface ISyncService
     // Network available and not simulating offline
     bool IsOnline { get; }
 
+    // A sync is running right now (shown as "Syncing..." by the connectivity banner)
+    bool IsSyncing { get; }
+
+    // Raised when a sync starts pushing, from any thread
+    event EventHandler? Started;
+
     // Raised after every sync attempt, from any thread
     event EventHandler<SyncResult>? Completed;
 

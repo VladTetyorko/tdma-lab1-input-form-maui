@@ -18,12 +18,17 @@ public partial class ProductListViewModel(
     IAlertService alerts,
     IPermissionGuard guard,
     INavigationService navigation,
+    IShakeGesture shake,
+    ConnectivityBannerViewModel connectivity,
     ILogger<ProductListViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;
     private bool _sortOptionsStale;
     private bool _productsStale;
+
+    // Offline / syncing / waiting changes, shown above the list
+    public ConnectivityBannerViewModel Connectivity { get; } = connectivity;
 
     // What the list shows: _all, sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
@@ -62,7 +67,19 @@ public partial class ProductListViewModel(
 
     partial void OnSortDescendingChanged(bool value) => ApplySort();
 
-    public void OnAppearing() => EnsureLoadedCommand.Execute(null);
+    // The shake sensor and the banner listen only while the page is visible. Shake opens the scanner ("quick scan")
+    public void OnAppearing()
+    {
+        EnsureLoadedCommand.Execute(null);
+        shake.Start(() => navigation.GoToAsync(Routes.Scanner));
+        Connectivity.Attach();
+    }
+
+    public void OnDisappearing()
+    {
+        shake.Stop();
+        Connectivity.Detach();
+    }
 
     // Called by the page every time it appears: loads once per signed-in user.
     // Changes made on other pages arrive through ApplyQueryAttributes instead

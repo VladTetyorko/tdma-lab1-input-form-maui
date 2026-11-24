@@ -26,7 +26,8 @@ public class RoleRefusalTests
 
     private ProductListViewModel CreateList() => new(
         _store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Session,
-        _store.AppState, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation, NullLogger<ProductListViewModel>.Instance);
+        _store.AppState, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation, _store.ShakeGesture, _store.Banner,
+        NullLogger<ProductListViewModel>.Instance);
 
     [Theory]
     [InlineData(Role.Storekeeper)]
@@ -189,7 +190,7 @@ public class RoleRefusalTests
     {
         await _store.SignInAsync(role);
         var viewModel = new ScannerViewModel(new FakeBarcodeScanner(), _store.Catalog, _store.CurrentUser, _store.Guard,
-            _store.Navigation, new FakeProductLookup(), NullLogger<ScannerViewModel>.Instance) { UnknownBarcode = Barcode };
+            _store.Navigation, new FakeProductLookup(), _store.ShakeGesture, NullLogger<ScannerViewModel>.Instance) { UnknownBarcode = Barcode };
 
         await viewModel.CreateProductCommand.ExecuteAsync(null);
         await viewModel.CreateFromLookupCommand.ExecuteAsync(null);

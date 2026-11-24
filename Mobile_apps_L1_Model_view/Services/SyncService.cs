@@ -21,6 +21,10 @@ public sealed class SyncService(
 
     public bool IsOnline => connectivity.HasInternet && !offline.IsOffline;
 
+    public bool IsSyncing { get; private set; }
+
+    public event EventHandler? Started;
+
     public event EventHandler<SyncResult>? Completed;
 
     public void Start()
@@ -63,10 +67,15 @@ public sealed class SyncService(
 
         try
         {
-            return Publish(await PushAllAsync());
+            IsSyncing = true;
+            Started?.Invoke(this, EventArgs.Empty);
+            var result = await PushAllAsync();
+            IsSyncing = false;
+            return Publish(result);
         }
         finally
         {
+            IsSyncing = false;
             _running.Release();
         }
     }
