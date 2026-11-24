@@ -70,9 +70,8 @@ public class HmacTokenServiceTests
     public async Task ChangedSignature_IsRejected()
     {
         var token = await _tokens.IssueAsync(Guid.NewGuid());
-        var last = token[^1] == 'A' ? 'B' : 'A';
 
-        Assert.Null(await _tokens.ValidateAsync(token[..^1] + last));
+        Assert.Null(await _tokens.ValidateAsync(TokenTamper.ChangeSignature(token)));
     }
 
     [Fact]

@@ -81,7 +81,7 @@ public class AppLifecycleServiceTests
     public async Task RestoreAsync_TamperedToken_ReturnsLoginAndClearsTheSavedState()
     {
         await SaveSessionOfNewUserAsync();
-        _secrets.Values[SessionStore.TokenKey] = _secrets.Values[SessionStore.TokenKey][..^2] + "AA";
+        _secrets.Values[SessionStore.TokenKey] = TokenTamper.ChangeSignature(_secrets.Values[SessionStore.TokenKey]);
         _state.LastRoute = Routes.ProductDetail;
         _state.SetDraft(new ProductFormDraft("Saw", "4820001000016"));
         _state.Save();

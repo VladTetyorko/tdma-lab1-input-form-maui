@@ -18,8 +18,9 @@ roles, about ten products. It does four things:
   **number of units**. A barcode identifies a product (a kind of unit), so
   one scan can record many units.
 
+Users **sign in with a login and a password** (stored only as a salted hash) and the role decides what they may do.
 Around these it behaves like a real mobile app: it **keeps unsaved forms and the
-signed-in user** when minimised or killed, has a **System/Light/Dark theme**,
+signed-in session** when minimised or killed, has a **System/Light/Dark theme**,
 opens a product from a **deep link** (`stockroom://product/{barcode}`), and
 scans with the **camera** on Android and iOS (manual entry on Windows).
 
@@ -93,7 +94,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | — | — | [Plan for labs 5–9 and the catalog step](docs/plan.md) | in review |
 | 05a | — | [Catalog: real Open Food Facts seed, QR scanning, product lookup, quick flow](docs/steps/05a-catalog.md) | in review |
 | 05 | 5 | [Logging, global error handling, log viewer, crash reporter](docs/steps/05-logging.md) | done (775 tests) |
-| 06 | 6 | Login, password hashing, token, roles, biometrics, certificate pinning | planned |
+| 06 | 6 | [Login, password hashing, session token, roles, biometrics, certificate pinning](docs/steps/06-auth.md) | done (950 tests) |
 | 07 | 7 | Permissions, photo, location, map, shake, network indicator | planned |
 | 08 | 8 | Core library, Moq tests, CI, UI tests | planned |
 | 09 | 9 | Final module: search, access matrix, APK, v1.0 | planned |
@@ -158,6 +159,16 @@ Every architectural decision, newest last. Details are in the step documents.
 | 52 | 5 | `ICrashReporter` with `SentryCrashReporter` (plain Sentry SDK; Sentry.Maui crashed the Windows app at start) when a DSN exists (env var or untracked `appsettings.local.json`), else `NullCrashReporter`; `SendDefaultPii = false`, log lines not forwarded; no analytics | App Center is retired and Crashlytics has no MAUI binding; fresh clones run without a secret; scope stays at crash reporting |
 | 53 | 5 | In-app log viewer (`ILogReader`, `LogsViewModel`, `LogsPage`): newest first, level filter, max 200, `FileShare.ReadWrite`; Manager only, hidden in the UI and refused by the ViewModel with a `Warning` | Logs show internals; two layers per AGENTS 2a |
 | 54 | 5 | Settings "Diagnostics" section behind `IDiagnosticsService` (test entries, unobserved task + `GC.Collect`, test crash only with a DSN); the service also refuses non-Managers | Failures can be demonstrated and verified without code changes; logic is testable |
+| 55 | 6 | `Users` gets `Login` (unique index, `COLLATE NOCASE`) and `PasswordHash` in migration `0003_auth.sql`; the columns are nullable in the table (SQLite cannot add `NOT NULL` without a default) but not in the model; `UserRow.PasswordHash` is `[JsonIgnore]`, so the hash never reaches the sync payload | The stub server (and any real one) has no use for a hash; leaving it out is safer than relying on the server |
+| 56 | 6 | Passwords are never stored: `Pbkdf2PasswordHasher` (PBKDF2-HMAC-SHA256, 16-byte random salt, 210 000 iterations, `pbkdf2-sha256$iterations$salt$hash`, `FixedTimeEquals`, malformed hash = false); the iteration count is read from the hash, so it can be raised later (`NeedsRehash`) | AGENTS 2a; no new package, the BCL has it; self-describing string = no extra column |
+| 57 | 6 | `AuthService.LoginAsync` returns `Result<User>`, one message for unknown login and wrong password, a dummy-hash verify for unknown logins, lockout after 5 failures per login for 30 s (in memory, injected `IClock`, unknown logins counted too); the login text is not logged | No user enumeration by message, timing or lockout; a password typed into the login box never reaches the log |
+| 58 | 6 | The session is a signed token, not a user id: `HmacTokenService` (`base64url(userId.expiry).HMAC-SHA256`, 30 days, key generated once in `ISecretStore`), kept by `SessionStore` under one `ISecretStore` key and removed on sign-out; the old `state.user` preference is removed | A saved id can be edited and trusted nothing; a token must pass the HMAC and the expiry. `ISecretStore` got `RemoveAsync` |
+| 59 | 6 | The lab's `ISessionService` is `ICurrentUserService` (`CurrentRole`, `IsInRole`); no second session class | One source of truth for "who is acting" |
+| 60 | 6 | Biometric unlock (`IBiometricAuthenticator`, `IBiometricSettings`, Settings switch, off by default): with it on, a restart does **not** restore the session silently; the login page offers the fingerprint button (valid token + setting + hardware), and success only unlocks `ISessionStore.LoadUserAsync`, so the token is still validated | Biometrics unlock a stored credential, they are not a credential (lab 1.5); with the switch off the app keeps opening straight away as before |
+| 61 | 6 | `Plugin.Maui.Biometric` 0.1.2 (MIT; BiometricPrompt on Android, Windows Hello on Windows), wrapped by `MauiBiometricAuthenticator` which never throws; Android `minSdk` raised from 21 to 23 and `USE_BIOMETRIC` added | The plugin AndroidX libraries need API 23; the plugin cannot tell "cancelled" from "did not match", so both are `Failed` |
+| 62 | 6 | `IPermissionGuard` (`PermissionGuard`): every restricted ViewModel command asks it first and, when refused, an alert with the reason and a `Warning` log appear and nothing is called; the services still refuse too | Lab 1.4 asks for the check in the command; one class instead of a copy in every ViewModel (DRY); the service stays the layer that counts |
+| 63 | 6 | Certificate pinning is only in `HttpSyncApi` (`PinnedHandlerFactory`): SHA-256 of the SubjectPublicKeyInfo against `Sync:Pins`, **in addition to** the normal chain check, https only, no pins = refuse; `StubSyncApi` stays the default and Open Food Facts never pins | Public-key pins survive certificate renewal; pinning must not weaken TLS; third-party hosts change certificates without telling us |
+| 64 | 6 | `LocalSettings` reads `appsettings.local.json` for both `Sentry:Dsn` and `Sync:BaseUrl` / `Sync:Pins` (`SentryDsn` and `SyncSettings` delegate to it) | One untracked config file, one reader, no duplicated JSON code |
 
 ## Architecture
 
@@ -325,6 +336,32 @@ graph TD
     IDeepLinkHandler --> IAlertService
     IDeepLinkHandler --> INavigationService
 ```
+
+## Demo accounts
+
+The three seeded users sign in with these accounts (the database stores only their PBKDF2 hashes, see
+`Data/Migrations/0003_auth.sql`). They are demo data for the course, not secrets; real accounts would be created by an
+administrator and the demo ones removed.
+
+| Login | Password | Role | Can do |
+|-------|----------|------|--------|
+| `olena` | `Manager#2026` | Manager | everything, also add / edit / delete products, characteristics, logs, diagnostics |
+| `petro` | `Keeper#2026` | Storekeeper | scan, record In and Out |
+| `ivan` | `Driver#2026` | Driver | scan, record In only |
+
+Five wrong passwords for a login lock it for 30 seconds. The session is kept for 30 days; **Sign out** removes it.
+Settings has **Biometric unlock** (only on a device with a fingerprint / face sensor or Windows Hello): with it on, the app
+asks for the biometric check after a restart instead of opening straight away; the password always works.
+
+**Sync server (optional).** Without configuration the app syncs with a local stub. To use a real server over https with
+certificate pinning add this to the untracked `Mobile_apps_L1_Model_view/appsettings.local.json` (next to the Sentry DSN) and rebuild:
+
+```json
+{ "Sync": { "BaseUrl": "https://sync.example.com/", "Pins": ["<base64 SHA-256 of the server public key>"] } }
+```
+
+The pin is `openssl s_client -connect host:443 | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64`.
+Open Food Facts lookups never use pinning.
 
 ## Logging
 

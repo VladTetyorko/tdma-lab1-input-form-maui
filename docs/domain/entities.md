@@ -30,6 +30,8 @@ classDiagram
     class User {
         +string FullName
         +Role Role
+        +string Login
+        +string PasswordHash
     }
     class Product {
         +string Name
@@ -112,18 +114,20 @@ and leaves joining data to ViewModels and, later, repositories.
 
 ## `User`
 
-A person who uses the app. There are three, one per role, seeded at start.
+A person who uses the app. There are three, one per role, seeded at start, each with a login and a password.
 
 | Field | Type | Rules |
 |-------|------|-------|
 | `FullName` | `string` | Required, not blank |
 | `Role` | `Role` | `Storekeeper`, `Driver` or `Manager` |
+| `Login` | `string` | Unique, compared ignoring case (unique index `UX_Users_Login`); typed on the login page |
+| `PasswordHash` | `string` | `pbkdf2-sha256$iterations$salt$hash`; the password itself is never stored or logged; not part of the sync payload |
 
 - **Relations:** is the `CreatedByUserId` of every `OwnedEntity`.
-- **Who can do what:** nobody edits users in the app; the user only *picks*
-  one on the login screen.
+- **Who can do what:** nobody edits users in the app; the user signs in with
+  login and password (`IAuthService`).
 - **Not owned:** users are seeded, so there is no "creator" for them.
-- **Scaling:** login / PIN, more users per role, several roles per user
+- **Scaling:** user administration, password change and recovery, more users per role, several roles per user
   (a `UserRoles` link table instead of the `Role` field).
 
 ## `Product`
@@ -228,7 +232,7 @@ added at runtime.
 
 | Entity | Storekeeper | Driver | Manager |
 |--------|-------------|--------|---------|
-| `User` | pick self | pick self | pick self |
+| `User` | sign in | sign in | sign in |
 | `Product` | view | view | create, edit, delete (no operations) |
 | `Characteristic` | view, sort by | view, sort by | create |
 | `ProductCharacteristic` | view | view | set, change, remove |

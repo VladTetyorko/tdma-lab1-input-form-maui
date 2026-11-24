@@ -257,7 +257,7 @@ public class LoginViewModelTests
         await _store.Session.SaveAsync(_storekeeper);
         _biometricSettings.IsEnabled = true;
         await OfferedAsync();
-        _store.Secrets.Values[SessionStore.TokenKey] = _store.Secrets.Values[SessionStore.TokenKey][..^2] + "AA";
+        _store.Secrets.Values[SessionStore.TokenKey] = TokenTamper.ChangeSignature(_store.Secrets.Values[SessionStore.TokenKey]);
 
         await _viewModel.BiometricSignInCommand.ExecuteAsync(null);
 

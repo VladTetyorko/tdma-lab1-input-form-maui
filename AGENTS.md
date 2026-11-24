@@ -153,7 +153,7 @@ than a few lines.
 - `Mobile_apps_L1_Model_view.Tests/EndToEnd/` holds flow tests that build the
   real DI container (real services and repositories, fake platform
   services) and drive whole user flows through ViewModels, e.g.
-  *pick user → scan → Out 3 units → list shows the new quantity*.
+  *log in → scan → Out 3 units → list shows the new quantity*.
 - `dotnet test Mobile_apps_L1_Model_view.Tests` must pass before every commit.
 - The app must build for Windows (`-f net10.0-windows10.0.19041.0`) and Android (`-f net10.0-android`).
 

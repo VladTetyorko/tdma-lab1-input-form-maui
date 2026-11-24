@@ -62,7 +62,7 @@ public class SessionStoreTests
     {
         await _session.SaveAsync(_user);
         var token = _secrets.Values[SessionStore.TokenKey];
-        _secrets.Values[SessionStore.TokenKey] = token[..^2] + "AA";
+        _secrets.Values[SessionStore.TokenKey] = TokenTamper.ChangeSignature(token);
 
         Assert.Null(await _session.LoadUserAsync());
 
