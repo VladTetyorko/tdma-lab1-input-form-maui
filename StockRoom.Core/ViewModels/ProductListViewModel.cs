@@ -20,7 +20,7 @@ public partial class ProductListViewModel(
     INavigationService navigation,
     IShakeGesture shake,
     ConnectivityBannerViewModel connectivity,
-    ILogger<ProductListViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    ILogger<ProductListViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;

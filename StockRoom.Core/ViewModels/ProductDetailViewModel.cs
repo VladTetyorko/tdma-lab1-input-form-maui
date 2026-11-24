@@ -22,7 +22,7 @@ public partial class ProductDetailViewModel(
     ProductPhotoEditor photo,
     IMapLauncher maps,
     IDeviceFeedback feedback,
-    ILogger<ProductDetailViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    ILogger<ProductDetailViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private ProductSummary? _product;
 

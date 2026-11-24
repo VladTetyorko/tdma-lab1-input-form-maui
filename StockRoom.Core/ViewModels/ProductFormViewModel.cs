@@ -17,7 +17,7 @@ public partial class ProductFormViewModel(
     IAppStateService appState,
     INavigationService navigation,
     ProductPhotoEditor photo,
-    ILogger<ProductFormViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    ILogger<ProductFormViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private bool _opened;
     private bool _prefilled;

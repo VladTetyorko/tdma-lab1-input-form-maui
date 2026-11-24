@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Platform-free core: models, services (interfaces + logic), SQLite data layer, ViewModels. No Microsoft.Maui.* here.
+         The namespace stays Mobile_apps_L1_Model_view.* so no using or XAML x:DataType has to change. -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Mobile_apps_L1_Model_view</RootNamespace>
+        <AssemblyName>StockRoom.Core</AssemblyName>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+        <!-- SQLite: sqlite-net-pcl is the thin ORM; the bundle selects the native sqlite3 provider.
+             The native library itself (patched 2.1.14) is referenced by each host: the app and the test project -->
+        <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+        <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
+    </ItemGroup>
+
+    <!-- Numbered schema scripts are read by MigrationRunner; the logical name is the file name -->
+    <ItemGroup>
+        <EmbeddedResource Include="Data\Migrations\*.sql" LogicalName="Migrations/%(Filename)%(Extension)" />
+    </ItemGroup>
+
+</Project>
