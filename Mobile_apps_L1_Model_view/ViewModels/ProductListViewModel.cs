@@ -209,6 +209,9 @@ public partial class ProductListViewModel(
     private Task ScanAsync() => navigation.GoToAsync(Routes.Scanner);
 
     [RelayCommand]
+    private Task OpenMapAsync() => navigation.GoToAsync(Routes.Map);
+
+    [RelayCommand]
     private async Task SignOutAsync()
     {
         logger.LogInformation("User {UserId} signed out", currentUser.CurrentUser?.Id);

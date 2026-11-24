@@ -1,12 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round"
-                 android:supportsRtl="true"></application>
+                 android:supportsRtl="true">
+        <!-- Google Maps for the embedded map (Lab 7). The key is an OWNER ACTION: create an Android-restricted key in
+             Google Cloud Console (Maps SDK for Android) and put it here. Without it the map page still lists the
+             places and opens them in the maps app -->
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR_GOOGLE_MAPS_API_KEY"/>
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+    </application>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Barcode scanning; the camera is optional, manual entry works without it -->
+    <!-- Product photos (Lab 7) use the same camera permission -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- Optional location of an In/Out operation. Fine = GPS, coarse = network; both are asked together
+         (Android 12 lets the user grant only the approximate one). Never required: the app works without them -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-feature android:name="android.hardware.location" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
+    <!-- Shake to scan; no permission is needed for the accelerometer, the feature line only keeps the app installable
+         on a device without one -->
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false"/>
+    <!-- Android 11+ package visibility: the camera app (MediaPicker) and a maps app (geo: links) -->
+    <queries>
+        <intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent>
+        <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="geo"/></intent>
+    </queries>
     <!-- Biometric unlock (fingerprint / face) on the login page; the password always works -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 </manifest>

@@ -90,9 +90,11 @@
         <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
     </ItemGroup>
 
-    <!-- Camera barcode scanning exists on Android and iOS only; Windows uses manual entry -->
+    <!-- Camera barcode scanning and the embedded Map control exist on Android and iOS only; Windows uses manual entry
+         and the list with "Open in maps" -->
     <ItemGroup Condition="$(TargetFramework.StartsWith('net10.0-android')) or $(TargetFramework.StartsWith('net10.0-ios'))">
         <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.10.4" />
+        <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="$(MauiVersion)" />
     </ItemGroup>
 
 </Project>

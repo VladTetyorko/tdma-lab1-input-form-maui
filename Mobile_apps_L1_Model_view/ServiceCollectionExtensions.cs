@@ -88,6 +88,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<ScannerViewModel>();
         services.AddTransient<LogsViewModel>();
+        services.AddTransient<MapViewModel>();
 
         return services;
     }

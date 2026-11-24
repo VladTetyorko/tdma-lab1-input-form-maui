@@ -62,7 +62,7 @@ public class ServiceLoggingTests
         await _store.SignInAsync(Role.Storekeeper);
         var product = await _store.AddProductAsync("Drill", Barcode);
         var viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Guard, _store.Drafts, _store.Navigation,
-            _store.Logger<OperationViewModel>());
+            _store.Location, _store.Feedback, _store.Logger<OperationViewModel>());
         viewModel.ApplyQueryAttributes(new Dictionary<string, object>
         {
             [NavigationKeys.SelectedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)

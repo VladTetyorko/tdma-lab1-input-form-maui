@@ -16,6 +16,8 @@ public partial class OperationViewModel(
     IPermissionGuard guard,
     IOperationDraftStore drafts,
     INavigationService navigation,
+    ILocationService locationService,
+    IDeviceFeedback feedback,
     ILogger<OperationViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private Guid _productId;
@@ -47,6 +49,24 @@ public partial class OperationViewModel(
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
+    // Where the operation happens (optional, attached with the button); null = no location
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLocation))]
+    [NotifyPropertyChangedFor(nameof(LocationText))]
+    public partial GeoPoint? Location { get; set; }
+
+    public bool HasLocation => Location is not null;
+
+    public string LocationText => Location is null ? "No location attached" : $"Location attached: {Location}";
+
+    // Why the location could not be attached (denied, GPS off, ...), or empty
+    [ObservableProperty]
+    public partial string LocationMessage { get; set; } = string.Empty;
+
+    // True while a position is being looked up (up to ten seconds), so the button is not pressed twice
+    [ObservableProperty]
+    public partial bool IsLocating { get; set; }
+
     partial void OnSelectedDirectionChanged(OperationDirection value) => SaveDraft();
 
     partial void OnQuantityChanged(int value) => SaveDraft();
@@ -54,6 +74,8 @@ public partial class OperationViewModel(
     partial void OnCounterpartyChanged(string value) => SaveDraft();
 
     partial void OnReasonChanged(string value) => SaveDraft();
+
+    partial void OnLocationChanged(GeoPoint? value) => SaveDraft();
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
@@ -100,7 +122,7 @@ public partial class OperationViewModel(
         }
 
         var result = await stock.RecordAsync(
-            _productId, SelectedDirection, Quantity, Blank(Counterparty), Blank(Reason));
+            _productId, SelectedDirection, Quantity, Blank(Counterparty), Blank(Reason), Location);
         if (!result.IsSuccess)
         {
             ErrorMessage = result.Error!;
@@ -108,11 +130,49 @@ public partial class OperationViewModel(
             return;
         }
 
-        logger.LogDebug("Operation {OperationId} recorded from the operation page", result.Value!.Id);
+        logger.LogDebug("Operation {OperationId} recorded from the operation page (location: {HasLocation})",
+            result.Value!.Id, HasLocation);
         drafts.Clear();
 
         // The detail page reloads when it appears again
         await navigation.GoToAsync(Routes.Back);
+    }
+
+    // Optional: "attach my location" (a driver's drop-off point). Denied, GPS off and the like only show a message
+    [RelayCommand]
+    private async Task AttachLocationAsync()
+    {
+        if (IsLocating)
+        {
+            return;
+        }
+
+        IsLocating = true;
+        try
+        {
+            var result = await locationService.GetCurrentAsync();
+            if (result.Status == DeviceStatus.Succeeded)
+            {
+                Location = result.Point;
+                LocationMessage = string.Empty;
+                logger.LogInformation("Location attached to the operation form of product {ProductId}", _productId);
+            }
+            else
+            {
+                LocationMessage = feedback.Report(DeviceFeature.Location, result.Status, result.Error);
+            }
+        }
+        finally
+        {
+            IsLocating = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ClearLocation()
+    {
+        Location = null;
+        LocationMessage = string.Empty;
     }
 
     [RelayCommand]
@@ -135,13 +195,14 @@ public partial class OperationViewModel(
         Quantity = draft.Quantity;
         Counterparty = draft.Counterparty;
         Reason = draft.Reason;
+        Location = draft.Location;
     }
 
     private void SaveDraft()
     {
         if (_barcode.Length > 0)
         {
-            _ = drafts.SaveAsync(new OperationDraft(_barcode, SelectedDirection, Quantity, Counterparty, Reason));
+            _ = drafts.SaveAsync(new OperationDraft(_barcode, SelectedDirection, Quantity, Counterparty, Reason, Location));
         }
     }
 

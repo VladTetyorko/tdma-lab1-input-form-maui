@@ -9,9 +9,12 @@ public sealed class FakeLocationService : ILocationService
 
     public int Calls { get; private set; }
 
+    // Set to keep the lookup "in progress" until the test completes it
+    public TaskCompletionSource<LocationResult>? Pending { get; set; }
+
     public Task<LocationResult> GetCurrentAsync()
     {
         Calls++;
-        return Task.FromResult(Result);
+        return Pending is { } pending ? pending.Task : Task.FromResult(Result);
     }
 }

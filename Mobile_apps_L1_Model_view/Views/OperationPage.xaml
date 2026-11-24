@@ -38,6 +38,17 @@
             <Label Text="Reason (optional)" />
             <Entry Text="{Binding Reason, Mode=TwoWay}" Placeholder="Why" />
 
+            <Label Text="Location (optional)" />
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Attach my location" Command="{Binding AttachLocationCommand}"
+                        AutomationId="AttachLocationButton" />
+                <Button Text="Clear location" Command="{Binding ClearLocationCommand}"
+                        IsVisible="{Binding HasLocation}" AutomationId="ClearLocationButton" />
+                <ActivityIndicator IsRunning="{Binding IsLocating}" IsVisible="{Binding IsLocating}" />
+            </HorizontalStackLayout>
+            <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}" AutomationId="LocationLabel" />
+            <Label Text="{Binding LocationMessage}" Style="{StaticResource ErrorLabel}" />
+
             <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabel}" />
 
             <HorizontalStackLayout Spacing="10">

@@ -122,7 +122,7 @@ public class RoleRefusalTests
         var product = await _store.AddProductAsync("Drill", Barcode);
         await _store.SignInAsync(Role.Driver);
         var viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Guard, _store.Drafts, _store.Navigation,
-            NullLogger<OperationViewModel>.Instance);
+            _store.Location, _store.Feedback, NullLogger<OperationViewModel>.Instance);
         viewModel.ApplyQueryAttributes(new Dictionary<string, object>
         {
             [NavigationKeys.SelectedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
@@ -143,7 +143,7 @@ public class RoleRefusalTests
         var product = await _store.AddProductAsync("Drill", Barcode);
         await _store.SignInAsync(Role.Driver);
         var viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Guard, _store.Drafts, _store.Navigation,
-            NullLogger<OperationViewModel>.Instance);
+            _store.Location, _store.Feedback, NullLogger<OperationViewModel>.Instance);
         viewModel.ApplyQueryAttributes(new Dictionary<string, object>
         {
             [NavigationKeys.SelectedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
