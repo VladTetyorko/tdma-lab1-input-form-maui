@@ -55,8 +55,8 @@ public class StockRoomFlowTests : IDisposable
 
         var list = _provider.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
-        Assert.Equal(21, drill.Quantity);
+        var drill = Assert.Single(list.Products, p => p.Name == "Nutella 400 g");
+        Assert.Equal(36, drill.Quantity);
 
         var stock = _provider.GetRequiredService<IStockService>();
         var result = await stock.RecordAsync(drill.Id, OperationDirection.Out, 3);
@@ -64,7 +64,7 @@ public class StockRoomFlowTests : IDisposable
 
         await list.LoadCommand.ExecuteAsync(null);
         var updated = Assert.Single(list.Products, p => p.Id == drill.Id);
-        Assert.Equal(18, updated.Quantity);
+        Assert.Equal(33, updated.Quantity);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class StockRoomFlowTests : IDisposable
 
         var list = _provider.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        var hammer = Assert.Single(list.Products, p => p.Name == "Claw Hammer 500 g");
+        var hammer = Assert.Single(list.Products, p => p.Name == "Nutella 500 g");
         Assert.Equal(28, hammer.Quantity);
 
         var stock = _provider.GetRequiredService<IStockService>();
@@ -97,14 +97,14 @@ public class StockRoomFlowTests : IDisposable
         await SignInAsync(Role.Manager);
         var list = _provider.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
+        var drill = Assert.Single(list.Products, p => p.Name == "Nutella 400 g");
 
         await list.OpenDetailsCommand.ExecuteAsync(drill);
         var detail = _provider.GetRequiredService<ProductDetailViewModel>();
         detail.ApplyQueryAttributes(LastParameters());
         await detail.LoadCommand.ExecuteAsync(null);
         var weight = detail.Characteristics.Single(c => c.Name == "Weight (kg)");
-        Assert.Equal("1.6", weight.Value);
+        Assert.Equal("0.4", weight.Value);
 
         weight.Value = "9.5";
         Assert.True(detail.SaveCommand.CanExecute(null));
@@ -118,12 +118,13 @@ public class StockRoomFlowTests : IDisposable
         Assert.Equal("9.5", updated.Values[weight.CharacteristicId]);
 
         list.SelectedSortOption = list.SortOptions.Single(o => o.Title == "Weight (kg)");
-        Assert.Equal("Interior Paint 10 L", list.Products.Last().Name);
+        // Drinks have no weight, so they come last; the edited product has the biggest weight
+        Assert.Equal("Red Bull Energy Drink 250 ml", list.Products.Last().Name);
         Assert.Equal(8, list.Products.IndexOf(updated));
 
         list.SortDescending = true;
-        Assert.Equal("Interior Paint 10 L", list.Products[0].Name);
-        Assert.Equal(drill.Id, list.Products[1].Id);
+        Assert.Equal(drill.Id, list.Products[0].Id);
+        Assert.Equal("Nutella 500 g", list.Products[1].Name);
     }
 
     [Fact]
@@ -157,19 +158,19 @@ public class StockRoomFlowTests : IDisposable
         await SignInAsync(Role.Storekeeper);
         var list = _provider.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
+        var drill = Assert.Single(list.Products, p => p.Name == "Nutella 400 g");
 
         await list.OpenDetailsCommand.ExecuteAsync(drill);
         var detail = _provider.GetRequiredService<ProductDetailViewModel>();
         detail.ApplyQueryAttributes(LastParameters());
         await detail.LoadCommand.ExecuteAsync(null);
-        Assert.Equal(21, detail.Quantity);
+        Assert.Equal(36, detail.Quantity);
 
         await detail.OpenOperationCommand.ExecuteAsync(null);
         var operation = _provider.GetRequiredService<OperationViewModel>();
         operation.ApplyQueryAttributes(LastParameters());
         await operation.LoadCommand.ExecuteAsync(null);
-        Assert.Equal(21, operation.QuantityOnHand);
+        Assert.Equal(36, operation.QuantityOnHand);
 
         operation.SelectedDirection = OperationDirection.Out;
         operation.Quantity = 2;
@@ -178,7 +179,7 @@ public class StockRoomFlowTests : IDisposable
 
         // The detail page reloads its data when it appears again
         await detail.LoadCommand.ExecuteAsync(null);
-        Assert.Equal(19, detail.Quantity);
+        Assert.Equal(34, detail.Quantity);
         Assert.Equal(OperationDirection.Out, detail.History[0].Direction);
         Assert.Equal(2, detail.History[0].Quantity);
     }
@@ -189,7 +190,7 @@ public class StockRoomFlowTests : IDisposable
         await SignInAsync(Role.Driver);
         var list = _provider.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
+        var drill = Assert.Single(list.Products, p => p.Name == "Nutella 400 g");
 
         await list.OpenDetailsCommand.ExecuteAsync(drill);
         var detail = _provider.GetRequiredService<ProductDetailViewModel>();

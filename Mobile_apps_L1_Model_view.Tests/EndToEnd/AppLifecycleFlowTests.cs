@@ -11,7 +11,7 @@ namespace Mobile_apps_L1_Model_view.Tests.EndToEnd;
 public class AppLifecycleFlowTests
 {
     private const string NewProductBarcode = "4006381333931";
-    private readonly string _drillBarcode = Ean13.WithCheckDigit("482000100001");
+    private readonly string _drillBarcode = "3017620422003";
 
     [Fact]
     public async Task KilledWhileRecordingAnOperation_RestartSignsInAndResumesTheDraft()
@@ -69,12 +69,12 @@ public class AppLifecycleFlowTests
         operation2.ApplyQueryAttributes(LastParameters(secondNavigation));
         await operation2.LoadCommand.ExecuteAsync(null);
 
-        Assert.Equal("Cordless Drill 18V", operation2.ProductName);
+        Assert.Equal("Nutella 400 g", operation2.ProductName);
         Assert.Equal(OperationDirection.Out, operation2.SelectedDirection);
         Assert.Equal(4, operation2.Quantity);
         Assert.Equal("Acme Ltd", operation2.Counterparty);
         Assert.Equal("Site 7", operation2.Reason);
-        Assert.Equal(21, operation2.QuantityOnHand);
+        Assert.Equal(36, operation2.QuantityOnHand);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class AppLifecycleFlowTests
         var detail = provider.GetRequiredService<ProductDetailViewModel>();
         detail.ApplyQueryAttributes(LastParameters(navigation));
         await detail.LoadCommand.ExecuteAsync(null);
-        Assert.Equal("Cordless Drill 18V", detail.Name);
+        Assert.Equal("Nutella 400 g", detail.Name);
         Assert.Equal(_drillBarcode, detail.Barcode);
     }
 

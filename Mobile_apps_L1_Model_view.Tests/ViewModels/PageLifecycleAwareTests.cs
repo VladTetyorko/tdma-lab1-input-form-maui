@@ -46,7 +46,7 @@ public class PageLifecycleAwareTests : IDisposable
 
         ((IPageLifecycleAware)list).OnAppearing();
 
-        await Eventually.WaitAsync(() => list.Products.Count == 10);
+        await Eventually.WaitAsync(() => list.Products.Count == 12);
     }
 
     [Fact]

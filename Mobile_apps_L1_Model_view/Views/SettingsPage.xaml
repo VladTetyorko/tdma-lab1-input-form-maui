@@ -38,7 +38,7 @@
             <Label Text="{Binding ExportText}" Style="{StaticResource CaptionLabel}" />
 
             <Label Text="Open a link" Style="{StaticResource SectionLabel}" />
-            <Label Text="Try a deep link without another app, e.g. stockroom://product/4820001000016"
+            <Label Text="Try a deep link without another app, e.g. stockroom://product/3017620422003"
                    Style="{StaticResource CaptionLabel}" />
             <Entry Text="{Binding LinkText, Mode=TwoWay}" Placeholder="stockroom://product/{barcode}" />
             <Button Text="Open" Command="{Binding OpenLinkCommand}" HorizontalOptions="Start" />

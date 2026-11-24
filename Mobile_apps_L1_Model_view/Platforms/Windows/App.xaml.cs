@@ -24,7 +24,7 @@ public partial class App : MauiWinUIApplication
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 
     // The unpackaged app has no protocol activation, so a link arrives as a command-line argument:
-    //   Mobile_apps_L1_Model_view.exe stockroom://product/4820001000016
+    //   Mobile_apps_L1_Model_view.exe stockroom://product/3017620422003
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         base.OnLaunched(args);

@@ -68,7 +68,7 @@ public class SqliteDatabaseTests : IDisposable
     {
         var characteristics = _provider.GetRequiredService<ICharacteristicRepository>();
 
-        var duplicate = new Characteristic { Name = "COLOR", ValueType = CharacteristicValueType.Text, CreatedByUserId = SeedData.ManagerId };
+        var duplicate = new Characteristic { Name = "BRAND", ValueType = CharacteristicValueType.Text, CreatedByUserId = SeedData.ManagerId };
 
         await Assert.ThrowsAsync<SQLiteException>(() => characteristics.AddAsync(duplicate));
     }
@@ -137,7 +137,7 @@ public class SqliteDatabaseTests : IDisposable
         await database.CopyToAsync(target);
 
         var copy = new SQLiteAsyncConnection(target, SQLiteOpenFlags.ReadOnly);
-        Assert.Equal(10, await copy.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Products"));
+        Assert.Equal(12, await copy.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Products"));
         await copy.CloseAsync();
     }
 

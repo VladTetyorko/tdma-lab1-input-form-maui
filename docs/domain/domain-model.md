@@ -160,9 +160,11 @@ sequenceDiagram
 
 ## Seed data
 
-One warehouse (implicit), three users (one per role), about ten products,
-three to four characteristics (e.g. *Weight, kg* — Number; *Color* — Text;
-*Category* — Text), and a few operations so quantities are not zero. It is
+One warehouse (implicit), three users (one per role), twelve real products
+with their Open Food Facts barcodes (see [`open-data.md`](open-data.md)), four
+characteristics (*Weight, kg* and *Volume, l* — Number, one per product;
+*Brand* and *Category* — Text), and a few operations so quantities are not zero
+(one product is at zero stock, one is low, one has no movements). It is
 migration `0002_seed.sql`, with fixed ids, applied once when the database is
 created.
 
