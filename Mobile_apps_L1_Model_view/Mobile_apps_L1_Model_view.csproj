@@ -39,6 +39,18 @@
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     </PropertyGroup>
 
+    <!-- Android Release: no trimming, no AOT, no marshal methods. Trimming makes restore ask for Microsoft.NETCore.App.Runtime.Mono.win-x64,
+         which nuget.org does not publish for .NET 10, so a Release build and an APK could not be produced at all.
+         The cost is a larger, slower-starting package, which is fine for a debug-signed course APK -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <PublishTrimmed>false</PublishTrimmed>
+        <RunAOTCompilation>false</RunAOTCompilation>
+        <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+        <!-- dotnet publish builds every architecture; the marshal-method classifiers then differ between them
+             (XAGJS7009) with this SDK. Off = the classic, slightly slower JNI registration -->
+        <AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
+    </PropertyGroup>
+
     <ItemGroup>
         <!-- App Icon -->
         <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
