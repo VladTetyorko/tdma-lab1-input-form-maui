@@ -1,6 +1,7 @@
 #if ANDROID || IOS
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using Mobile_apps_L1_Model_view.Views.Components;
 #endif
 using Microsoft.Extensions.Logging;
 
@@ -32,7 +33,9 @@ public sealed class MauiToastService(ILogger<MauiToastService> logger) : IToastS
 #if ANDROID || IOS
         try
         {
-            await Snackbar.Make(message, action, actionText, TimeSpan.FromSeconds(5)).Show();
+            // Above the main button of the page, never over it
+            var anchor = Shell.Current?.CurrentPage?.GetVisualTreeDescendants().OfType<BottomActionBar>().FirstOrDefault();
+            await Snackbar.Make(message, action, actionText, TimeSpan.FromSeconds(5), anchor: anchor).Show();
         }
         catch (Exception ex)
         {

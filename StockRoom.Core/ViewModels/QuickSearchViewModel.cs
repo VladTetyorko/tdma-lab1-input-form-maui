@@ -197,7 +197,7 @@ public sealed partial class QuickSearchViewModel(
         var searched = _products.Where(product => product.Id != ExcludedProductId);
         foreach (var suggestion in ProductSuggestions.Find(searched, _characteristics, Query, MaxSuggestions, InStockFirst))
         {
-            Suggestions.Add(new QuickSearchRow(suggestion));
+            Suggestions.Add(new QuickSearchRow(suggestion, InStockFirst));
         }
 
         HasSuggestions = Suggestions.Count > 0;

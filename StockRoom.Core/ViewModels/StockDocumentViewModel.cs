@@ -20,7 +20,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     private readonly IBarcodeScanner scanner;
     private readonly IScanFeedback feedback;
     private readonly IToastService toast;
-    private readonly IAlertService alerts;
+    private readonly IConfirmSheet confirm;
     private readonly IPermissionGuard guard;
     private readonly INavigationService navigation;
     private readonly StockChanges changes;
@@ -40,7 +40,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         IBarcodeScanner scanner,
         IScanFeedback feedback,
         IToastService toast,
-        IAlertService alerts,
+        IConfirmSheet confirm,
         IPermissionGuard guard,
         INavigationService navigation,
         StockChanges changes,
@@ -55,7 +55,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         this.scanner = scanner;
         this.feedback = feedback;
         this.toast = toast;
-        this.alerts = alerts;
+        this.confirm = confirm;
         this.guard = guard;
         this.navigation = navigation;
         this.changes = changes;
@@ -127,8 +127,13 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
-    // "Draft · 5 lines · 37 units"
+    // "Received 12 units · R-20261125-0001" after a commit; the page shows it for a moment
     [ObservableProperty]
+    public partial string SuccessText { get; set; } = string.Empty;
+
+    // "Draft · 5 lines · 37 units"; empty for an empty draft, which has its own empty state
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSummary))]
     public partial string SummaryText { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -140,6 +145,8 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     public partial string UndoText { get; set; } = string.Empty;
 
     public bool CanUndo => UndoText.Length > 0;
+
+    public bool HasSummary => SummaryText.Length > 0;
 
     public bool IsEmpty => Lines.Count == 0;
 
@@ -234,6 +241,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         await QuickSearch.LoadCommand.ExecuteAsync(null);
 
         StatusMessage = string.Empty;
+        SuccessText = string.Empty;
         UndoText = string.Empty;
         _removed = null;
         _products.Clear();
@@ -340,6 +348,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         }
 
         _removed = removed;
+        StatusMessage = string.Empty;
         UndoText = $"Undo removing {line.Name}";
         Refresh();
         await drafts.SaveAsync(_draft);
@@ -386,7 +395,10 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     private async Task DiscardAsync()
     {
         if (_draft.IsEmpty
-            || !await alerts.ConfirmAsync("Discard draft", "Remove all lines of this draft?", "Discard", "Keep"))
+            || !await confirm.AskAsync(new ConfirmRequest("Discard draft", "Remove all lines of this draft?", "Discard", "Keep")
+            {
+                IsDestructive = true
+            }))
         {
             return;
         }
@@ -403,8 +415,14 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         try
         {
             var units = _draft.TotalUnits;
-            var question = $"{(IsIssue ? "Issue" : "Receive")} {units} units of {_draft.Lines.Count} products?";
-            if (!await alerts.ConfirmAsync(Title, question, IsIssue ? "Issue" : "Receive", "Cancel"))
+            var verb = IsIssue ? "Issue" : "Receive";
+            var question = new ConfirmRequest(Title,
+                $"{verb} {Plural.Units(units)} of {Plural.Products(_draft.Lines.Count)}?",
+                $"{verb} {Plural.Units(units)}", "Cancel")
+            {
+                Lines = [.. Lines.Select(line => $"{line.Name}  {Signed(line.Quantity)}")]
+            };
+            if (!await confirm.AskAsync(question))
             {
                 return;
             }
@@ -424,9 +442,9 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             // Cleared only after success, so a kill during the commit never loses the lines
             ClearDraft();
             await QuickSearch.LoadCommand.ExecuteAsync(null);
-            StatusMessage = $"Saved {result.Value!.Number}";
+            StatusMessage = string.Empty;
+            SuccessText = $"{(IsIssue ? "Issued" : "Received")} {Plural.Units(units)} · {result.Value!.Number}";
             feedback.Success();
-            await toast.ShowAsync(StatusMessage);
         }
         finally
         {
@@ -447,6 +465,9 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         }
     }
 
+    // "+12" when receiving, "−12" when issuing
+    private string Signed(int quantity) => $"{(IsIssue ? "−" : "+")}{quantity}";
+
     private async Task<bool> AddAsync(string? text, bool debounce, int quantity = 1)
     {
         var parsed = ScanPayloadParser.Parse(text);
@@ -465,13 +486,14 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         }
 
         UndoText = string.Empty;
+        SuccessText = string.Empty;
         _removed = null;
         await ResolveAsync([barcode]);
         _draft.Add(barcode, quantity);
         Refresh();
         if (_products[barcode] is { } product)
         {
-            StatusMessage = $"{product.Name} +{quantity}";
+            StatusMessage = $"{product.Name} {Signed(quantity)}";
             feedback.Success();
         }
         else
@@ -527,10 +549,8 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         }
 
         var units = _draft.TotalUnits;
-        SummaryText = Lines.Count == 0
-            ? "Draft is empty. Scan a barcode or type a name."
-            : $"Draft · {Lines.Count} {(Lines.Count == 1 ? "line" : "lines")} · {units} units";
-        CommitText = $"{(IsIssue ? "Issue" : "Receive")} {units} units";
+        SummaryText = Lines.Count == 0 ? string.Empty : $"Draft · {Plural.Lines(Lines.Count)} · {Plural.Units(units)}";
+        CommitText = $"{(IsIssue ? "Issue" : "Receive")} {Plural.Units(units)}";
         CommitHint = Lines.Count == 0 ? "Add a product first"
             : Lines.Any(line => line.IsInvalid) ? "Fix the red lines first"
             : string.Empty;

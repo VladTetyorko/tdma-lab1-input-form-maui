@@ -44,7 +44,7 @@ public class StockDocumentViewModelTests
         var search = new QuickSearchViewModel(_store.Catalog, _store.CharacteristicService, _store.CurrentUser,
             _store.Guard, _store.Navigation, _store.Keyboard, _store.Logger<QuickSearchViewModel>());
         var viewModel = new StockDocumentViewModel(_drafts, service, _store.Catalog, _store.CurrentUser, _scanner,
-            _feedback, _toasts, _store.Alerts, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
+            _feedback, _toasts, _store.Confirm, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
             _store.Logger<StockDocumentViewModel>())
         {
             Direction = direction
@@ -159,6 +159,7 @@ public class StockDocumentViewModelTests
         await viewModel.DecrementCommand.ExecuteAsync(viewModel.Lines.Single());
         Assert.Empty(viewModel.Lines);
         Assert.True(viewModel.CanUndo);
+        Assert.Equal((string.Empty, false), (viewModel.StatusMessage, viewModel.HasSummary));
 
         _toasts.Action!();
 
@@ -184,11 +185,11 @@ public class StockDocumentViewModelTests
     {
         var viewModel = await OpenAsync();
         await TypeAsync(viewModel, Drill);
-        _store.Alerts.ConfirmAnswer = false;
+        _store.Confirm.Answer = false;
         await viewModel.DiscardCommand.ExecuteAsync(null);
         Assert.Single(viewModel.Lines);
 
-        _store.Alerts.ConfirmAnswer = true;
+        _store.Confirm.Answer = true;
         await viewModel.DiscardCommand.ExecuteAsync(null);
 
         Assert.Empty(viewModel.Lines);
@@ -206,10 +207,16 @@ public class StockDocumentViewModelTests
 
         Assert.Single(_documents.Documents);
         Assert.Empty(viewModel.Lines);
-        Assert.StartsWith("Saved R-", viewModel.StatusMessage);
+        Assert.StartsWith("Received 2 units · R-", viewModel.SuccessText);
+        Assert.Equal(string.Empty, viewModel.StatusMessage);
         Assert.Equal(0, _drafts.LineCount(OperationDirection.In));
         Assert.Equal(1, _changes.Version);
-        Assert.Contains("Receive 2 units of 2 products?", _store.Alerts.Confirmations.Single().Message);
+        var asked = _store.Confirm.Asked.Single();
+        Assert.Equal(("Receive 2 units of 2 products?", "Receive 2 units"), (asked.Message, asked.Accept));
+        Assert.Equal(["Saw  +1", "Drill  +1"], asked.Lines); // the order of the page: newest first
+
+        await TypeAsync(viewModel, Drill);
+        Assert.Equal(string.Empty, viewModel.SuccessText);
     }
 
     [Fact]
@@ -217,7 +224,7 @@ public class StockDocumentViewModelTests
     {
         var viewModel = await OpenAsync();
         await TypeAsync(viewModel, Drill);
-        _store.Alerts.ConfirmAnswer = false;
+        _store.Confirm.Answer = false;
 
         await viewModel.CommitCommand.ExecuteAsync(null);
 
@@ -248,7 +255,9 @@ public class StockDocumentViewModelTests
 
         var line = viewModel.Lines.Single();
         Assert.True(line.IsInvalid);
-        Assert.Equal("Only 0 on hand", line.Problem);
+        Assert.Equal(("Out of stock", "on hand 0 → 0, short by 1"), (line.Problem, line.StockText));
+        Assert.Equal("Drill −1", viewModel.StatusMessage);
+        Assert.Equal(("Issue 1 unit", "Draft · 1 line · 1 unit"), (viewModel.CommitText, viewModel.SummaryText));
         Assert.False(viewModel.CommitCommand.CanExecute(null));
         Assert.Equal(("Issue goods", "Recipient (optional)"), (viewModel.Title, viewModel.CounterpartyLabel));
     }

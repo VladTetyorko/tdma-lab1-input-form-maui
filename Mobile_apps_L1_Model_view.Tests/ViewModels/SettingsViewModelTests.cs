@@ -24,7 +24,7 @@ public class SettingsViewModelTests
     }
 
     private SettingsViewModel CreateViewModel() => new(_theme, _store.DeepLinks, _sync, _offline, _exporter,
-        _store.Diagnostics, _biometricSettings, _biometrics, _store.ShakeSettings, _store.ShakeDetector, _store.Navigation,
+        _store.Diagnostics, _biometricSettings, _biometrics, _store.ShakeSettings, _store.ShakeDetector, new ScanSoundSettings(_store.Preferences), _store.Navigation,
         _store.Logger<SettingsViewModel>());
 
     [Fact]
@@ -36,6 +36,19 @@ public class SettingsViewModelTests
 
         Assert.True(_biometricSettings.IsEnabled);
         Assert.Contains(_store.Logs, l => l.Message.Contains("Biometric unlock switched on"));
+    }
+
+    [Fact]
+    public void ScanSound_IsOnByDefault_AndSwitchingItOffIsSaved()
+    {
+        Assert.True(_viewModel.ScanSound);
+
+        _viewModel.ScanSound = false;
+
+        Assert.False(new ScanSoundSettings(_store.Preferences).IsEnabled);
+        Assert.False(CreateViewModel().ScanSound);
+        _viewModel.ScanSound = true;
+        Assert.True(new ScanSoundSettings(_store.Preferences).IsEnabled);
     }
 
     [Fact]

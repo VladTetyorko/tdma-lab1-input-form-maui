@@ -26,8 +26,20 @@
                                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="12,6" ColumnSpacing="8">
                                         <components:HighlightedLabel Value="{Binding Suggestion.Title}"
                                                                      Ranges="{Binding Suggestion.NameRanges}"
-                                                                     Style="{StaticResource TextBodyStrong}" />
-                                        <Label Grid.Column="1" Text="{Binding Suggestion.StockText}" Style="{StaticResource TextCaption}" />
+                                                                     Style="{StaticResource TextBodyStrong}">
+                                            <components:HighlightedLabel.Triggers>
+                                                <DataTrigger TargetType="components:HighlightedLabel" Binding="{Binding IsUnavailable}"
+                                                             Value="True">
+                                                    <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
+                                                </DataTrigger>
+                                            </components:HighlightedLabel.Triggers>
+                                        </components:HighlightedLabel>
+                                        <Label Grid.Column="1" Text="{Binding Suggestion.StockText}" Style="{StaticResource TextCaption}"
+                                               IsVisible="{Binding IsAvailable}" />
+                                        <Border Grid.Column="1" StyleClass="ChipDanger" HorizontalOptions="End"
+                                                IsVisible="{Binding IsUnavailable}">
+                                            <Label Text="Out of stock" Style="{StaticResource ChipDangerText}" />
+                                        </Border>
                                         <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Suggestion.Details}"
                                                Style="{StaticResource TextCaption}" />
                                         <components:HighlightedLabel Grid.Row="2" Value="{Binding Suggestion.Code}"

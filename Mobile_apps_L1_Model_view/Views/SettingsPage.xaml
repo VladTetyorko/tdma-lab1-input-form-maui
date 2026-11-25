@@ -32,6 +32,18 @@
             </Border>
 
             <Border StyleClass="SectionCard">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                        <Label Text="Scan sound" Style="{StaticResource TextHeading}" />
+                        <Label Text="A beep for an accepted scan, another for a refused one."
+                               Style="{StaticResource CaptionLabel}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding ScanSound, Mode=TwoWay}" VerticalOptions="Center"
+                            AutomationId="ScanSoundSwitch" />
+                </Grid>
+            </Border>
+
+            <Border StyleClass="SectionCard">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="Gestures" Style="{StaticResource SectionLabel}" />
                     <HorizontalStackLayout Spacing="10">

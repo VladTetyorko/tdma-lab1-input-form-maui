@@ -40,6 +40,8 @@ public static class TestPlatform
         services.AddSingleton<FakeAppDataPath>();
         services.AddSingleton<IAppDataPathProvider>(provider => provider.GetRequiredService<FakeAppDataPath>());
         services.AddSingleton<IBarcodeScanner, FakeBarcodeScanner>();
+        services.AddSingleton<FakeConfirmSheet>();
+        services.AddSingleton<IConfirmSheet>(provider => provider.GetRequiredService<FakeConfirmSheet>());
         services.AddSingleton<FakeKeyboard>();
         services.AddSingleton<IKeyboard>(provider => provider.GetRequiredService<FakeKeyboard>());
         services.AddSingleton<FakeMainThread>();

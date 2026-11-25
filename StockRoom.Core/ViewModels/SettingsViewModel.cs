@@ -16,6 +16,7 @@ public partial class SettingsViewModel(
     IBiometricAuthenticator biometrics,
     IShakeSettings shakeSettings,
     IShakeDetector shakeDetector,
+    IScanSoundSettings soundSettings,
     INavigationService navigation,
     ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
@@ -57,6 +58,10 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial bool ShakeToScan { get; set; } = shakeSettings.IsEnabled;
 
+    // "Scan sound": a beep for an accepted scan, another for a refused one. On by default
+    [ObservableProperty]
+    public partial bool ScanSound { get; set; } = soundSettings.IsEnabled;
+
     // The switch is disabled, with a note, on a device without an accelerometer (a Windows PC)
     public bool IsShakeSupported => shakeDetector.IsSupported;
 
@@ -87,6 +92,12 @@ public partial class SettingsViewModel(
     {
         shakeSettings.IsEnabled = value;
         logger.LogInformation("Shake to scan switched {State}", value ? "on" : "off");
+    }
+
+    partial void OnScanSoundChanged(bool value)
+    {
+        soundSettings.IsEnabled = value;
+        logger.LogInformation("Scan sound switched {State}", value ? "on" : "off");
     }
 
     partial void OnSimulateOfflineChanged(bool value)

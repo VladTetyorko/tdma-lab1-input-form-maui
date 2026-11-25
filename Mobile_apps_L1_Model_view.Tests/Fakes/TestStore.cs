@@ -34,6 +34,7 @@ public sealed class TestStore
     public OperationDraftStore Drafts { get; }
     public FakeAlertService Alerts { get; } = new();
     public FakeKeyboard Keyboard { get; } = new();
+    public FakeConfirmSheet Confirm { get; } = new();
     public DeepLinkHandler DeepLinks { get; }
     public StartupNavigator Startup { get; }
 

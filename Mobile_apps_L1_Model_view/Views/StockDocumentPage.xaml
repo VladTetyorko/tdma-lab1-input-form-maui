@@ -23,7 +23,9 @@
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="1200">
                 <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
-                <Label Text="{Binding SummaryText}" Style="{StaticResource TextCaption}" AutomationId="DocumentSummary" />
+                <components:SuccessBanner Message="{Binding SuccessText}" />
+                <Label Text="{Binding SummaryText}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasSummary}"
+                       AutomationId="DocumentSummary" />
 
                 <!-- Continuous scanning: repeated reads of one code are ignored by the ViewModel -->
                 <Border HeightRequest="220" IsVisible="{Binding IsCameraActive}" StrokeShape="RoundRectangle 10"
@@ -44,8 +46,11 @@
                 <FlexLayout Wrap="Wrap" AlignItems="Center">
                     <Label Text="{Binding StatusMessage}" Style="{StaticResource TextBodyStrong}" FlexLayout.Grow="1"
                            AutomationId="DocumentStatus" />
-                    <Button Text="{Binding UndoText}" StyleClass="Ghost" Command="{Binding UndoCommand}"
-                            IsVisible="{Binding CanUndo}" AutomationId="UndoRemoveButton" />
+                    <!-- Desktop only: a phone offers Undo in the snackbar -->
+                    <Grid IsVisible="{OnIdiom Default=True, Phone=False}">
+                        <Button Text="{Binding UndoText}" StyleClass="Ghost" Command="{Binding UndoCommand}"
+                                IsVisible="{Binding CanUndo}" AutomationId="UndoRemoveButton" />
+                    </Grid>
                 </FlexLayout>
 
                 <components:EmptyState Glyph="{StaticResource IconBox}" Title="Draft is empty"

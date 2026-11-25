@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDeviceFeedback, DeviceFeedback>();
         services.AddSingleton<PhotoStore>();
         services.AddSingleton<IShakeSettings, ShakeSettings>();
+        services.AddSingleton<IScanSoundSettings, ScanSoundSettings>();
         services.AddTransient<IShakeGesture, ShakeGesture>();
         services.AddSingleton<IAppStateService, AppStateService>();
         services.AddSingleton<IOperationDraftStore, OperationDraftStore>();

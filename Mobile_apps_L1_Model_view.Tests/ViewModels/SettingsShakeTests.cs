@@ -12,7 +12,7 @@ public class SettingsShakeTests
     private SettingsViewModel CreateViewModel() => new(
         new ThemeService(_store.Preferences, new FakeThemeApplier()), _store.DeepLinks, _store.Sync, _store.Offline,
         new FakeDatabaseExporter(), _store.Diagnostics, _biometricSettings, new FakeBiometricAuthenticator(),
-        new ShakeSettings(_store.Preferences), _store.ShakeDetector, _store.Navigation, _store.Logger<SettingsViewModel>());
+        new ShakeSettings(_store.Preferences), _store.ShakeDetector, new ScanSoundSettings(_store.Preferences), _store.Navigation, _store.Logger<SettingsViewModel>());
 
     [Fact]
     public void ShakeToScan_IsOnByDefault()

@@ -30,7 +30,37 @@ public class MauiScanFeedbackTests
         }
     }
 
-    private static MauiScanFeedback Create(FakeVibration vibration) => new(vibration, NullLogger<MauiScanFeedback>.Instance);
+    private sealed class FakeTones : ITonePlayer
+    {
+        public List<string> Played { get; } = [];
+
+        public void Accepted() => Played.Add("accepted");
+
+        public void Refused() => Played.Add("refused");
+    }
+
+    private sealed class FakeSoundSettings : IScanSoundSettings
+    {
+        public bool IsEnabled { get; set; } = true;
+    }
+
+    private static MauiScanFeedback Create(FakeVibration vibration, FakeTones? tones = null, bool sound = true) =>
+        new(vibration, tones ?? new FakeTones(), new FakeSoundSettings { IsEnabled = sound },
+            NullLogger<MauiScanFeedback>.Instance);
+
+    [Theory]
+    [InlineData(true, new[] { "accepted", "refused" })]
+    [InlineData(false, new string[0])]
+    public void Sounds_FollowTheSwitch(bool sound, string[] expected)
+    {
+        var tones = new FakeTones();
+        var feedback = Create(new FakeVibration(), tones, sound);
+
+        feedback.Success();
+        feedback.Error();
+
+        Assert.Equal(expected, tones.Played);
+    }
 
     [Fact]
     public void Error_BuzzesLongerThanSuccess()

@@ -19,11 +19,15 @@ public sealed record StockDocumentLineItem(string Barcode, ProductSummary? Produ
 
     public int After => Direction == OperationDirection.In ? OnHand + Quantity : OnHand - Quantity;
 
-    public string StockText => Product is null ? Barcode : $"on hand {OnHand} → {After}";
+    // Stock never goes below zero: what is missing is said in words
+    public string StockText => Product is null ? Barcode
+        : ExceedsStock ? $"on hand {OnHand} → 0, short by {Quantity - OnHand}"
+        : $"on hand {OnHand} → {After}";
 
     public string Problem => IsUnknown
         ? $"No product has barcode {Barcode}"
-        : ExceedsStock ? $"Only {OnHand} on hand" : string.Empty;
+        : !ExceedsStock ? string.Empty
+        : OnHand <= 0 ? "Out of stock" : $"Only {OnHand} on hand";
 
     // For the quantity box: what the person types is applied by SetQuantityCommand
     public string QuantityText { get; set; } = Quantity.ToString();

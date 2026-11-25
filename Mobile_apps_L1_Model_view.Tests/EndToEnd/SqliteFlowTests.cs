@@ -54,6 +54,7 @@ public class SqliteFlowTests : IDisposable
         services.AddSingleton<IMapLauncher>(new FakeMapLauncher());
         services.AddSingleton<IMainThread>(new FakeMainThread());
         services.AddSingleton<IKeyboard>(new FakeKeyboard());
+        services.AddSingleton<IConfirmSheet>(new FakeConfirmSheet());
         _app = services.BuildServiceProvider();
         return _app;
     }
