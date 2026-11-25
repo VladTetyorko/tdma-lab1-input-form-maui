@@ -17,7 +17,6 @@ public partial class StockDocumentPage : ContentPage
         BindingContext = _viewModel = viewModel;
 
         Search.InputFocusChanged += OnTypingFocusChanged;
-        Quantity.InputFocusChanged += OnTypingFocusChanged;
 
         // A keyboard scanner types into the box that has the focus: give it back after every Enter
         Search.InputCompleted += (_, _) => FocusSearch();
@@ -51,7 +50,7 @@ public partial class StockDocumentPage : ContentPage
         {
             FocusSearch();
         }
-        else if (_viewModel.CameraState == CameraState.Active)
+        else if (_viewModel.CameraState == CameraState.Active && Search.IsInputFocused)
         {
             Dispatcher.Dispatch(Search.UnfocusInput);
         }
@@ -62,7 +61,8 @@ public partial class StockDocumentPage : ContentPage
     {
         if (_phone)
         {
-            Dispatcher.Dispatch(() => _viewModel.IsTyping = Search.IsInputFocused || Quantity.IsInputFocused);
+            // Typing a quantity keeps the camera: the next scan takes the number over
+            Dispatcher.Dispatch(() => _viewModel.IsTyping = Search.IsInputFocused);
         }
     }
 }

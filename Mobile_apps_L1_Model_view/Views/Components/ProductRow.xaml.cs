@@ -26,6 +26,19 @@ public partial class ProductRow : ContentView
         row.NoteLabel.IsVisible = !string.IsNullOrEmpty((string?)value);
     });
 
+    // Why the line cannot go as it is, in red with a warning sign
+    public static readonly BindableProperty ProblemProperty = Property(nameof(Problem), typeof(string), (row, value) =>
+    {
+        row.ProblemLabel.Text = (string?)value;
+        row.ProblemRow.IsVisible = !string.IsNullOrEmpty((string?)value);
+    });
+
+    public string? Problem
+    {
+        get => (string?)GetValue(ProblemProperty);
+        set => SetValue(ProblemProperty, value);
+    }
+
     public ProductRow()
     {
         InitializeComponent();

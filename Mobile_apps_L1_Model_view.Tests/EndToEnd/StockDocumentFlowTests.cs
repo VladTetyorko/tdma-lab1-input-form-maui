@@ -84,12 +84,14 @@ public class StockDocumentFlowTests
         Assert.Equal(Routes.Receive, navigation.RequestedRoutes.Last());
 
         var receive = await OpenAsync(services, OperationDirection.In);
-        receive.EntryQuantity = "12";
         receive.QuickSearch.Query = "nut";
         var row = receive.QuickSearch.Suggestions[0];
         var before = row.Suggestion.Product.Quantity;
         receive.QuickSearch.PickCommand.Execute(row);
         await Eventually.WaitAsync(() => receive.Lines.Count == 1);
+        Assert.True(receive.Lines[0].WantsFocus);
+        receive.Lines[0].QuantityText = "12";
+        Assert.Equal("Review 12 units", receive.CommitText);
         await receive.CommitCommand.ExecuteAsync(null);
 
         var list = services.GetRequiredService<ProductListViewModel>();

@@ -34,6 +34,12 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     private bool _loading;
     private bool _createdProduct;
 
+    // The barcode whose quantity gets the cursor on the next rebuild of the lines
+    private string? _focusBarcode;
+
+    // The unknown barcode a product is being created for
+    private string? _creating;
+
     // The page was left (Back), so a pending return must not close a second page
     private bool _left;
 
@@ -95,10 +101,6 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     public string Title => IsIssue ? "Issue goods" : "Receive goods";
 
     public ObservableCollection<StockDocumentLineItem> Lines { get; } = [];
-
-    // Units a typed or picked product adds; camera reads always add one
-    [ObservableProperty]
-    public partial string EntryQuantity { get; set; } = "1";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CameraMessage))]
@@ -237,7 +239,6 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         Counterparty = _draft.Counterparty;
         Note = _draft.Note;
         _loading = false;
-        EntryQuantity = "1";
         QuickSearch.InStockFirst = IsIssue;
         await QuickSearch.LoadCommand.ExecuteAsync(null);
 
@@ -247,6 +248,13 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         _removed = null;
         _products.Clear();
         await ResolveAsync(_draft.Lines.Select(line => line.Barcode));
+        // Back from creating the product: its line is resolved now and waits for the quantity
+        if (_creating is not null && _products.GetValueOrDefault(_creating) is not null)
+        {
+            _focusBarcode = _creating;
+        }
+
+        _creating = null;
         Refresh();
         OnPropertyChanged(nameof(CanCreateProducts));
     }
@@ -259,11 +267,6 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     [RelayCommand]
     private async Task AddTypedAsync()
     {
-        if (ReadEntryQuantity() is not { } quantity)
-        {
-            return;
-        }
-
         var text = QuickSearch.Query;
 
         // Cleared before the line is added, so the next read of a keyboard scanner starts in an empty box
@@ -272,37 +275,14 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             QuickSearch.Query = string.Empty;
         }
 
-        if (await AddAsync(text, debounce: false, quantity))
-        {
-            EntryQuantity = "1";
-        }
+        await AddAsync(text, debounce: false);
     }
 
     // A product chosen in the drop-down
     private async Task AddPickedAsync(ProductSummary product)
     {
-        if (ReadEntryQuantity() is not { } quantity)
-        {
-            return;
-        }
-
         _products[product.Barcode] = product;
-        if (await AddAsync(product.Barcode, debounce: false, quantity))
-        {
-            EntryQuantity = "1";
-        }
-    }
-
-    private int? ReadEntryQuantity()
-    {
-        if (int.TryParse(EntryQuantity, out var quantity) && quantity >= 1)
-        {
-            return quantity;
-        }
-
-        StatusMessage = WholeNumberMessage;
-        feedback.Error();
-        return null;
+        await AddAsync(product.Barcode, debounce: false);
     }
 
     [RelayCommand]
@@ -318,7 +298,8 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     [RelayCommand]
     private async Task SetQuantityAsync(StockDocumentLineItem? line)
     {
-        if (line is null || line.QuantityText == line.Quantity.ToString())
+        // A box that loses the focus because the lines were rebuilt belongs to an old line: it changes nothing
+        if (line is null || !Lines.Any(current => ReferenceEquals(current, line)) || line.QuantityText == line.Quantity.ToString())
         {
             return;
         }
@@ -388,6 +369,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         }
 
         _createdProduct = true;
+        _creating = line.Barcode;
         await navigation.GoToAsync(Routes.ProductForm,
             new Dictionary<string, object> { [NavigationKeys.Barcode] = line.Barcode });
     }
@@ -428,6 +410,19 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         IsBusy = true;
         try
         {
+            // A number typed without Enter counts too
+            if (ApplyTyped())
+            {
+                Refresh();
+                await drafts.SaveAsync(_draft);
+                if (Lines.Any(line => line.IsInvalid))
+                {
+                    StatusMessage = "Fix the red lines first";
+                    feedback.Error();
+                    return;
+                }
+            }
+
             var units = _draft.TotalUnits;
             Result<StockDocument>? result = null;
             var review = new DocumentReviewViewModel(Direction, [.. Lines],
@@ -510,7 +505,23 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     // "+12" when receiving, "−12" when issuing
     private string Signed(int quantity) => $"{(IsIssue ? "−" : "+")}{quantity}";
 
-    private async Task<bool> AddAsync(string? text, bool debounce, int quantity = 1)
+    // Takes over the numbers that are typed but not yet confirmed; true when a line changed
+    private bool ApplyTyped()
+    {
+        var changed = false;
+        foreach (var line in Lines.Where(line => line.TypedQuantity != line.Quantity))
+        {
+            _draft.SetQuantity(line.Barcode, line.TypedQuantity);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private void ShowCommitText() =>
+        CommitText = $"Review {Plural.Units(Lines.Sum(line => line.TypedQuantity))}";
+
+    private async Task<bool> AddAsync(string? text, bool debounce)
     {
         var parsed = ScanPayloadParser.Parse(text);
         if (!parsed.IsSuccess)
@@ -531,11 +542,14 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         SuccessText = string.Empty;
         _removed = null;
         await ResolveAsync([barcode]);
-        _draft.Add(barcode, quantity);
+        // The number typed for the line before is taken over first, then this one adds 1
+        ApplyTyped();
+        _draft.Add(barcode);
+        _focusBarcode = _products[barcode] is null ? null : barcode;
         Refresh();
         if (_products[barcode] is { } product)
         {
-            StatusMessage = $"{product.Name} {Signed(quantity)}";
+            StatusMessage = $"{product.Name} {Signed(1)}";
             feedback.Success();
         }
         else
@@ -587,12 +601,18 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         Lines.Clear();
         foreach (var line in _draft.Lines)
         {
-            Lines.Add(new StockDocumentLineItem(line.Barcode, _products.GetValueOrDefault(line.Barcode), line.Quantity, Direction));
+            Lines.Add(new StockDocumentLineItem(line.Barcode, _products.GetValueOrDefault(line.Barcode), line.Quantity, Direction)
+            {
+                WantsFocus = line.Barcode == _focusBarcode,
+                Typed = ShowCommitText
+            });
         }
+
+        _focusBarcode = null;
 
         var units = _draft.TotalUnits;
         SummaryText = Lines.Count == 0 ? string.Empty : $"Draft · {Plural.Lines(Lines.Count)} · {Plural.Units(units)}";
-        CommitText = $"Review {Plural.Units(units)}";
+        ShowCommitText();
         CommitHint = Lines.Count == 0 ? "Add a product first"
             : Lines.Any(line => line.IsInvalid) ? "Fix the red lines first"
             : string.Empty;

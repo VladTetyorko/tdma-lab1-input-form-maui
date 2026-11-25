@@ -411,34 +411,74 @@ public class StockDocumentViewModelTests
     }
 
     [Fact]
-    public async Task PickingFromTheSearch_AddsTheTypedQuantityAndResetsIt()
+    public async Task PickingFromTheSearch_AddsOneAndAsksForTheQuantity()
     {
         var viewModel = await OpenAsync();
-        viewModel.EntryQuantity = "12";
         viewModel.QuickSearch.Query = "dri";
 
         viewModel.QuickSearch.PickCommand.Execute(viewModel.QuickSearch.Suggestions.Single());
         await Eventually.WaitAsync(() => viewModel.Lines.Count == 1);
 
-        Assert.Equal(("Drill", 12), (viewModel.Lines[0].Name, viewModel.Lines[0].Quantity));
-        Assert.Equal("Drill +12", viewModel.StatusMessage);
-        Assert.Equal("1", viewModel.EntryQuantity);
+        Assert.Equal(("Drill", 1, true), (viewModel.Lines[0].Name, viewModel.Lines[0].Quantity, viewModel.Lines[0].WantsFocus));
+        Assert.Equal("Drill +1", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task TheNextScan_TakesTheTypedNumberOver_AndARepeatScanAddsOne()
+    {
+        var viewModel = await OpenAsync();
+        await TypeAsync(viewModel, Drill);
+        viewModel.Lines[0].QuantityText = "12";
+        Assert.Equal("Review 12 units", viewModel.CommitText);
+
+        await TypeAsync(viewModel, Saw);
+        Assert.Equal([("Saw", 1, true), ("Drill", 12, false)], viewModel.Lines.Select(l => (l.Name, l.Quantity, l.WantsFocus)));
+
+        await TypeAsync(viewModel, Drill);
+        Assert.Equal(("Drill", 13), (viewModel.Lines[0].Name, viewModel.Lines[0].Quantity));
+    }
+
+    [Fact]
+    public async Task ABoxOfARebuiltLine_ChangesNothing()
+    {
+        var viewModel = await OpenAsync();
+        await TypeAsync(viewModel, Drill);
+        var old = viewModel.Lines[0];
+        old.QuantityText = "12";
+        await TypeAsync(viewModel, Drill);
+
+        await viewModel.SetQuantityCommand.ExecuteAsync(old);
+
+        Assert.Equal(13, viewModel.Lines[0].Quantity);
     }
 
     [Theory]
     [InlineData("0")]
     [InlineData("two")]
     [InlineData("")]
-    public async Task WrongQuantity_AddsNothingAndKeepsTheText(string quantity)
+    public async Task AnUnusableNumber_LeavesTheLineAsItWas(string typed)
     {
         var viewModel = await OpenAsync();
-        viewModel.EntryQuantity = quantity;
-
         await TypeAsync(viewModel, Drill);
+        viewModel.Lines[0].QuantityText = typed;
+        _sheets.OnShow = FakeSheetService.DismissAsync;
 
-        Assert.Empty(viewModel.Lines);
-        Assert.Equal("Enter a whole number of units.", viewModel.StatusMessage);
-        Assert.Equal(Drill, viewModel.QuickSearch.Query);
+        await viewModel.CommitCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, viewModel.Lines[0].Quantity);
+        Assert.Equal("Receive 1 unit", Assert.IsType<DocumentReviewViewModel>(_sheets.Shown.Single()).PrimaryText);
+    }
+
+    [Fact]
+    public async Task Review_CountsANumberTypedWithoutEnter()
+    {
+        var viewModel = await OpenAsync();
+        await TypeAsync(viewModel, Drill);
+        viewModel.Lines[0].QuantityText = "24";
+
+        await viewModel.CommitCommand.ExecuteAsync(null);
+
+        Assert.StartsWith("Received 24 units", viewModel.SuccessText);
     }
 
     [Fact]

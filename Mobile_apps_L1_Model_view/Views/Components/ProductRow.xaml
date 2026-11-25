@@ -18,6 +18,11 @@
                 </Border>
             </HorizontalStackLayout>
             <Label x:Name="NoteLabel" Style="{StaticResource TextCaption}" IsVisible="False" />
+            <HorizontalStackLayout x:Name="ProblemRow" Spacing="4" IsVisible="False">
+                <Label Text="{StaticResource IconWarning}" Style="{StaticResource IconGlyph}" FontSize="16"
+                       TextColor="{DynamicResource Danger}" />
+                <Label x:Name="ProblemLabel" Style="{StaticResource ErrorLabel}" VerticalOptions="Center" />
+            </HorizontalStackLayout>
         </VerticalStackLayout>
         <ContentView x:Name="RightHost" Grid.Column="1" VerticalOptions="Center" />
     </Grid>

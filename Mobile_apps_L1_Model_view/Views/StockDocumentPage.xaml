@@ -35,13 +35,8 @@
                 <components:CameraStatusBanner Message="{Binding CameraMessage}" ActionText="{Binding CameraActionText}"
                                                ActionCommand="{Binding RetryCameraCommand}" />
 
-                <Grid ColumnDefinitions="*,88" ColumnSpacing="8">
-                    <components:QuickSearchBox x:Name="Search" BindingContext="{Binding QuickSearch}"
-                                               Label="Product" Placeholder="Type a name or barcode" />
-                    <components:OutlinedField x:Name="Quantity" Grid.Column="1" Label="Qty" Keyboard="Numeric" MaxLength="5"
-                                              ShowClear="False" EntryId="EntryQuantity" VerticalOptions="Start"
-                                              Text="{Binding EntryQuantity, Mode=TwoWay}" />
-                </Grid>
+                <components:QuickSearchBox x:Name="Search" BindingContext="{Binding QuickSearch}"
+                                           Placeholder="Type a name or barcode" />
 
                 <FlexLayout Wrap="Wrap" AlignItems="Center">
                     <Label Text="{Binding StatusMessage}" Style="{StaticResource TextBodyStrong}" FlexLayout.Grow="1"
@@ -59,50 +54,50 @@
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}" AutomationId="DocumentLines">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="viewModels:StockDocumentLineItem">
-                            <Grid RowDefinitions="Auto,1" RowSpacing="8" Padding="0,8,0,0">
-                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-                                    <VerticalStackLayout VerticalOptions="Center">
-                                        <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" />
-                                        <Label Text="{Binding StockText}" Style="{StaticResource TextCaption}" />
-                                        <HorizontalStackLayout Spacing="4" IsVisible="{Binding IsInvalid}">
-                                            <Label Text="{StaticResource IconWarning}" Style="{StaticResource IconGlyph}"
-                                                   TextColor="{DynamicResource Danger}" />
-                                            <Label Text="{Binding Problem}" Style="{StaticResource ErrorLabel}" VerticalOptions="Center" />
+                            <Grid RowDefinitions="Auto,Auto,1">
+                                <components:ProductRow ProductName="{Binding Name}" Code="{Binding Barcode}" Margin="-12,0"
+                                                       IsOutOfStock="{Binding IsOutOfStock}" Note="{Binding StockText}"
+                                                       Problem="{Binding Problem}">
+                                    <components:ProductRow.Right>
+                                        <HorizontalStackLayout>
+                                            <Border StrokeShape="RoundRectangle 24" HeightRequest="{StaticResource StepperHeight}"
+                                                    Stroke="{DynamicResource BorderStrongBrush}" VerticalOptions="Center">
+                                                <HorizontalStackLayout>
+                                                    <Button Text="{StaticResource IconSubtract}" StyleClass="Icon"
+                                                            SemanticProperties.Description="{Binding Name, StringFormat='One less {0}'}"
+                                                            Command="{Binding BindingContext.DecrementCommand, Source={x:Reference ThisPage}}"
+                                                            CommandParameter="{Binding .}" AutomationId="DecrementLineButton" />
+                                                    <components:BorderlessEntry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric"
+                                                           WidthRequest="52" MaxLength="5" HorizontalTextAlignment="Center"
+                                                           VerticalTextAlignment="Center"
+                                                           SemanticProperties.Description="{Binding Name, StringFormat='Quantity of {0}'}"
+                                                           ReturnCommand="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}"
+                                                           ReturnCommandParameter="{Binding .}"
+                                                           AutomationId="{Binding Barcode, StringFormat='LineQuantity_{0}'}">
+                                                        <components:BorderlessEntry.Behaviors>
+                                                            <views:UnfocusCommandBehavior Command="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}" />
+                                                            <views:FocusAndSelectBehavior />
+                                                        </components:BorderlessEntry.Behaviors>
+                                                    </components:BorderlessEntry>
+                                                    <Button Text="{StaticResource IconAdd}" StyleClass="Icon"
+                                                            SemanticProperties.Description="{Binding Name, StringFormat='One more {0}'}"
+                                                            Command="{Binding BindingContext.IncrementCommand, Source={x:Reference ThisPage}}"
+                                                            CommandParameter="{Binding .}" AutomationId="IncrementLineButton" />
+                                                </HorizontalStackLayout>
+                                            </Border>
+                                            <Button Text="{StaticResource IconDismiss}" Style="{StaticResource AppBarButton}"
+                                                    WidthRequest="40" TextColor="{DynamicResource TextSecondary}" FontSize="20"
+                                                    SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}"
+                                                    Command="{Binding BindingContext.RemoveLineCommand, Source={x:Reference ThisPage}}"
+                                                    CommandParameter="{Binding .}" AutomationId="RemoveLineButton" />
                                         </HorizontalStackLayout>
-                                        <Button Text="Create product" StyleClass="Compact,Outlined" HorizontalOptions="Start"
-                                                IsVisible="{Binding IsUnknown}" CommandParameter="{Binding .}"
-                                                Command="{Binding BindingContext.CreateProductCommand, Source={x:Reference ThisPage}}" />
-                                    </VerticalStackLayout>
-                                    <Border Grid.Column="1" StrokeShape="RoundRectangle 24" HeightRequest="{StaticResource StepperHeight}"
-                                            Stroke="{DynamicResource BorderStrongBrush}" VerticalOptions="Center">
-                                    <HorizontalStackLayout>
-                                        <Button Text="{StaticResource IconSubtract}" StyleClass="Icon"
-                                                SemanticProperties.Description="{Binding Name, StringFormat='One less {0}'}"
-                                                Command="{Binding BindingContext.DecrementCommand, Source={x:Reference ThisPage}}"
-                                                CommandParameter="{Binding .}" AutomationId="DecrementLineButton" />
-                                        <components:BorderlessEntry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric"
-                                               WidthRequest="56" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
-                                               SemanticProperties.Description="{Binding Name, StringFormat='Quantity of {0}'}"
-                                               ReturnCommand="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}"
-                                               ReturnCommandParameter="{Binding .}"
-                                               AutomationId="{Binding Barcode, StringFormat='LineQuantity_{0}'}">
-                                            <components:BorderlessEntry.Behaviors>
-                                                <views:UnfocusCommandBehavior Command="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}" />
-                                            </components:BorderlessEntry.Behaviors>
-                                        </components:BorderlessEntry>
-                                        <Button Text="{StaticResource IconAdd}" StyleClass="Icon"
-                                                SemanticProperties.Description="{Binding Name, StringFormat='One more {0}'}"
-                                                Command="{Binding BindingContext.IncrementCommand, Source={x:Reference ThisPage}}"
-                                                CommandParameter="{Binding .}" AutomationId="IncrementLineButton" />
-                                    </HorizontalStackLayout>
-                                    </Border>
-                                    <Button Grid.Column="2" Text="{StaticResource IconDismiss}" Style="{StaticResource AppBarButton}"
-                                            Margin="8,0,0,0" TextColor="{DynamicResource TextSecondary}" FontSize="20"
-                                            SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}"
-                                            Command="{Binding BindingContext.RemoveLineCommand, Source={x:Reference ThisPage}}"
-                                            CommandParameter="{Binding .}" AutomationId="RemoveLineButton" />
-                                </Grid>
-                                <BoxView Grid.Row="1" />
+                                    </components:ProductRow.Right>
+                                </components:ProductRow>
+                                <Button Grid.Row="1" Text="Create product" StyleClass="Compact,Outlined" HorizontalOptions="Start"
+                                        Margin="0,0,0,8" IsVisible="{Binding IsUnknown}" CommandParameter="{Binding .}"
+                                        Command="{Binding BindingContext.CreateProductCommand, Source={x:Reference ThisPage}}"
+                                        AutomationId="CreateProductButton" />
+                                <BoxView Grid.Row="2" />
                             </Grid>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
