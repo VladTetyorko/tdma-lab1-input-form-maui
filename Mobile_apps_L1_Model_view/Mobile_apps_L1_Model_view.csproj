@@ -14,6 +14,8 @@
         <OutputType>Exe</OutputType>
         <RootNamespace>Mobile_apps_L1_Model_view</RootNamespace>
         <UseMaui>true</UseMaui>
+        <!-- Latest 10.0.x servicing release; CommunityToolkit.Maui 16.0.0 needs Controls 10.0.90 or later -->
+        <MauiVersion>10.0.130</MauiVersion>
         <SingleProject>true</SingleProject>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -75,6 +77,8 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)" />
+        <!-- Toast and snackbar behind IToastService (MIT). 16.x is the last line targeting net10 -->
+        <PackageReference Include="CommunityToolkit.Maui" Version="16.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
         <!-- Fingerprint / face / Windows Hello behind IBiometricAuthenticator (MIT) -->
         <PackageReference Include="Plugin.Maui.Biometric" Version="0.1.2" />

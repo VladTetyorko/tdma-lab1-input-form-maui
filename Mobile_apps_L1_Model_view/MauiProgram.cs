@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Sentry;
 using Mobile_apps_L1_Model_view.Data;
@@ -18,6 +19,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -57,6 +59,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMapLauncher, MauiMapLauncher>();
         builder.Services.AddSingleton<IMainThread, MauiMainThread>();
         builder.Services.AddSingleton<IAlertService, ShellAlertService>();
+        builder.Services.AddSingleton<IToastService, MauiToastService>();
         builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddTransient<LoginPage>();
