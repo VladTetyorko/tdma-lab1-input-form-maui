@@ -92,7 +92,20 @@ public sealed class TestStore
 
     public IDiagnosticsService Diagnostics => new DiagnosticsService(CurrentUser, CrashReporter, Logger<DiagnosticsService>());
 
-    public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock);
+    public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock, CurrentUser);
+
+    // One document repository, so the feed sees the documents a test commits
+    private InMemoryStockDocumentRepository? _documents;
+
+    public InMemoryStockDocumentRepository Documents => _documents ??= new InMemoryStockDocumentRepository(Operations);
+
+    public IOperationFeed Feed =>
+        new OperationFeed(Operations, Products, Users, Documents, CurrentUser, Logger<OperationFeed>());
+
+    public FakeSheetService Sheets { get; } = new();
+
+    public OperationViewer Viewer =>
+        new(Sheets, Navigation, Catalog, Maps, Feedback, Clock, Logger<OperationViewer>());
 
     // Adds the user to the user repository (for history names) and signs them in
     public async Task<User> SignInAsync(Role role, string fullName = "Test User")

@@ -1,63 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- What needs me today (design revision 4, 5.2): drafts to continue, what has run out, today's operations. No tiles:
+     receiving and issuing are the pill of the bottom bar. No numbers to interpret, only lists to act on -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
              xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.HomePage"
              x:DataType="viewModels:HomeViewModel"
+             x:Name="ThisPage"
              Title="StockRoom">
 
     <ContentPage.Behaviors>
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
         <components:AppBar Title="StockRoom" Route="home" />
-        <ScrollView x:Name="Scroller" Grid.Row="1" SizeChanged="OnScrollerSizeChanged">
-        <!-- The actions sit in the middle of the free height, within reach of a thumb (the code-behind gives the
-             grid the height of the view) -->
-        <Grid x:Name="Body" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowDefinitions="Auto,*,Auto,*,Auto"
-              RowSpacing="8" MaximumWidthRequest="1200">
-            <VerticalStackLayout>
-                <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
-                <Label Text="{Binding Greeting}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
-                <Label Text="{Binding RoleText}" Style="{StaticResource TextCaption}" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Grid.Row="2" Spacing="8">
-
-            <!-- One column on a phone, two side by side on a wide window (code-behind) -->
-            <Grid x:Name="Tiles" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                <components:ActionTile x:Name="ReceiveTile" ButtonId="HomeReceiveTile" Title="Receive goods"
-                                       Glyph="{StaticResource IconReceive}" Caption="{Binding ReceiveCaption}"
-                                       Command="{Binding OpenReceiveCommand}" IsVisible="{Binding CanReceive}" />
-                <components:ActionTile x:Name="IssueTile" Grid.Row="1" ButtonId="HomeIssueTile" Title="Issue goods"
-                                       Glyph="{StaticResource IconIssue}" Caption="{Binding IssueCaption}"
-                                       Command="{Binding OpenIssueCommand}" IsVisible="{Binding CanIssue}" />
-            </Grid>
-            <Label Text="{Binding IssueNote}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasIssueNote}"
-                   AutomationId="HomeIssueNotAllowedLabel" />
-
-            <!-- Two buttons of equal width; alone, the first one takes the whole row -->
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                <Button Text="Find a product" StyleClass="Outlined" Command="{Binding FindProductCommand}"
-                        Grid.ColumnSpan="2" AutomationId="HomeFindProductButton">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding CanAddProduct}" Value="True">
-                            <Setter Property="Grid.ColumnSpan" Value="1" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="12" MaximumWidthRequest="720">
+                <VerticalStackLayout>
+                    <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
+                    <Label Text="{Binding Greeting}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
+                </VerticalStackLayout>
+                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding StatusMessage}" Value="">
+                            <Setter Property="IsVisible" Value="False" />
                         </DataTrigger>
-                    </Button.Triggers>
-                </Button>
-                <Button Grid.Column="1" Text="Add product" StyleClass="Outlined" Command="{Binding AddProductCommand}"
-                        IsVisible="{Binding CanAddProduct}" AutomationId="HomeAddProductButton" />
-            </Grid>
-            </VerticalStackLayout>
+                    </Label.Triggers>
+                </Label>
 
-            <components:RecentActivityPanel x:Name="Recent" Grid.Row="4" />
-        </Grid>
-    </ScrollView>
+                <VerticalStackLayout IsVisible="{Binding HasDrafts}" Spacing="8">
+                    <Label Text="Continue" Style="{StaticResource TextOverline}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Drafts}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:DraftRow">
+                                <Border StyleClass="SectionCard" Padding="12,0">
+                                    <Grid ColumnDefinitions="*,Auto" MinimumHeightRequest="48">
+                                        <Label Text="{Binding Text}" Style="{StaticResource TextBodyStrong}" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{StaticResource IconChevronRight}" Style="{StaticResource IconGlyph}" />
+                                        <Button Grid.ColumnSpan="2" StyleClass="RowOverlay" CommandParameter="{Binding .}"
+                                                Command="{Binding BindingContext.ContinueCommand, Source={x:Reference ThisPage}, x:DataType=ContentPage}"
+                                                SemanticProperties.Description="{Binding Text}" AutomationId="HomeDraftRow" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout IsVisible="{Binding HasOutOfStock}">
+                    <Grid ColumnDefinitions="*,Auto" MinimumHeightRequest="40">
+                        <Label Text="{Binding OutOfStockTitle}" Style="{StaticResource TextOverline}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{StaticResource IconChevronRight}" Style="{StaticResource IconGlyph}" />
+                        <Button Grid.ColumnSpan="2" StyleClass="RowOverlay" Command="{Binding OpenOutOfStockCommand}"
+                                SemanticProperties.Description="{Binding OutOfStockTitle}" AutomationId="HomeOutOfStock" />
+                    </Grid>
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding OutOfStock}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="services:ProductSummary">
+                                <Grid RowDefinitions="Auto,1">
+                                    <components:ProductRow ProductName="{Binding Name}" Code="{Binding Barcode}" IsOutOfStock="True">
+                                        <components:ProductRow.Right>
+                                            <Label Text="{Binding Quantity}" Style="{StaticResource TextNumeric}" />
+                                        </components:ProductRow.Right>
+                                    </components:ProductRow>
+                                    <Button StyleClass="RowOverlay" CommandParameter="{Binding .}"
+                                            Command="{Binding BindingContext.OpenProductCommand, Source={x:Reference ThisPage}, x:DataType=ContentPage}"
+                                            SemanticProperties.Description="{Binding Name}" AutomationId="HomeProductRow" />
+                                    <BoxView Grid.Row="1" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout>
+                    <Grid ColumnDefinitions="*,Auto" MinimumHeightRequest="40">
+                        <Label Text="{Binding TodayTitle}" Style="{StaticResource TextOverline}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{StaticResource IconChevronRight}" Style="{StaticResource IconGlyph}" />
+                        <Button Grid.ColumnSpan="2" StyleClass="RowOverlay" Command="{Binding OpenActivityCommand}"
+                                SemanticProperties.Description="{Binding TodayTitle}" AutomationId="HomeToday" />
+                    </Grid>
+                    <VerticalStackLayout IsVisible="{Binding HasToday}">
+                        <components:OperationHeader ShowBy="{Binding ShowBy}" />
+                        <components:OperationTable ItemsSource="{Binding Today}" Command="{Binding OpenOperationCommand}"
+                                                   AutomationId="HomeTodayTable" />
+                    </VerticalStackLayout>
+                    <Label Text="{Binding TodayEmptyText}" Style="{StaticResource TextBody}" Padding="0,8"
+                           TextColor="{DynamicResource TextSecondary}" AutomationId="HomeTodayEmpty" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
         <components:BottomNav Grid.Row="2" />
     </Grid>
 </ContentPage>

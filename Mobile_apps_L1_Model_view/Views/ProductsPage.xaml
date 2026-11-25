@@ -169,9 +169,6 @@
                                    VerticalOptions="Start" AutomationId="EmptyState" />
 
             <VerticalStackLayout Grid.Row="4" Spacing="4">
-                <Grid IsVisible="{OnIdiom Default=True, Phone=False}">
-                    <components:RecentActivityPanel x:Name="Recent" />
-                </Grid>
                 <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
             </VerticalStackLayout>
         </Grid>

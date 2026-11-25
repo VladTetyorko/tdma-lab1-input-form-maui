@@ -21,6 +21,9 @@ public static class NavigationKeys
     // string: where prefilled data comes from, shown as attribution on the form (licence requirement)
     public const string DataSource = "DataSource";
 
+    // bool: show the product table with the empty products first (Home's out-of-stock list)
+    public const string SortByQuantity = "SortByQuantity";
+
     // bool: products or stock changed on pages the list is not told about (scanner flow), reload it
     public const string ProductsChanged = "ProductsChanged";
 }

@@ -1,11 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!-- Every operation (design revision 4, 5.3): one row of filter chips, the header band stays, the rows scroll.
+     A tap on a row opens the operation sheet -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
              xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.ActivityPage"
+             x:DataType="viewModels:ActivityViewModel"
              Title="Activity">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
+
     <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
         <components:AppBar Title="Activity" Route="activity" />
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*" Padding="{OnIdiom Default='24,8', Phone='16,8'}"
+              RowSpacing="8" MaximumWidthRequest="720">
+            <FlexLayout Wrap="Wrap">
+                <Button Text="All" StyleClass="Choice" Margin="0,0,8,4" Command="{Binding ShowDirectionCommand}"
+                        CommandParameter="All" AutomationId="FilterAll">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsAll}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                            <Setter Property="BorderWidth" Value="2" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Text="In" StyleClass="Choice" Margin="0,0,8,4" Command="{Binding ShowDirectionCommand}"
+                        CommandParameter="In" AutomationId="FilterIn">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsIn}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                            <Setter Property="BorderWidth" Value="2" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Text="Out" StyleClass="Choice" Margin="0,0,16,4" Command="{Binding ShowDirectionCommand}"
+                        CommandParameter="Out" AutomationId="FilterOut">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsOut}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                            <Setter Property="BorderWidth" Value="2" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Text="Mine" StyleClass="Choice" Margin="0,0,8,4" Command="{Binding ToggleMineCommand}"
+                        IsVisible="{Binding CanFilterMine}" AutomationId="FilterMine">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding MineOnly}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                            <Setter Property="BorderWidth" Value="2" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Text="{Binding ProductText}" StyleClass="Choice" Margin="0,0,0,4" Command="{Binding ClearProductCommand}"
+                        IsVisible="{Binding HasProduct}" MaximumWidthRequest="240" LineBreakMode="TailTruncation"
+                        AutomationId="FilterProduct" />
+            </FlexLayout>
+            <Label Grid.Row="1" Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding StatusMessage}" Value="">
+                        <Setter Property="IsVisible" Value="False" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+            <components:OperationHeader Grid.Row="2" ShowBy="{Binding ShowBy}" />
+            <ScrollView Grid.Row="3">
+                <VerticalStackLayout>
+                    <components:OperationTable ItemsSource="{Binding Days}" Command="{Binding OpenCommand}"
+                                               AutomationId="ActivityTable" />
+                    <Label Text="{Binding EmptyText}" Style="{StaticResource TextBody}" Padding="0,24"
+                           HorizontalTextAlignment="Center" TextColor="{DynamicResource TextSecondary}" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
         <components:BottomNav Grid.Row="2" />
     </Grid>
 </ContentPage>

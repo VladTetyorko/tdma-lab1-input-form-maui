@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The one way an operation is shown (R3): day headers (when the data has them) and one row per operation. The header
+     band is OperationHeader, apart, so a page can keep it while the rows scroll -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.OperationTable"
+             x:Name="ThisTable">
+    <VerticalStackLayout x:Name="Days">
+        <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="viewModels:OperationDay">
+                <VerticalStackLayout>
+                    <Label Text="{Binding Header}" Style="{StaticResource TextOverline}" Padding="8,12,0,4"
+                           IsVisible="{Binding HasHeader}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Rows}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:OperationRowItem">
+                                <Grid RowDefinitions="Auto,1">
+                                    <Grid ColumnDefinitions="48,*,Auto,56" ColumnSpacing="8" Padding="8,4"
+                                          MinimumHeightRequest="52">
+                                        <Label Text="{Binding Amount}" Style="{StaticResource TextNumeric}" VerticalOptions="Center"
+                                               TextColor="{DynamicResource Success}">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsOut}" Value="True">
+                                                    <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                            <Label Text="{Binding ProductName}" Style="{StaticResource TextBodyStrong}"
+                                                   MaxLines="1" LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding Caption}" Style="{StaticResource TextCaption}"
+                                                   IsVisible="{Binding HasCaption}" />
+                                        </VerticalStackLayout>
+                                        <Border Grid.Column="2" StyleClass="ChipNeutral" WidthRequest="32" Padding="0,2"
+                                                IsVisible="{Binding ShowBy}">
+                                            <Label Text="{Binding Initials}" Style="{StaticResource ChipNeutralText}"
+                                                   HorizontalTextAlignment="Center" />
+                                        </Border>
+                                        <Label Grid.Column="3" Text="{Binding Time}" Style="{StaticResource TextCaption}"
+                                               VerticalOptions="Center" HorizontalTextAlignment="End" />
+                                    </Grid>
+                                    <Button StyleClass="RowOverlay" CommandParameter="{Binding .}"
+                                            Command="{Binding Command, Source={x:Reference ThisTable}, x:DataType=ContentView}"
+                                            SemanticProperties.Description="{Binding Description}"
+                                            AutomationId="{Binding AutomationId}" />
+                                    <BoxView Grid.Row="1" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </DataTemplate>
+        </BindableLayout.ItemTemplate>
+    </VerticalStackLayout>
+</ContentView>

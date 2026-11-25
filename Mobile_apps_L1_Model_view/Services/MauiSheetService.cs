@@ -39,6 +39,7 @@ public sealed class MauiSheetService : ISheetService
         ConfirmSheetViewModel => new ConfirmContent(),
         ActionSheetViewModel => new ActionContent(),
         DocumentReviewViewModel => new DocumentReviewContent(),
+        OperationSheetViewModel => new OperationContent(),
         _ => throw new ArgumentException($"No view for {sheet.GetType().Name}", nameof(sheet))
     };
 }

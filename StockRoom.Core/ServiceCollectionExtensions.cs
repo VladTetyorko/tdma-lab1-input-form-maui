@@ -68,6 +68,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICharacteristicService, CharacteristicService>();
         services.AddSingleton<IStockService, StockService>();
         services.AddSingleton<IProductCatalog, ProductCatalog>();
+        services.AddSingleton<IOperationFeed, OperationFeed>();
+        services.AddSingleton<OperationViewer>();
         services.AddSingleton<StockChanges>();
         // Every question and message is one sheet; the host shows it (ISheetService)
         services.AddSingleton<IConfirmSheet, SheetConfirm>();
@@ -102,7 +104,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ScannerViewModel>();
         services.AddTransient<LogsViewModel>();
         services.AddTransient<StockDocumentViewModel>();
-        services.AddTransient<RecentActivityViewModel>();
+        services.AddTransient<ActivityViewModel>();
         services.AddTransient<QuickSearchViewModel>();
         services.AddTransient<MapViewModel>();
         services.AddSingleton<AppBarViewModel>();

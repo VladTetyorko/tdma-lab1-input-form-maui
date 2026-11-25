@@ -39,7 +39,7 @@ public class ProductFormViewModelTests
         var operations = new InMemoryOperationRepository();
         var characteristics = new InMemoryCharacteristicRepository();
         var catalog = new ProductCatalog(_products, characteristics, values, operations, new InMemoryUserRepository(),
-            new StockService(operations, _products, _currentUser, new FakeClock(), NullLogger<StockService>.Instance));
+            new StockService(operations, _products, _currentUser, new FakeClock(), NullLogger<StockService>.Instance), _currentUser);
         var characteristicService = new CharacteristicService(characteristics, values, _products,
             new CharacteristicValidator(characteristics), _currentUser, new FakeClock(),
             NullLogger<CharacteristicService>.Instance);

@@ -9,7 +9,8 @@ public sealed class ProductCatalog(
     IProductCharacteristicRepository values,
     IOperationRepository operations,
     IUserRepository users,
-    IStockService stock) : IProductCatalog
+    IStockService stock,
+    ICurrentUserService currentUser) : IProductCatalog
 {
     public async Task<IReadOnlyList<ProductSummary>> GetSummariesAsync()
     {
@@ -49,7 +50,8 @@ public sealed class ProductCatalog(
 
         var productValues = await values.GetByProductAsync(productId);
         var history = await BuildHistoryAsync(productId);
-        var summary = Summarize(product, await stock.GetQuantityOnHandAsync(productId), productValues, history.Count > 0);
+        var summary = Summarize(product, await stock.GetQuantityOnHandAsync(productId), productValues,
+            await operations.AnyForProductAsync(productId));
 
         var items = (await characteristics.GetAllAsync())
             .Select(c => new CharacteristicValueItem(
@@ -65,7 +67,7 @@ public sealed class ProductCatalog(
         var productsById = (await products.GetAllAsync()).ToDictionary(p => p.Id);
 
         return (await operations.GetAllAsync())
-            .Where(o => o.Location is not null && productsById.ContainsKey(o.ProductId))
+            .Where(o => o.Location is not null && productsById.ContainsKey(o.ProductId) && MaySee(o))
             .OrderByDescending(o => o.CreatedAt)
             .ThenByDescending(o => o.Id)
             .Select(o => new LocatedOperation(
@@ -86,6 +88,7 @@ public sealed class ProductCatalog(
 
         // Ids are UUID v7, so they break ties between operations recorded at the same instant
         return (await operations.GetByProductAsync(productId))
+            .Where(MaySee)
             .OrderByDescending(o => o.CreatedAt)
             .ThenByDescending(o => o.Id)
             .Select(o => new OperationHistoryItem(
@@ -98,6 +101,12 @@ public sealed class ProductCatalog(
                 o.Location))
             .ToList();
     }
+
+    // entities.md: the Driver views only what he recorded (the history and the map)
+    private bool MaySee(Operation operation) =>
+        currentUser.CurrentUser is not { } user
+        || RolePermissions.CanViewAllOperations(user.Role)
+        || operation.CreatedByUserId == user.Id;
 
     private static ProductSummary Summarize(
         Product product, int quantity, IEnumerable<ProductCharacteristic> productValues, bool hasOperations) =>

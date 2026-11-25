@@ -72,15 +72,15 @@ public class StockDocumentFlowTests
         Assert.Empty(await services.GetRequiredService<IStockDocumentRepository>().GetRecentAsync(5));
     }
 
-    // Home -> Receive -> type "nut" -> pick -> quantity 12 -> commit -> the product list shows the new quantity
+    // Bottom bar -> Receive -> type "nut" -> pick -> quantity 12 -> commit -> the product list shows the new quantity
     [Fact]
     public async Task StorekeeperReceivesFromHomeByPickingASuggestion()
     {
         var navigation = new FakeNavigationService();
         using var services = TestContainer.Create(new FakePreferencesStore(), navigation);
         await SignInAsync(services, Role.Storekeeper);
-        var home = services.GetRequiredService<HomeViewModel>();
-        await home.OpenReceiveCommand.ExecuteAsync(null);
+        var bar = services.GetRequiredService<BottomNavViewModel>();
+        await bar.OpenCommand.ExecuteAsync(Routes.Receive);
         Assert.Equal(Routes.Receive, navigation.RequestedRoutes.Last());
 
         var receive = await OpenAsync(services, OperationDirection.In);
@@ -95,6 +95,30 @@ public class StockDocumentFlowTests
         var list = services.GetRequiredService<ProductListViewModel>();
         await list.EnsureLoadedCommand.ExecuteAsync(null);
         Assert.Equal(before + 12, list.Products.Single(p => p.Id == row.Suggestion.Product.Id).Quantity);
+    }
+
+    // entities.md "view own": what others recorded never reaches the Driver's Home
+    [Fact]
+    public async Task DriverReceivesTwice_AndHomeShowsOnlyHisRows()
+    {
+        using var services = TestContainer.Create(new FakePreferencesStore(), new FakeNavigationService());
+        await SignInAsync(services, Role.Driver);
+        var barcode = (await services.GetRequiredService<IProductCatalog>().GetSummariesAsync())[0].Barcode;
+        for (var i = 0; i < 2; i++)
+        {
+            var draft = new StockDocumentDraft(OperationDirection.In);
+            draft.Add(barcode, 4);
+            Assert.True((await services.GetRequiredService<IStockDocumentService>().CommitAsync(draft)).IsSuccess);
+        }
+
+        var home = services.GetRequiredService<HomeViewModel>();
+        await home.LoadCommand.ExecuteAsync(null);
+        var activity = services.GetRequiredService<ActivityViewModel>();
+        await activity.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal([4, 4], Assert.Single(home.Today).Rows.Select(r => r.Entry.Quantity));
+        var driver = services.GetRequiredService<ICurrentUserService>().CurrentUser!.Id;
+        Assert.All(activity.Days.SelectMany(d => d.Rows), row => Assert.Equal(driver, row.Entry.UserId));
     }
 
     [Fact]

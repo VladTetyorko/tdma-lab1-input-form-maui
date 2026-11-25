@@ -219,6 +219,13 @@ public partial class ProductListViewModel(
             ApplySort();
         }
 
+        if (query.ContainsKey(NavigationKeys.SortByQuantity))
+        {
+            SearchText = string.Empty;
+            SortDescending = false;
+            SelectedSortOption = SortOption.ByQuantity;
+        }
+
         if (query.ContainsKey(NavigationKeys.ProductsChanged))
         {
             _productsStale = true;
