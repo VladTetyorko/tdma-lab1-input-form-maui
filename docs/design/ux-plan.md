@@ -1,6 +1,6 @@
 # UX plan — StockRoom redesign
 
-Status: **proposal for the owner's review** (branch `design`). Nothing here is implemented yet.
+Status: **implemented in part** on branch `design`; what differs is listed in [`../steps/10-design.md`](../steps/10-design.md).
 Read with [`design-system.md`](design-system.md) (tokens, components' look) and [`tasks.md`](tasks.md) (order of work).
 Evidence for the choices is in [`research.md`](research.md).
 

@@ -189,3 +189,9 @@ folder. **Settings → Share database** checkpoints the write-ahead log, copies
 the file and hands the copy to the system share sheet, so it can be opened on a
 PC (DB Browser for SQLite, DBeaver). Only `Operations.Counterparty` is
 encrypted; everything else is readable.
+
+## Batch documents (redesign, migration 0005)
+
+`StockDocument` (number, direction, encrypted supplier or recipient, note, creator, timestamps) groups the operations of one
+delivery or one issue: `Operation.DocumentId` points to it and is empty for a single In/Out. Fields and rules:
+[`entities.md`](entities.md). The role rules are those of operations.

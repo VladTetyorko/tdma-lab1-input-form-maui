@@ -124,6 +124,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 07 | 7 | [Device capabilities: permissions, product photo, operation location, map, shake, connectivity banner](docs/steps/07-device.md) | done (1206 tests) |
 | 08 | 8 | [Core library, Moq tests, integration tests, GitHub Actions CI with coverage gate, AutomationId, Appium UI tests](docs/steps/08-testing-ci.md) | done (1227 tests + 2 UI tests not run; ViewModels 97.4 % coverage) |
 | 09 | 9 | [Final module: search, ER and screen map, role matrix, DI table, offline scenario, demo script, APK, v1.0](docs/steps/09-final.md) | done (1226 tests + 42 AppTests + 2 UI tests not run; ViewModels 97.4 % coverage; APK artifact in CI; tag by the owner) |
+| 10 | — | [UI redesign: themes, tabs / side panel, product table, batch Receive and Issue](docs/steps/10-design.md) | implemented, not checked on screen (1309 tests + 42 AppTests) |
 
 ## Decision log
 
@@ -217,6 +218,13 @@ Every architectural decision, newest last. Details are in the step documents.
 | 84 | 9 | Android builds with `PublishTrimmed`, `RunAOTCompilation`, `AndroidEnableProfiledAot` and `AndroidEnableMarshalMethods` off, and the XAML `xmlns` of `Models` / `Services` / `ViewModels` name `assembly=StockRoom.Core` | Found by the first Release build: the XAML compiler could not resolve types moved to Core in Lab 8, trimming asked for a runtime pack nuget.org does not publish for .NET 10, and a multi-architecture publish failed in marshal methods. Cost: a larger, slower-starting APK |
 | 85 | 9 | Operation history of a product is visible to every role; the domain table no longer says "own only" for the Driver | The code never filtered it and no lab asks for it; a restriction is a new feature |
 | 86 | 9 | Release: CI job `apk` publishes a debug-signed APK and uploads it; the tag `v1.0` is created by the owner after the merge; no keystore or secret in the repository | The course needs an installable package, not a store release; tagging is a release decision |
+| 87 | — | Two theme dictionaries with the same semantic keys, swapped at run time; styles use `DynamicResource`; raw colours only in those dictionaries (no `Colors.xaml`) | `AppThemeBinding` allows two variants only; a `Color` element cannot alias a resource |
+| 88 | — | MAUI 10.0.130 (`MauiVersion`) and CommunityToolkit.Maui 16.0.0 (last net10 line) behind `IToastService`; no toast on the unpackaged Windows app | Both targets and all tests passed after the servicing update; toasts are supplementary |
+| 89 | — | Icons are the Fluent UI System Icons font (MIT) | One TTF, tinted by theme colours, official code points |
+| 90 | — | Navigation: side panel on desktop, bottom tabs on a phone, entries from `NavigationMenu.For(role)` | One tap to the daily actions; the role rule is tested in Core |
+| 91 | — | Product table sorted by tapping headers; the table is a pure model (`ProductTable`) | Testable without a page; `ProductSorter` unchanged |
+| 92 | — | `StockDocument` + `Operation.DocumentId` (migration 0005); document, operations and sync entries in one transaction; supplier / recipient on the document only, encrypted | A delivery is all or nothing; 3NF |
+| 93 | — | Issuing more than on hand is blocked; stock is read again at commit | The existing domain rule |
 
 ## Architecture
 
@@ -517,7 +525,7 @@ dotnet publish Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net
 **Tests.**
 
 ```bash
-dotnet test Mobile_apps_L1_Model_view.Tests                       # 1226 tests of Core, any OS (the UI tests are a separate project)
+dotnet test Mobile_apps_L1_Model_view.Tests                       # 1309 tests of Core, any OS (the UI tests are a separate project)
 dotnet test Mobile_apps_L1_Model_view.Tests --filter "Category!=UI" --collect:"XPlat Code Coverage" --results-directory ./TestResults   # what CI runs
 python .github/scripts/check_coverage.py TestResults/<guid>/coverage.cobertura.xml Mobile_apps_L1_Model_view.ViewModels. 60            # the 60 % ViewModel gate
 dotnet tool install -g dotnet-reportgenerator-globaltool

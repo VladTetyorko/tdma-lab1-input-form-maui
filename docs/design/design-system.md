@@ -1,6 +1,6 @@
 # Design system — StockRoom
 
-Status: **proposal** (branch `design`). Tokens are the contract between this document, the future Figma file and
+Status: **implemented in part** (green and dark only, see [`../steps/10-design.md`](../steps/10-design.md)). Tokens are the contract between this document, the future Figma file and
 `Resources/Styles`. Names below are the XAML resource keys to use. Screens and flows: [`ux-plan.md`](ux-plan.md).
 
 ## 1. Principles
