@@ -7,6 +7,7 @@ about ten products. The app does four things:
 2. **Sorts** the list by any characteristic.
 3. Lets you **add products** and **add characteristics**.
 4. **Scans a barcode** and records that goods were taken out or brought in.
+5. Lets the Manager **count the stock** and post the differences (approved in design revision 4).
 
 No dashboards, approvals or several warehouses. Anything beyond this list is a
 separate decision.
@@ -26,7 +27,10 @@ separate decision.
 | Scan → Out | ✔ | — | ✔ |
 | Add / edit / delete product (delete only without operations) | — | — | ✔ |
 | Add characteristic, set its value on a product | — | — | ✔ |
-| View operation history of a product | ✔ | ✔ | ✔ |
+| View operations (Activity, product history, map) | all | **own only** | all |
+| Correct a quantity upwards (a new In) | ✔ | ✔ | ✔ |
+| Correct a quantity downwards (a new Out) | ✔ | — | ✔ |
+| Stock count: count and post the differences | — | — | ✔ |
 | Take / pick / remove a product photo (Lab 7) | — | — | ✔ |
 | Attach my location to an In / Out (Lab 7) | ✔ | ✔ | ✔ |
 | Operations map, Open in maps, shake to scan (Lab 7) | ✔ | ✔ | ✔ |
@@ -118,6 +122,22 @@ erDiagram
         TEXT UpdatedAt
     }
 ```
+
+### Correcting a wrong quantity
+
+An `Operation` is never edited or deleted. *Correct quantity* records the **difference** as a new one-line
+`StockDocument` (In or Out) whose `Note` is `Correction of {Number}` (for an operation without a document:
+`Correction of operation of {local date and time}`). There is no column linking the two. What the original operation
+stands for is its quantity plus the corrections with that note, so correcting it twice does not count the difference
+twice. Out never exceeds the quantity on hand, and the role rules of In / Out apply.
+
+### Stock count
+
+A stock count is **not an entity**: the counted numbers are a local draft of the device (with the quantity on hand at
+the moment of counting), not synced. Posting computes `counted − on hand now` for each counted product and writes up
+to two documents, one In with what was found extra and one Out with what is missing, both with the note
+`Stock count {date}`, **in one transaction**. Products that were not counted are not touched. A product whose quantity
+changed since it was counted is left out until it is counted again. No schema change.
 
 ### Tables
 

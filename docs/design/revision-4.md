@@ -1,6 +1,6 @@
 # Design revision 4: from skeleton to a daily tool
 
-Status: **plan, not implemented.** It builds on [`journeys.md`](journeys.md) (personas, journeys, tap counts,
+Status: **implemented** (see [`../steps/13-design-revision-4.md`](../steps/13-design-revision-4.md) for what differs). It builds on [`journeys.md`](journeys.md) (personas, journeys, tap counts,
 sources) and on revisions 2 and 3. Where they disagree, this file wins.
 
 These requirements still hold:

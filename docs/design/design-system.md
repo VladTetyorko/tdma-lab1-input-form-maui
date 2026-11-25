@@ -314,3 +314,28 @@ build) is an optional size optimisation, not required.
 
 Minimal: 150 ms fade for toasts and the scan result banner, 120 ms background change on row press. No page-transition
 customisation; respect the OS "remove animations" setting where MAUI exposes it.
+
+## 12. Revision 4: screen rules, bottom bar, sheet
+
+Where this section and an earlier one differ, this one wins. Full text: [`revision-4.md`](revision-4.md) section 4.
+
+| # | Rule |
+|---|------|
+| R1 | At most one filled button per screen (the split pill, or Receive / Issue on the product page, count as one) |
+| R2 | At most two visible secondary actions; the rest is in a ⋮ menu or gone |
+| R3 | One product row (`ProductRow`), one operation table (`OperationHeader` + `OperationTable`) |
+| R4 | Optional fields sit in the review sheet or a wizard step |
+| R5 | One sheet for every question (`AppSheet`); never "OK", "Done" or "Yes"; the primary is named after its result |
+| R6 | A wizard for a rare multi-field task |
+| R7 | One dedicated search (the Search tab) |
+| R8 | 48 dp targets, 56 dp bottom action and pill halves |
+| R9 | A task returns to where it was started |
+| R10 | Title, one primary and a way back are visible without scrolling |
+| R11 | A role never sees a control it cannot use; the service refuses as well |
+| R12 | Numbers right, text left, local time, plural helpers |
+
+| Part | Tokens and sizes |
+|------|------------------|
+| Bottom bar (`BottomNav`) | 68 high, `Surface` with a 1 px top line; places: 22 glyph, 11 label, selected = `PrimaryText` + `PrimarySoft` marker; pill 56 x 172, `PrimaryBrush`, radius 28, styles `PillHalf`, `PillBadge`; on root pages only, the keyboard covers it |
+| Sheet (`AppSheet`) | `Surface`, top corners 16, handle 40 x 4 `BorderStrong`, scrim `Overlay`, no shadow; footer 56 high: outlined way back + one filled action; desktop: centred, 480 wide |
+| Choice chip (`StyleClass="Choice"`) | outlined, 40 high, radius 20; chosen = `PrimarySoft` fill, 2 px edge (and a tick where the text allows) |

@@ -223,7 +223,7 @@ Derived from `RolePermissions` (the single source), the page bindings and the Vi
 | Settings | Diagnostics section (test log entries, unobserved task, test crash) | - | - | yes | `CanUseDiagnostics`: `DiagnosticsService.Deny` |
 | Logs | open the log viewer | - | - | yes | `CanViewLogs`: guard in `LogsViewModel` |
 
-The permission rules, as code, are six: `CanManageProducts`, `CanManagePhotos`, `CanViewLogs`, `CanUseDiagnostics` (Manager only) and `CanRecord(In)` (everyone), `CanRecord(Out)` (not the Driver). **`RolePermissionsMatrixTests` encodes exactly this table as data** (6 rows x 3 roles) and a second test fails when a public method is added to or removed from `RolePermissions` without a row here, so the matrix cannot silently go stale.
+Design revision 4 added `CanCorrect` (as `CanRecord`), `CanViewAllOperations` (not the Driver) and `CanCountStock` (Manager); see step 13. The permission rules of Lab 9 were six: `CanManageProducts`, `CanManagePhotos`, `CanViewLogs`, `CanUseDiagnostics` (Manager only) and `CanRecord(In)` (everyone), `CanRecord(Out)` (not the Driver). **`RolePermissionsMatrixTests` encodes exactly this table as data** (6 rows x 3 roles) and a second test fails when a public method is added to or removed from `RolePermissions` without a row here, so the matrix cannot silently go stale.
 
 ### 5.4 Layers
 

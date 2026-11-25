@@ -218,9 +218,15 @@ out). The **only** way quantity changes.
 | `CreatedAt` | inherited | When it happened |
 
 - **Who can do what:** Storekeeper and Manager record `In` and `Out`; the
-  Driver records `In` only. Everyone sees the history.
+  Driver records `In` only. Storekeeper and Manager see every operation; the
+  Driver sees only the ones he recorded (enforced in `OperationFeed` and
+  `ProductCatalog`, not only in the UI).
 - **Immutable:** never edited or deleted. A mistake is fixed by a new
-  operation in the opposite direction, so `UpdatedAt` always equals `CreatedAt`.
+  operation of the difference, so `UpdatedAt` always equals `CreatedAt`.
+  *Correct quantity* writes it as a one-line document with the note
+  `Correction of {Number}`; there is no linking column.
+- **Stock count:** not an entity. Posting it writes ordinary documents with the
+  note `Stock count {date}` (see [`domain-model.md`](domain-model.md)).
 - **Scaling:** a `Location` entity (several warehouses or shelves, not the same
   thing as the optional `GeoPoint` above), a link to a delivery document, a `Transfer` direction.
 

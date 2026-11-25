@@ -27,7 +27,7 @@ opens a product from a **deep link** (`stockroom://product/{barcode}`), and
 scans with the **camera** on Android and iOS (manual entry on Windows).
 Since Lab 7 it also uses the device: a Manager can attach a **photo** to a product (camera or gallery),
 an In/Out can carry the **location** where it was recorded, a **map page** shows those operations (embedded map on
-Android and iOS, a list with *Open in maps* everywhere), **shaking** the phone opens the scanner, and a **banner**
+Android and iOS, a list with *Open in maps* everywhere), **shaking** the phone opens Search, and a **banner**
 on the product list shows offline / syncing / changes waiting.
 
 Entities use UUID keys, `CreatedAt`/`UpdatedAt` and an owner (`CreatedByUserId`),
@@ -51,7 +51,8 @@ roles Storekeeper, Driver and Manager, camera and accelerometer (plus scanner, l
 | Area | What the app does | Where to read |
 |------|-------------------|---------------|
 | Products | list with quantity on hand and colour state; **search** by name, barcode or characteristic value; sort by name, quantity or any characteristic; add, edit, delete (Manager) | steps 01, 02, 09 |
-| Counter | Home with *Receive goods* / *Issue goods*, a drawer menu, camera first with a quick-search field, one big action at the bottom (not yet checked on a screen) | step 11 |
+| Counter | A bottom bar (Home, Products, + Receive / − Issue, Search, Activity); scan, then type the quantity; a review sheet with the last suppliers / recipients | step 13 |
+| Daily tools | Operation table (the Driver sees only his own), *Correct quantity*, Manager's stock count, add a product in three steps | step 13 |
 | Operations | scan or type a barcode, choose **In** or **Out**, enter the number of units, optionally attach the location; Out never exceeds the stock; operations are never edited | steps 01, 02, 07 |
 | Roles | Storekeeper (In and Out), Driver (In only), Manager (everything, photos, logs, diagnostics); checked in the UI, in every command and in the service | step 06, [access matrix](docs/steps/09-final.md) |
 | Offline first | SQLite file, every change queued in `SyncQueue` and pushed to a stub server; last write wins | step 04 |
@@ -127,6 +128,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 09 | 9 | [Final module: search, ER and screen map, role matrix, DI table, offline scenario, demo script, APK, v1.0](docs/steps/09-final.md) | done (1226 tests + 42 AppTests + 2 UI tests not run; ViewModels 97.4 % coverage; APK artifact in CI; tag by the owner) |
 | 10 | — | [UI redesign: themes, tabs / side panel, product table, batch Receive and Issue](docs/steps/10-design.md) | implemented, not checked on screen (1309 tests + 42 AppTests) |
 | 11 | — | [Design revision 2: Home tiles, drawer, camera first, quick search, bottom action bar, APK script](docs/steps/11-design-revision.md) | implemented, not checked on screen or on a device (1387 tests + 42 AppTests) |
+| 13 | — | [Design revision 4: bottom bar, one sheet, operation table, scan then type, wizard, correction, stock count](docs/steps/13-design-revision-4.md) | implemented, checked on an emulator, not on a phone (1485 tests + 44 AppTests) |
 | 12 | — | [Design revision 3: camera safety, own app bar, tolerant search, counter feedback, polished pages](docs/steps/12-design-revision-3.md) | implemented, checked on an emulator, not on a phone (1454 tests + 44 AppTests) |
 
 ## Decision log
@@ -246,6 +248,17 @@ Every architectural decision, newest last. Details are in the step documents.
 | 109 | — | Confirmations before commit, discard and leaving a typed form are a themed bottom sheet (`IConfirmSheet`) | The native dialog was unthemed; the action sits where the main button was |
 | 110 | — | Page grids avoid system bars and the keyboard on the bottom edge (`SafeAreaEdges All`) | `adjustResize` alone left the main button under the keyboard |
 | 111 | — | Undo after commit, minimum stock, packs, CSV, labels and a History page are deferred, each needing a domain decision | `Operation` is immutable; these change the data model |
+| 112 | — | Own bottom bar (Home, Products, + Receive / − Issue, Search, Activity) on the four root pages; Shell stays the router; task pages are pushed and return to their origin; the drawer keeps the rare items (supersedes 95, 96) | Owner request; Shell `TabBar` disables the flyout and cannot draw a split centre button |
+| 113 | — | Owner: the Home tiles go; receiving and issuing are the central bar button | One place for in and out, always visible |
+| 114 | — | Screen rules R1-R12: one filled button, at most two secondary actions, one product row, one operation table, wizards for rare multi-field tasks | Owner: "overwhelming" |
+| 115 | — | One sheet (`ISheetService`, `SheetViewModel`) as a transparent modal page, not the Toolkit `Popup`; never "OK / Done"; confirms, alerts and ⋮ menus use it too | The technique already worked on the emulator; the contract does not depend on it |
+| 116 | — | Scan, then type the quantity; the Qty box goes; supplier / note move to the review sheet | People name the product before the count |
+| 117 | — | Owner: the review offers the last 3 suppliers / recipients as chips; decrypted only on screen, never logged; the Driver gets only his own | Fewer taps; personal data stays protected |
+| 118 | — | Search tab replaces the Scanner page and *Find a product* | One dedicated search entry |
+| 119 | — | Correct quantity = a one-line document of the difference with the note "Correction of …", no new column (supersedes the "History page / undo" part of 111) | `Operation` is immutable; no schema change |
+| 120 | — | The Driver sees only his own operations, enforced in `OperationFeed` and `ProductCatalog` | entities.md "view own"; the old Home leaked others |
+| 121 | — | Owner: simple stock count, Manager only, the database quantity visible, differences posted as compensating documents in one transaction after confirmation; local draft, no table | Approved scope addition (AGENTS section 1) |
+| 122 | — | `BorderlessEntry` handlers are never auto-disconnected | A focused box removed from a rebuilt list crashed the app |
 
 ## Architecture
 
@@ -260,7 +273,7 @@ graph TD
         CharacteristicsPage
         OperationPage
         SettingsPage
-        ScannerPage
+        SearchPage
         CameraScannerView
         PageLifecycleBehavior
         MapPage
@@ -274,7 +287,7 @@ graph TD
         CharacteristicsViewModel
         OperationViewModel
         SettingsViewModel
-        ScannerViewModel
+        SearchViewModel
         MapViewModel
         ProductPhotoEditor
         ConnectivityBannerViewModel
@@ -397,18 +410,18 @@ graph TD
     IProductService --> IOperationRepository
     IProductRepository --> Entities
     SettingsPage --> SettingsViewModel
-    ScannerPage --> ScannerViewModel
-    ScannerPage --> CameraScannerView
-    ScannerPage --> PageLifecycleBehavior
+    SearchPage --> SearchViewModel
+    SearchPage --> CameraScannerView
+    SearchPage --> PageLifecycleBehavior
     PageLifecycleBehavior -.calls.-> IPageLifecycleAware
     ProductListViewModel -.implements.-> IPageLifecycleAware
-    ScannerViewModel -.implements.-> IPageLifecycleAware
-    CameraScannerView -- "DetectedCommand" --> ScannerViewModel
+    SearchViewModel -.implements.-> IPageLifecycleAware
+    CameraScannerView -- "DetectedCommand" --> SearchViewModel
     SettingsViewModel --> IThemeService
     SettingsViewModel --> IDeepLinkHandler
-    ScannerViewModel --> IBarcodeScanner
-    ScannerViewModel --> IProductCatalog
-    ScannerViewModel --> INavigationService
+    SearchViewModel --> IBarcodeScanner
+    SearchViewModel --> IProductCatalog
+    SearchViewModel --> INavigationService
     ProductListViewModel --> IStartupNavigator
     ProductListViewModel --> IAppStateService
     ProductFormViewModel --> IAppStateService
@@ -427,7 +440,7 @@ graph TD
     MapViewModel --> IProductCatalog
     MapViewModel --> IMapLauncher
     ProductListViewModel --> IShakeGesture
-    ScannerViewModel --> IShakeGesture
+    HomeViewModel --> IShakeGesture
     IShakeGesture --> IShakeDetector
     IShakeGesture --> IMainThread
     ProductListViewModel --> ConnectivityBannerViewModel
@@ -496,8 +509,8 @@ or set the environment variable `STOCKROOM_SENTRY_DSN` (desktop only). Details: 
 |---------|-------|-------|
 | Product photo (camera or gallery) | product form and detail page, Manager | camera permission for *Take photo*; none for *Pick photo* on Android / Windows |
 | Location of an In / Out | *Attach my location* on the operation page | location permission, GPS on |
-| Map of located operations | *Map* on the product list: embedded map on Android and iOS, list + *Open in maps* everywhere | a Google Maps API key for the tiles on Android |
-| Shake to scan | product list (opens the scanner), scanner (scans again); Settings switch | an accelerometer |
+| Map of located operations | *Operations map* in the menu: embedded map on Android and iOS, list + *Open in maps* everywhere | a Google Maps API key for the tiles on Android |
+| Shake to search | Home and the product list open Search; Settings switch | an accelerometer |
 | Connectivity banner | top of the product list | nothing |
 
 Every refused permission, missing sensor, cancel or failure shows one message and writes one log line; the table of
@@ -578,7 +591,7 @@ The package is a debug-signed Release build (git-ignored). Options and the manua
 
 Seed products and the "Create from Open Food Facts" lookup use data from [Open Food Facts](https://world.openfoodfacts.org/),
 available under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/) (individual contents under
-the Database Contents License). The scanner page shows the attribution; details in [`docs/domain/open-data.md`](docs/domain/open-data.md).
+the Database Contents License). Search and the new-product steps show the attribution; details in [`docs/domain/open-data.md`](docs/domain/open-data.md).
 
 ## Known limits
 
@@ -589,4 +602,6 @@ the Database Contents License). The scanner page shows the attribution; details 
 - **Windows has no camera scanner** (manual entry), no shake and no embedded map; Android and iOS have them. iOS and Mac Catalyst are configured but were never built or run.
 - **Google Maps tiles need a key** (owner action) and **Sentry needs a DSN**; without them the map area is blank and the test crash is disabled.
 - **The Appium UI tests and the Android and hardware behaviour were not executed by the authoring tooling**; they are checked by hand with the smoke checklist in step 09.
-- The history of a product is visible to every role.
+- The Driver sees only his own operations; the other roles see all. Quantities on hand are visible to every role.
+- A correction is linked to its operation by the note only; two operations without a document recorded in the same minute for the same product would share that note.
+- A stock count is a draft of one device: it is not synced, and two people cannot count together.
