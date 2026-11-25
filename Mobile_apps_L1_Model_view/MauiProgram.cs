@@ -35,7 +35,7 @@ public static class MauiProgram
         builder.UseMauiMaps();
         builder.Services.AddSingleton<IBarcodeScanner, CameraBarcodeScanner>();
 #else
-        // No camera scanning here (Windows): the scanner page offers manual entry
+        // No camera scanning here (Windows): the pages offer manual entry
         builder.Services.AddSingleton<IBarcodeScanner, ManualBarcodeScanner>();
 #endif
 
@@ -80,7 +80,6 @@ public static class MauiProgram
         builder.Services.AddTransient<CharacteristicsPage>();
         builder.Services.AddTransient<OperationPage>();
         builder.Services.AddTransient<SettingsPage>();
-        builder.Services.AddTransient<ScannerPage>();
         builder.Services.AddTransient<SearchPage>();
         builder.Services.AddTransient<ActivityPage>();
         builder.Services.AddTransient<LogsPage>();

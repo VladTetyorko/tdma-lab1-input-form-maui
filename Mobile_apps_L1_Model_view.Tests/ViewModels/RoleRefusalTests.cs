@@ -178,23 +178,6 @@ public class RoleRefusalTests
         Assert.Equal("Red", (await _store.Values.GetByProductAsync(product.Id)).Single().Value);
     }
 
-    [Theory]
-    [InlineData(Role.Storekeeper)]
-    [InlineData(Role.Driver)]
-    public async Task Scanner_CreateProduct_AsNonManager_IsRefused_WithoutNavigating(Role role)
-    {
-        await _store.SignInAsync(role);
-        var viewModel = new ScannerViewModel(new FakeBarcodeScanner(), _store.Catalog, _store.CurrentUser, _store.Guard,
-            _store.Navigation, new FakeProductLookup(), _store.ShakeGesture, NullLogger<ScannerViewModel>.Instance) { UnknownBarcode = Barcode };
-
-        await viewModel.CreateProductCommand.ExecuteAsync(null);
-        await viewModel.CreateFromLookupCommand.ExecuteAsync(null);
-
-        Assert.Equal(2, _store.Alerts.Shown.Count);
-        Assert.All(_store.Alerts.Shown, a => Assert.Equal($"Your role ({role}) cannot add products.", a.Message));
-        Assert.Empty(_store.Navigation.RequestedRoutes);
-    }
-
     [Fact]
     public async Task Command_WhenNobodyIsSignedIn_AsksToSignIn()
     {

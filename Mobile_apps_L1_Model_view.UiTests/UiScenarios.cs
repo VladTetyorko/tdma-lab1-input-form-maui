@@ -21,7 +21,7 @@ public class UiScenarios : IDisposable
         _screen.SignInAsManager();
 
         Assert.True(_screen.IsShown("HomeReceiveTile"), "Home should be visible after signing in.");
-        _screen.Tap("HomeFindProductButton");
+        _screen.Tap("NavProducts");
         Assert.True(_screen.IsShown("ProductsCollection"), "The product list should open from Home.");
         Assert.True(_screen.IsShown("AddProductButton"), "The Manager may add products.");
     }
@@ -40,7 +40,7 @@ public class UiScenarios : IDisposable
         _screen.Tap("SaveProductButton");
 
         Assert.True(_screen.IsShown("HomeReceiveTile"), "Save returns to Home.");
-        _screen.Tap("HomeFindProductButton");
+        _screen.Tap("NavProducts");
         Assert.True(_screen.IsTextShown(name), $"The new product '{name}' should be in the list.");
     }
 

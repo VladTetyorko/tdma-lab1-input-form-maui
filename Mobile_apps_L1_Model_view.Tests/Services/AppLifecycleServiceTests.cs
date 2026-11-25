@@ -197,14 +197,14 @@ public class AppLifecycleServiceTests
     {
         var user = new User { FullName = "Olena Kovalenko", Role = Role.Manager };
         _currentUser.SignIn(user);
-        _navigation.CurrentRoute = Routes.Scanner;
+        _navigation.CurrentRoute = Routes.Search;
 
         _lifecycle.OnDestroying();
 
         var restored = new AppStateService(_preferences);
         restored.Restore();
         Assert.False(_preferences.Values.ContainsKey("state.user"));
-        Assert.Equal(Routes.Scanner, restored.LastRoute);
+        Assert.Equal(Routes.Search, restored.LastRoute);
     }
 
     [Fact]

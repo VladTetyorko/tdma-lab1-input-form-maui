@@ -187,7 +187,7 @@ public class AppLifecycleFlowTests
     }
 
     [Fact]
-    public async Task Manager_ScansAnUnknownBarcode_AddsTheProduct_AndRecordsStockFromTheScanner()
+    public async Task Manager_ScansAnUnknownBarcodeOnSearch_AddsTheProduct_AndFindsIt()
     {
         var navigation = new FakeNavigationService();
         var scanner = new FakeBarcodeScanner { IsCameraSupported = false };
@@ -199,16 +199,16 @@ public class AppLifecycleFlowTests
         await list.LoadCommand.ExecuteAsync(null);
 
         // Windows: no camera, the barcode is typed; it matches no product
-        var scan = provider.GetRequiredService<ScannerViewModel>();
-        scan.OnAppearing();
-        Assert.False(scan.IsCameraActive);
-        scan.ManualBarcode = NewProductBarcode;
-        await scan.LookUpCommand.ExecuteAsync(null);
-        Assert.Equal(NewProductBarcode, scan.UnknownBarcode);
-        Assert.True(scan.CanCreateProduct);
+        var search = provider.GetRequiredService<SearchViewModel>();
+        await search.AppearCommand.ExecuteAsync(null);
+        Assert.False(search.IsCameraActive);
+        search.QuickSearch.Query = NewProductBarcode;
+        search.QuickSearch.SubmitCommand.Execute(null);
+        await Eventually.WaitAsync(() => search.IsUnknown);
+        Assert.True(search.CanCreateUnknown);
 
         // The form opens with the barcode filled in
-        await scan.CreateProductCommand.ExecuteAsync(null);
+        await search.CreateCommand.ExecuteAsync(null);
         Assert.Equal(Routes.ProductForm, navigation.RequestedRoutes.Last());
         var form = provider.GetRequiredService<ProductFormViewModel>();
         form.ApplyQueryAttributes(LastParameters(navigation));
@@ -219,13 +219,13 @@ public class AppLifecycleFlowTests
         await form.SaveCommand.ExecuteAsync(null);
         Assert.Equal(Routes.Back, navigation.RequestedRoutes.Last());
 
-        // Back on the scanner, the same barcode now finds the product and opens the operation page
-        scan.ManualBarcode = NewProductBarcode;
-        await scan.LookUpCommand.ExecuteAsync(null);
-        Assert.Equal(Routes.Operation, navigation.RequestedRoutes.Last());
+        // Back on Search the same code now finds the product and opens it
+        await search.ScanDetectedCommand.ExecuteAsync(NewProductBarcode);
+        Assert.Equal(Routes.ProductDetail, navigation.RequestedRoutes.Last());
+        var found = LastParameters(navigation);
 
         var operation = provider.GetRequiredService<OperationViewModel>();
-        operation.ApplyQueryAttributes(LastParameters(navigation));
+        operation.ApplyQueryAttributes(found);
         await operation.LoadCommand.ExecuteAsync(null);
         Assert.Equal("Cordless Saw", operation.ProductName);
         Assert.Equal(0, operation.QuantityOnHand);
@@ -235,9 +235,8 @@ public class AppLifecycleFlowTests
         await operation.SaveCommand.ExecuteAsync(null);
         Assert.True(string.IsNullOrEmpty(operation.ErrorMessage));
 
-        // Leaving the scanner tells the list that products changed, so it shows the new quantity
-        await scan.GoBackCommand.ExecuteAsync(null);
-        list.ApplyQueryAttributes(LastParameters(navigation));
+        // Opening Products from the bottom bar reads the list again, so it shows the new quantity
+        await provider.GetRequiredService<BottomNavViewModel>().OpenCommand.ExecuteAsync(Routes.Products);
         await list.EnsureLoadedCommand.ExecuteAsync(null);
 
         var saw = Assert.Single(list.Products, p => p.Barcode == NewProductBarcode);

@@ -101,10 +101,10 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CharacteristicsViewModel>();
         services.AddTransient<OperationViewModel>();
         services.AddTransient<SettingsViewModel>();
-        services.AddTransient<ScannerViewModel>();
         services.AddTransient<LogsViewModel>();
         services.AddTransient<StockDocumentViewModel>();
         services.AddTransient<ActivityViewModel>();
+        services.AddTransient<SearchViewModel>();
         services.AddTransient<QuickSearchViewModel>();
         services.AddTransient<MapViewModel>();
         services.AddSingleton<AppBarViewModel>();

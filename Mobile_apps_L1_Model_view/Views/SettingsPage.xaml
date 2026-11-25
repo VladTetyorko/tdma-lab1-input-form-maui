@@ -40,7 +40,7 @@
                             <Switch Grid.Column="1" IsToggled="{Binding ShakeToScan, Mode=TwoWay}" VerticalOptions="Center" IsEnabled="{Binding IsShakeSupported}"
                                     AutomationId="ShakeToScanSwitch" />
                         </Grid>
-                        <Label Text="Shake the device on the product list to open the scanner." Style="{StaticResource TextCaption}" />
+                        <Label Text="Shake the device on Home or Products to open Search." Style="{StaticResource TextCaption}" />
                         <Label Text="This device has no accelerometer, so shaking is not available here." Style="{StaticResource TextCaption}" IsVisible="{Binding IsShakeUnsupported}" />
                     </VerticalStackLayout>
                 </Border>

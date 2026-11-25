@@ -126,11 +126,11 @@ public partial class ProductListViewModel(
         SelectedSortOption = sort;
     }
 
-    // The shake sensor listens only while the page is visible. Shake opens the scanner ("quick scan")
+    // The shake sensor listens only while the page is visible. Shake opens Search ("quick scan")
     public void OnAppearing()
     {
         EnsureLoadedCommand.Execute(null);
-        shake.Start(() => navigation.GoToAsync(Routes.Scanner));
+        shake.Start(() => navigation.GoToAsync(Routes.Search));
     }
 
     public void OnDisappearing()

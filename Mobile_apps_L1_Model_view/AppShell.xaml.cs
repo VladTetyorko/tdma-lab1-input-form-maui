@@ -19,7 +19,6 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.ProductDetail, typeof(ProductDetailPage));
         Routing.RegisterRoute(Routes.Characteristics, typeof(CharacteristicsPage));
         Routing.RegisterRoute(Routes.Operation, typeof(OperationPage));
-        Routing.RegisterRoute(Routes.Scanner, typeof(ScannerPage));
         Routing.RegisterRoute(Routes.Logs, typeof(LogsPage));
         Routing.RegisterRoute(Routes.Map, typeof(MapPage));
         Routing.RegisterRoute(Routes.Receive, typeof(ReceivePage));
