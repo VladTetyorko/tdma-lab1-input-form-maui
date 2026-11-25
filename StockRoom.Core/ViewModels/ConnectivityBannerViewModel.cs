@@ -63,6 +63,19 @@ public sealed partial class ConnectivityBannerViewModel(
     [RelayCommand]
     private async Task RefreshAsync()
     {
+        // Runs from events, with nobody awaiting it: a queue that cannot be read must not end the app
+        try
+        {
+            await ReadStateAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "The sync state could not be read");
+        }
+    }
+
+    private async Task ReadStateAsync()
+    {
         if (!sync.IsOnline)
         {
             Show(ConnectivityState.Offline, await WaitingTextAsync("Offline"));

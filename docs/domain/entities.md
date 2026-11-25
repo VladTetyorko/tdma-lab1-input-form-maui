@@ -213,6 +213,7 @@ out). The **only** way quantity changes.
 | `Counterparty` | `string?` | Who it was received from / given to. Personal data: **stored AES-encrypted** (base64), plain in the app |
 | `Reason` | `string?` | Why: "delivery", "order #12", "damaged" |
 | `Location` | `GeoPoint?` | Where it was recorded (Lab 7, optional, mainly a driver's drop-off point). Stored as two columns `Latitude` / `Longitude` (`REAL`), both set or both `NULL`; latitude -90..90, longitude -180..180 (`CHECK`). Synced with the operation. Never written to the log |
+| `DocumentId` | `Guid?` | The `StockDocument` the operation belongs to (migration `0005`); empty for a single In/Out. Operations of a document keep `Counterparty` and `Reason` empty: those facts belong to the document (3NF) |
 | `CreatedByUserId` | inherited | Who recorded it |
 | `CreatedAt` | inherited | When it happened |
 
@@ -222,6 +223,26 @@ out). The **only** way quantity changes.
   operation in the opposite direction, so `UpdatedAt` always equals `CreatedAt`.
 - **Scaling:** a `Location` entity (several warehouses or shelves, not the same
   thing as the optional `GeoPoint` above), a link to a delivery document, a `Transfer` direction.
+
+---
+
+## StockDocument : OwnedEntity
+
+One receipt (`In`) or issue (`Out`) of several products, committed in one transaction with its operations (migration `0005`).
+
+| Property | Type | Rules |
+|----------|------|-------|
+| `Number` | `string` | Unique, `R-yyyyMMdd-0001` or `I-...`; counted per day and direction on this device |
+| `Direction` | `OperationDirection` | Equal to the direction of all its operations (enforced by `StockDocumentService`) |
+| `Counterparty` | `string?` | Supplier or recipient; encrypted like `Operation.Counterparty`; never logged |
+| `Note` | `string?` | Waybill or order number |
+
+```
+User 1 --- * StockDocument 1 --- * Operation * --- 1 Product
+```
+
+- **Who can do what:** the same rules as for operations (the Driver receives only).
+- **Immutable:** never edited or deleted.
 
 ---
 
@@ -253,6 +274,6 @@ added at runtime.
 |------|--------|
 | Several warehouses / shelves | New `Location : OwnedEntity`; `Operation.LocationId`; quantity computed per location |
 | Low-stock alerts | `Product.MinQuantity` |
-| Delivery documents | New `Delivery : OwnedEntity`; `Operation.DeliveryId?` |
+| Delivery documents | Done: `StockDocument` and `Operation.DocumentId` |
 | Edit history for products | Audit table, or `UpdatedByUserId` on `OwnedEntity` |
 | Sync between devices (Lab 4) | Done for the push direction: UUID keys never clash, every write is queued in `SyncQueue`, and the server applies "last write wins" by change time. Pulling other devices' changes is future work |

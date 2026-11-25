@@ -23,7 +23,7 @@ public class SqliteDatabaseTests : IDisposable
     {
         var connection = await OpenAsync();
 
-        Assert.Equal(4, await connection.ExecuteScalarAsync<int>("PRAGMA user_version"));
+        Assert.Equal(5, await connection.ExecuteScalarAsync<int>("PRAGMA user_version"));
         Assert.Equal(1, await connection.ExecuteScalarAsync<int>("PRAGMA foreign_keys"));
     }
 

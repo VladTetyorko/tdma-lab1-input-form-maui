@@ -1,0 +1,104 @@
+using Microsoft.Extensions.Logging;
+using Mobile_apps_L1_Model_view.Data.Rows;
+using Mobile_apps_L1_Model_view.Models;
+using Mobile_apps_L1_Model_view.Services;
+
+namespace Mobile_apps_L1_Model_view.Data;
+
+public sealed class SqliteStockDocumentRepository(
+    IDatabase database,
+    SyncJournal journal,
+    IFieldEncryptor encryptor,
+    ILogger<SqliteStockDocumentRepository> logger)
+    : SqliteRepository<StockDocument, StockDocumentRow>(database, journal, logger), IStockDocumentRepository
+{
+    private readonly IDatabase _database = database;
+    private readonly SyncJournal _journal = journal;
+
+    public Task<StockDocument?> GetByIdAsync(Guid id) => FindAsync("WHERE Id = ?", RowFormat.Text(id));
+
+    public async Task<IReadOnlyList<StockDocument>> GetRecentAsync(int count)
+    {
+        var connection = await _database.GetConnectionAsync();
+        var rows = await connection.QueryAsync<StockDocumentRow>(
+            "SELECT * FROM StockDocuments ORDER BY CreatedAt DESC, rowid DESC LIMIT ?", count);
+
+        var documents = new List<StockDocument>(rows.Count);
+        foreach (var row in rows)
+        {
+            documents.Add(await ToEntityAsync(row));
+        }
+
+        return documents;
+    }
+
+    public async Task<int> CountByNumberPrefixAsync(string prefix)
+    {
+        var connection = await _database.GetConnectionAsync();
+        return await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM StockDocuments WHERE substr(Number, 1, ?) = ?", prefix.Length, prefix);
+    }
+
+    public async Task AddAsync(StockDocument document, IReadOnlyList<Operation> operations)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(operations);
+        if (operations.Count == 0 || operations.Any(o => o.DocumentId != document.Id || o.Counterparty is not null))
+        {
+            throw new ArgumentException("A document needs operations that point to it and carry no counterparty.", nameof(operations));
+        }
+
+        // Encryption is async, so every row is prepared before the (synchronous) transaction starts
+        var documentRow = await ToRowAsync(document);
+        var rows = operations.Select(o => (Row: OperationRowMapper.ToRow(o, null), o.UpdatedAt)).ToList();
+
+        await InTransactionAsync(transaction =>
+        {
+            // The document goes first, so a server applying the queue in order never sees a dangling DocumentId
+            transaction.Insert(documentRow);
+            _journal.Record(transaction, documentRow, SyncOperation.Insert, document.UpdatedAt);
+            foreach (var (row, changedAt) in rows)
+            {
+                transaction.Insert(row);
+                _journal.Record(transaction, row, SyncOperation.Insert, changedAt);
+            }
+        });
+    }
+
+    protected override async ValueTask<StockDocumentRow> ToRowAsync(StockDocument document) => new()
+    {
+        Id = RowFormat.Text(document.Id),
+        Number = document.Number,
+        Direction = RowFormat.Text(document.Direction),
+        Counterparty = document.Counterparty is null ? null : await encryptor.EncryptAsync(document.Counterparty),
+        Note = document.Note,
+        CreatedByUserId = RowFormat.Text(document.CreatedByUserId),
+        CreatedAt = RowFormat.Text(document.CreatedAt),
+        UpdatedAt = RowFormat.Text(document.UpdatedAt)
+    };
+
+    protected override async ValueTask<StockDocument> ToEntityAsync(StockDocumentRow row) => new()
+    {
+        Id = RowFormat.ToGuid(row.Id),
+        Number = row.Number,
+        Direction = RowFormat.ToEnum<OperationDirection>(row.Direction),
+        Counterparty = row.Counterparty is null ? null : await DecryptAsync(row),
+        Note = row.Note,
+        CreatedByUserId = RowFormat.ToGuid(row.CreatedByUserId),
+        CreatedAt = RowFormat.ToTime(row.CreatedAt),
+        UpdatedAt = RowFormat.ToTime(row.UpdatedAt)
+    };
+
+    private async Task<string> DecryptAsync(StockDocumentRow row)
+    {
+        try
+        {
+            return await encryptor.DecryptAsync(row.Counterparty!);
+        }
+        catch (EncryptionException ex)
+        {
+            Logger.LogWarning(ex, "Counterparty of document {Document} cannot be decrypted", row.Id);
+            return SqliteOperationRepository.UnreadableCounterparty;
+        }
+    }
+}

@@ -52,6 +52,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICharacteristicRepository, SqliteCharacteristicRepository>();
         services.AddSingleton<IProductCharacteristicRepository, SqliteProductCharacteristicRepository>();
         services.AddSingleton<IOperationRepository, SqliteOperationRepository>();
+        services.AddSingleton<IStockDocumentRepository, SqliteStockDocumentRepository>();
         services.AddSingleton<IFieldEncryptor, AesFieldEncryptor>();
 
         services.AddSingleton<StubSyncApi>();

@@ -12,5 +12,8 @@ public interface IOperationRepository
     // Cheaper than GetByProductAsync when only existence matters
     Task<bool> AnyForProductAsync(Guid productId);
 
+    // The newest first, at most "count"
+    Task<IReadOnlyList<Operation>> GetRecentAsync(int count);
+
     Task AddAsync(Operation operation);
 }

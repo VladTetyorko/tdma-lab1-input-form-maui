@@ -6,6 +6,7 @@ namespace Mobile_apps_L1_Model_view.Data.Rows;
 public sealed class OperationRow : OwnedRow
 {
     public string ProductId { get; set; } = string.Empty;
+    public string? DocumentId { get; set; }
     public string Direction { get; set; } = string.Empty;
     public int Quantity { get; set; }
 

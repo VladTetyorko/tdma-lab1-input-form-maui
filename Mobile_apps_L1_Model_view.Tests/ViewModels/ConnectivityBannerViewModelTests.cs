@@ -1,3 +1,4 @@
+using Moq;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
 using Mobile_apps_L1_Model_view.ViewModels;
@@ -154,5 +155,20 @@ public class ConnectivityBannerViewModelTests
         _banner.Attach();
 
         await Eventually.WaitAsync(() => _banner.Text == "7 changes waiting to sync");
+    }
+
+    [Fact]
+    public async Task Refresh_QueueCannotBeRead_IsLoggedAndDoesNotThrow()
+    {
+        var sync = new Moq.Mock<ISyncService>();
+        sync.SetupGet(s => s.IsOnline).Returns(true);
+        sync.Setup(s => s.GetPendingCountAsync()).ThrowsAsync(new IOException("closed"));
+        var logger = new CapturingLogger<ConnectivityBannerViewModel>();
+        var banner = new ConnectivityBannerViewModel(sync.Object, Moq.Mock.Of<IOfflineSimulator>(),
+            Moq.Mock.Of<IConnectivityMonitor>(), logger);
+
+        await banner.RefreshCommand.ExecuteAsync(null);
+
+        Assert.Contains(logger.Records, r => r.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
     }
 }
