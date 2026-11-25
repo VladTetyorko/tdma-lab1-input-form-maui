@@ -141,6 +141,9 @@
             </CollectionView>
 
             <VerticalStackLayout Grid.Row="5" Spacing="4">
+                <Grid IsVisible="{OnIdiom Default=True, Phone=False}">
+                    <components:RecentActivityPanel x:Name="Recent" />
+                </Grid>
                 <Label Text="{Binding EmptyText}" Style="{StaticResource CaptionLabel}" AutomationId="EmptyLabel" />
                 <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
                 <Label Text="A product with stock history cannot be deleted: operations are permanent records."

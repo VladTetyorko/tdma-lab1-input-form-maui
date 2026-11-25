@@ -95,6 +95,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ScannerViewModel>();
         services.AddTransient<LogsViewModel>();
         services.AddTransient<StockDocumentViewModel>();
+        services.AddTransient<RecentActivityViewModel>();
         services.AddTransient<MapViewModel>();
 
         return services;

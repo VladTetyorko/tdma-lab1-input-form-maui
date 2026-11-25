@@ -12,6 +12,12 @@ public partial class ProductsPage : ContentPage, IQueryAttributable
         BindingContext = _viewModel = viewModel;
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        Recent.Refresh();
+    }
+
     // Below this width the table keeps only name, quantity and one chosen characteristic
     private const double NarrowWidth = 600;
 

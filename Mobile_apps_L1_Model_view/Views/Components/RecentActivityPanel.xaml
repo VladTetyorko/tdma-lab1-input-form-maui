@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.RecentActivityPanel">
+    <Border x:Name="Card" StyleClass="SectionCard" x:DataType="viewModels:RecentActivityViewModel"
+            IsVisible="{Binding HasItems}" AutomationId="RecentActivity">
+        <VerticalStackLayout Spacing="4">
+            <Label Text="Recent activity" Style="{StaticResource TextOverline}" />
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}" Spacing="4">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:RecentActivityItem">
+                        <FlexLayout Wrap="Wrap" AlignItems="Center">
+                            <Label Text="{Binding Summary}" Style="{StaticResource TextBodyStrong}" Margin="0,0,8,0" />
+                            <Label Text="{Binding Details}" Style="{StaticResource TextCaption}" />
+                        </FlexLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

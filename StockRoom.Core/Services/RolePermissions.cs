@@ -15,6 +15,9 @@ public static class RolePermissions
 
     public static bool CanUseDiagnostics(Role role) => role == Role.Manager;
 
+    // The Driver sees only the history of their own operations (docs/domain/entities.md)
+    public static bool SeesEveryOperation(Role role) => role != Role.Driver;
+
     public static bool CanRecord(Role role, OperationDirection direction) =>
         direction == OperationDirection.In || role != Role.Driver;
 }
