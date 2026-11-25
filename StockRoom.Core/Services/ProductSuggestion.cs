@@ -27,4 +27,6 @@ public sealed record ProductSuggestion(
     public IReadOnlyList<TextRange> CodeRanges { get; init; } = [];
 
     public bool IsOutOfStock => Product.Quantity <= 0;
+
+    public string SimilarText => IsFuzzy ? SimilarCaption : string.Empty;
 }

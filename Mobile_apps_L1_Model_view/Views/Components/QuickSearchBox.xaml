@@ -28,28 +28,17 @@
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="viewModels:QuickSearchRow">
                             <Grid RowDefinitions="Auto,1">
-                                <Grid MinimumHeightRequest="{OnIdiom 56, Desktop=44}">
+                                <Grid>
                                     <BoxView Color="{DynamicResource PrimarySoft}" IsVisible="{Binding IsHighlighted}" />
-                                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="12,6" ColumnSpacing="8">
-                                        <components:HighlightedLabel Value="{Binding Suggestion.Title}"
-                                                                     Ranges="{Binding Suggestion.NameRanges}"
-                                                                     Style="{StaticResource TextBodyStrong}"
-                                                                     IsDimmed="{Binding IsUnavailable}" />
-                                        <Label Grid.Column="1" Text="{Binding Suggestion.StockText}" Style="{StaticResource TextCaption}"
-                                               IsVisible="{Binding IsAvailable}" />
-                                        <Border Grid.Column="1" StyleClass="ChipDanger" HorizontalOptions="End"
-                                                IsVisible="{Binding IsUnavailable}">
-                                            <Label Text="Out of stock" Style="{StaticResource ChipDangerText}" />
-                                        </Border>
-                                        <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Suggestion.Details}"
-                                               Style="{StaticResource TextCaption}" />
-                                        <components:HighlightedLabel Grid.Row="2" Value="{Binding Suggestion.Code}"
-                                                                     Ranges="{Binding Suggestion.CodeRanges}"
-                                                                     Style="{StaticResource TextCaption}" />
-                                        <Label Grid.Row="2" Grid.Column="1" Text="Similar name" HorizontalTextAlignment="End"
-                                               Style="{StaticResource TextCaption}" IsVisible="{Binding Suggestion.IsFuzzy}"
-                                               AutomationId="SuggestionSimilarLabel" />
-                                    </Grid>
+                                    <components:ProductRow ProductName="{Binding Suggestion.Title}"
+                                                           NameRanges="{Binding Suggestion.NameRanges}"
+                                                           Code="{Binding Suggestion.Code}" CodeRanges="{Binding Suggestion.CodeRanges}"
+                                                           IsOutOfStock="{Binding Suggestion.IsOutOfStock}"
+                                                           Note="{Binding Suggestion.SimilarText}">
+                                        <components:ProductRow.Right>
+                                            <Label Text="{Binding Suggestion.Product.Quantity}" Style="{StaticResource TextNumeric}" />
+                                        </components:ProductRow.Right>
+                                    </components:ProductRow>
                                     <Button StyleClass="RowOverlay" CommandParameter="{Binding .}"
                                             Command="{Binding BindingContext.PickCommand, Source={x:Reference ThisBox}}"
                                             SemanticProperties.Description="{Binding Suggestion.Title}"

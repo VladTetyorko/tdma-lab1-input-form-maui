@@ -17,6 +17,8 @@ public sealed record StockDocumentLineItem(string Barcode, ProductSummary? Produ
 
     public int OnHand => Product?.Quantity ?? 0;
 
+    public bool IsOutOfStock => Product is not null && Product.Quantity <= 0;
+
     public int After => Direction == OperationDirection.In ? OnHand + Quantity : OnHand - Quantity;
 
     // Stock never goes below zero: what is missing is said in words

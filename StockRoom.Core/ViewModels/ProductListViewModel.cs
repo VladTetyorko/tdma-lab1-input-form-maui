@@ -399,7 +399,7 @@ public partial class ProductListViewModel(
         foreach (var product in Products)
         {
             var match = _matches[product.Id];
-            Rows.Add(ProductTable.Row(product, columns) with { NameRanges = match.NameRanges, IsSimilar = match.IsFuzzy });
+            Rows.Add(ProductTable.Row(product, columns) with { NameRanges = match.NameRanges, IsSimilar = match.IsFuzzy, ShowCode = IsNarrow });
         }
     }
 }

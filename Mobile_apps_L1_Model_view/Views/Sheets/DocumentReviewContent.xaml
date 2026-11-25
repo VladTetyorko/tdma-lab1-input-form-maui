@@ -13,14 +13,11 @@
         <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}">
             <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="viewModels:StockDocumentLineItem">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" Padding="0,4">
-                        <VerticalStackLayout>
-                            <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" />
-                            <Label Text="{Binding StockText}" Style="{StaticResource TextCaption}" />
-                        </VerticalStackLayout>
-                        <Label Grid.Column="1" Text="{Binding Quantity}" Style="{StaticResource TextNumeric}"
-                               VerticalOptions="Center" />
-                    </Grid>
+                    <components:ProductRow ProductName="{Binding Name}" Code="{Binding StockText}" Margin="-12,0">
+                        <components:ProductRow.Right>
+                            <Label Text="{Binding Quantity}" Style="{StaticResource TextNumeric}" />
+                        </components:ProductRow.Right>
+                    </components:ProductRow>
                 </DataTemplate>
             </BindableLayout.ItemTemplate>
         </VerticalStackLayout>
