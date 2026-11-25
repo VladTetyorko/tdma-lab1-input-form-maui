@@ -2,11 +2,13 @@
 
 Status: **implemented in part** (green and dark only, see [`../steps/10-design.md`](../steps/10-design.md)). Tokens are the contract between this document, the future Figma file and
 `Resources/Styles`. Names below are the XAML resource keys to use. Screens and flows: [`ux-plan.md`](ux-plan.md).
+Revision 2 ([`revision-2.md`](revision-2.md)) changed sizes, the drawer, tiles, the bottom action bar and disabled buttons.
 
 ## 1. Principles
 
 1. **Calm and flat.** Elevation is shown by surface tone and a 1 px border, never by shadow or glow. No gradients.
-2. **One filled button per screen** — the main action (green). Everything else is outlined or ghost.
+2. **One filled button per screen** — the main action (green). Everything else is outlined or ghost. Exception
+   (revision 2): Home has two equal main actions, *Receive goods* and *Issue goods*, both filled tiles.
 3. **Red means "this deletes or discards"**, nothing else. Issuing goods is normal work, so it is green.
 4. **Numbers first.** Quantities are large, right-aligned, tabular, and never coloured as the only signal.
 5. **Tokens, not values.** Pages use semantic keys (`TextPrimary`, `Border`, …) only; palettes change in one file.
@@ -157,12 +159,14 @@ if not, use a fixed `WidthRequest` cell with end alignment (good enough) — Q10
 | `RadiusPill` | 999 | chips, round add button |
 | `BorderThin` | 1 | every border and divider |
 | `BorderFocus` | 2 | keyboard focus, selected outline |
-| `ControlHeight` | 48 phone / 36 desktop | buttons, inputs, steppers |
+| `ControlHeight` | 48 phone / 40 desktop (was 36; Windows touch target 40 epx, revision 2) | buttons, inputs, steppers |
+| `ActionHeight` | 56 phone / 48 desktop | the main action in the bottom bar (never smaller than an input) |
+| `HomeTileHeight` | 120 phone / 112 desktop | Receive / Issue tiles on Home |
 | `RowHeightTable` | 56 phone (two lines) / 40 desktop | table rows (min; grow with font scale) |
 | `HeaderHeightTable` | 40 phone / 36 desktop | table header |
 | `IconSize` | 20 (24 in tab bar) | font icons |
 | `TouchTargetMin` | 48 | Android; Windows ≥ 32 |
-| `SidePanelWidth` | 240 | desktop flyout |
+| `DrawerWidth` | 320 (phone: at most 85 % of the width) | drawer (replaces the 240 locked side panel, revision 2) |
 | `ContentMaxWidth` | 1200 | desktop pages centre beyond this |
 
 **Shadows: none.** The template's `Shadow` style is removed; `Border.StrokeShape="RoundRectangle {RadiusM}"` +
@@ -179,7 +183,7 @@ supports `PointerOver` on Windows; on Android hover never happens, `Pressed` car
 | Hover | bg `PrimaryHover` | bg `PrimarySoft` | bg `SurfaceAlt` | bg `DangerSoft` | border `TextSecondary` |
 | Pressed | bg `PrimaryPressed` | bg `PrimarySoft`, border `PrimaryText` | bg `PrimarySoft` | bg `DangerSoft`, border 2 | — |
 | Focused (keyboard) | + 2 px `FocusRing` outline (outer `Border`) | border `FocusRing` 2 | border `FocusRing` 2 | border 2 | border `FocusRing` 2 |
-| Disabled | bg `SurfaceAlt`, text `TextDisabled` | border `Border`, text `TextDisabled` | text `TextDisabled` | border `Border`, text `TextDisabled` | bg `Surface`, text `TextDisabled` |
+| Disabled | bg `SurfaceAlt`, 1 px `BorderStrong`, text `TextDisabled`, reason caption below (revision 2) | border `Border`, text `TextDisabled` | text `TextDisabled` | border `Border`, text `TextDisabled` | bg `Surface`, text `TextDisabled` |
 | Error | — | — | — | — | border `Danger` 1, caption below in `Danger` with an icon |
 
 Disabled buttons with a reason (e.g. delete of a product with history) also get `ToolTipProperties.Text` (Windows) and
@@ -196,7 +200,10 @@ the reason in a caption on phone — never a silent grey button.
 | `Danger` | 1 px `Danger` border, `Danger` text; filled red only inside a destructive confirm dialog | *Discard draft*, *Delete* |
 | `Ghost` | no border, `PrimaryText` | *Show all*, *Undo* |
 | `Icon` / `IconDanger` | 40×40 (48 on phone) ghost with a font icon, `SemanticProperties.Description` required | row edit / trash |
-| `Fab` | 56×56 round, filled `Primary`, **no shadow**, 1 px `Background` ring to separate from content | phone *Add product* |
+| `ActionTile` | filled `Primary`, radius 10, height `HomeTileHeight`, icon 32 + `TextTitle` + caption (revision 2) | Home *Receive goods*, *Issue goods* |
+| `BottomActionBar` | `Surface` bar, 1 px top `Border`, one full-width `Primary` button of `ActionHeight` (desktop: right-aligned, min 320), stays above the soft keyboard | *Receive 37 units*, *Add product* |
+
+The round `Fab` is removed in revision 2: *Add product* (Manager) lives in the Products bottom bar.
 
 Labels are verbs + object ("Receive 37 units", not "OK"); sentence case.
 

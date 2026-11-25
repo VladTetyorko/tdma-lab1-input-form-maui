@@ -4,6 +4,12 @@ Status: **implemented in part** on branch `design`; what differs is listed in [`
 Read with [`design-system.md`](design-system.md) (tokens, components' look) and [`tasks.md`](tasks.md) (order of work).
 Evidence for the choices is in [`research.md`](research.md).
 
+> **Revised by [`revision-2.md`](revision-2.md)** (owner request, 2026-11-25): a Home page with two big Receive / Issue
+> tiles is the start page; a drawer (hamburger + close) replaces the side panel and the bottom tabs; the StatusHeader
+> and its Scan button leave the pages; Receive / Issue / Product form are camera-first with a quick-search drop-down and
+> one big action in a bottom bar. Where this document and revision 2 disagree (§2 shell structure, §3, wireframes 4.2–4.5
+> and 4.7 "More", Q3), revision 2 wins.
+
 ## 1. Goals and non-goals
 
 Goals, from the owner's request and the research:
@@ -55,7 +61,10 @@ Role-aware menu (single source: a new pure `NavigationMenu.For(Role)` in Core, b
 Driver never sees *Issue*: hidden in the menu (UI layer) **and** refused by `IStockDocumentService`
 (`RolePermissions.CanRecord(role, Out)`, service layer), per AGENTS.md §2a.
 
-### Shell structure (one `AppShell`, adaptive)
+### Shell structure (one `AppShell`, adaptive) — superseded
+
+Superseded by [`revision-2.md`](revision-2.md) §3: `FlyoutBehavior="Flyout"` (drawer) on every device, Home as the
+start page, Receive / Issue pushed on Home. The text below describes what step 10 built.
 
 - **Windows / tablet (width ≥ 840)**: `FlyoutBehavior="Locked"` — a permanent left side panel (240 px) with the menu,
   the user card on top and the sync status at the bottom. Bottom tab bar hidden.
@@ -71,6 +80,9 @@ Driver never sees *Issue*: hidden in the menu (UI layer) **and** refused by `ISt
   (code in the app's `Shell*` class, logic in Core, tested there).
 
 ## 3. Persistent context ("see your journey from any page")
+
+Revision 2: the user card moves to the drawer header; pages show only a compact sync chip when the state is not
+"all synced"; *Scan* becomes a toolbar icon on Home and Products.
 
 A reusable **`StatusHeader`** (ContentView) on every main page, bound to one singleton `SessionStatusViewModel`:
 
@@ -373,7 +385,7 @@ interactive part with an `AutomationId` and `SemanticProperties`.
 |---|----------|----------|
 | Q1 | Ship the blue/light-blue accent as a user setting, or keep green only? | Design both, implement green; blue = optional slice 18 (YAGNI) |
 | Q2 | Exact brand green: "like Fora" — use Fora's colour or our own accessible green? | Our own `#1F7A3A` family (Fora-like lime only as a decorative tint): white text on Fora's light lime fails WCAG, and we must not imitate a real brand |
-| Q3 | Phone: bottom tabs (proposed) or a hamburger flyout like desktop? | Bottom tabs |
+| Q3 | Phone: bottom tabs (proposed) or a hamburger flyout like desktop? | Bottom tabs. **Owner, revision 2: a drawer on every device** |
 | Q4 | "Recent activity" list (last 5 operations, all roles) on the products page / side panel? Not a dashboard, but new | Yes, small, read-only |
 | Q5 | Documents: keep counterparty and note on the document only (proposed) or also per line? | Document only |
 | Q6 | Should a committed document be printable / shareable as a waybill (PDF/text)? | Not now (scope); the number is shown for reference |
