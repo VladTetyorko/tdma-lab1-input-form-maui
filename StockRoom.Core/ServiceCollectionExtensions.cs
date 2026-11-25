@@ -70,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProductCatalog, ProductCatalog>();
         services.AddSingleton<IOperationFeed, OperationFeed>();
         services.AddSingleton<OperationCorrector>();
+        services.AddSingleton<StockCountService>();
         services.AddSingleton<OperationViewer>();
         services.AddSingleton<StockChanges>();
         // Every question and message is one sheet; the host shows it (ISheetService)
@@ -107,6 +108,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<StockDocumentViewModel>();
         services.AddTransient<ActivityViewModel>();
         services.AddTransient<SearchViewModel>();
+        services.AddTransient<StockCountViewModel>();
         services.AddTransient<QuickSearchViewModel>();
         services.AddTransient<MapViewModel>();
         services.AddSingleton<AppBarViewModel>();

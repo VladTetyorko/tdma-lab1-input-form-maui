@@ -20,6 +20,7 @@ public static class NavigationMenu
 
     private static readonly (MenuEntry Entry, Func<Role, bool> Allowed)[] Drawer =
     [
+        (new(Routes.StockCount, "Stock count", MenuEntryKind.Action, "IconClipboard"), RolePermissions.CanCountStock),
         (new(Routes.Characteristics, "Characteristics", MenuEntryKind.Action, "IconTag"), RolePermissions.CanManageProducts),
         (new(Routes.Map, "Operations map", MenuEntryKind.Action, "IconMap"), _ => true),
         (new(Routes.Settings, "Settings", MenuEntryKind.Action, "IconSettings"), _ => true)

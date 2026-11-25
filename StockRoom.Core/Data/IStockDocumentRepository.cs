@@ -19,4 +19,7 @@ public interface IStockDocumentRepository
 
     // Saves the document and all its operations, or nothing at all. Every operation must point to the document
     Task AddAsync(StockDocument document, IReadOnlyList<Operation> operations);
+
+    // The same for several documents in one transaction
+    Task AddAsync(IReadOnlyList<(StockDocument Document, IReadOnlyList<Operation> Operations)> batch);
 }

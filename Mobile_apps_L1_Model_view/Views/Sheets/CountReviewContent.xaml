@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:sheets="clr-namespace:Mobile_apps_L1_Model_view.ViewModels.Sheets;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Sheets.CountReviewContent"
+             x:DataType="sheets:CountReviewViewModel">
+    <VerticalStackLayout Spacing="8">
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="sheets:CountReviewLine">
+                    <components:ProductRow ProductName="{Binding Name}" Code="{Binding Change}" Problem="{Binding Problem}"
+                                           Margin="-12,0">
+                        <components:ProductRow.Right>
+                            <Label Text="{Binding Difference}" Style="{StaticResource TextNumeric}"
+                                   TextColor="{DynamicResource Success}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsMissing}" Value="True">
+                                        <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </components:ProductRow.Right>
+                    </components:ProductRow>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+        <Label Text="{Binding Summary}" Style="{StaticResource TextCaption}" />
+        <Label Text="{Binding NoteText}" Style="{StaticResource TextCaption}" />
+    </VerticalStackLayout>
+</ContentView>

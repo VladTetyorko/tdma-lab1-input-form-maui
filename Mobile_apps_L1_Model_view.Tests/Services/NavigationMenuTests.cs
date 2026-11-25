@@ -26,7 +26,7 @@ public class NavigationMenuTests
     [Fact]
     public void DrawerFor_KeepsOnlyTheRareEntries()
     {
-        Assert.Equal([Routes.Characteristics, Routes.Map, Routes.Settings], Drawer(Role.Manager));
+        Assert.Equal([Routes.StockCount, Routes.Characteristics, Routes.Map, Routes.Settings], Drawer(Role.Manager));
         Assert.Equal([Routes.Map, Routes.Settings], Drawer(Role.Storekeeper));
         Assert.Equal([Routes.Map, Routes.Settings], Drawer(Role.Driver));
         Assert.All(NavigationMenu.DrawerFor(Role.Manager), entry => Assert.StartsWith("Icon", entry.Glyph));

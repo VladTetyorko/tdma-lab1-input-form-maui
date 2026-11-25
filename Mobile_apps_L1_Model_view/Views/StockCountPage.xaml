@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Stock count (design revision 4, 5.9): camera first, every product with what the database says, a field for what
+     is on the shelf and the difference; one action reviews the differences -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.StockCountPage"
+             x:DataType="viewModels:StockCountViewModel"
+             x:Name="ThisPage"
+             Title="Stock count">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
+
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
+        <components:AppBar Title="Stock count" ActionGlyph="{StaticResource IconMore}" ActionDescription="More actions"
+                           ActionCommand="{Binding OpenMenuCommand}" ActionId="CountMenuButton" />
+        <ScrollView x:Name="Scroller" Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
+                <Label Text="{Binding Progress}" Style="{StaticResource TextBodyStrong}" AutomationId="CountProgress" />
+                <Border HeightRequest="180" IsVisible="{Binding IsCameraActive}" StrokeShape="RoundRectangle 10">
+                    <views:CameraScannerView IsActive="{Binding IsCameraActive}" DetectedCommand="{Binding ScanDetectedCommand}" />
+                </Border>
+                <components:CameraStatusBanner Message="{Binding CameraMessage}" ActionText="{Binding CameraActionText}"
+                                               ActionCommand="{Binding RetryCameraCommand}" />
+                <components:QuickSearchBox x:Name="Search" BindingContext="{Binding QuickSearch}"
+                                           Placeholder="Type a name or barcode" />
+                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding StatusMessage}" Value="">
+                            <Setter Property="IsVisible" Value="False" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+                <Grid ColumnDefinitions="*,48,64,40" ColumnSpacing="8" Padding="12,0" HeightRequest="36"
+                      BackgroundColor="{DynamicResource SurfaceAlt}">
+                    <Label Text="Product" Style="{StaticResource TableHeader}" />
+                    <Label Grid.Column="1" Text="On hand" Style="{StaticResource TextCaption}" HorizontalTextAlignment="End"
+                           VerticalOptions="Center" />
+                    <Label Grid.Column="2" Text="Counted" Style="{StaticResource TextCaption}" HorizontalTextAlignment="Center"
+                           VerticalOptions="Center" />
+                    <Label Grid.Column="3" Text="+ / −" Style="{StaticResource TextCaption}" HorizontalTextAlignment="End"
+                           VerticalOptions="Center" />
+                </Grid>
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Rows}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:CountRow">
+                            <Grid RowDefinitions="Auto,1">
+                                <components:ProductRow ProductName="{Binding Name}" Code="{Binding Barcode}"
+                                                       IsOutOfStock="{Binding IsOutOfStock}" Problem="{Binding Problem}">
+                                    <components:ProductRow.Right>
+                                        <Grid ColumnDefinitions="48,64,40" ColumnSpacing="8">
+                                            <Label Text="{Binding OnHand}" Style="{StaticResource TextNumeric}" VerticalOptions="Center" />
+                                            <Border Grid.Column="1" StrokeShape="RoundRectangle 8"
+                                                    Stroke="{DynamicResource BorderStrongBrush}">
+                                                <components:BorderlessEntry Text="{Binding CountedText, Mode=TwoWay}" Keyboard="Numeric"
+                                                                            MaxLength="5" ReturnType="Next"
+                                                                            HorizontalTextAlignment="Center"
+                                                                            SemanticProperties.Description="{Binding Name, StringFormat='Counted {0}'}"
+                                                                            ReturnCommand="{Binding BindingContext.NextCommand, Source={x:Reference ThisPage}, x:DataType=ContentPage}"
+                                                                            ReturnCommandParameter="{Binding .}"
+                                                                            AutomationId="{Binding AutomationId}"
+                                                                            Loaded="OnCountLoaded" />
+                                            </Border>
+                                            <Label Grid.Column="2" Text="{Binding DifferenceText}" Style="{StaticResource TextNumeric}"
+                                                   VerticalOptions="Center">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsDifferent}" Value="True">
+                                                        <Setter Property="TextColor" Value="{DynamicResource Success}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsMissing}" Value="True">
+                                                        <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Grid>
+                                    </components:ProductRow.Right>
+                                </components:ProductRow>
+                                <BoxView Grid.Row="1" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+        <components:BottomActionBar Grid.Row="2" ButtonId="ReviewCountButton" Text="{Binding ReviewText}"
+                                    Command="{Binding ReviewCommand}" Caption="{Binding ReviewHint}" />
+    </Grid>
+</ContentPage>

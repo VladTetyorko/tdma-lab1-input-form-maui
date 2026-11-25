@@ -29,17 +29,22 @@ public sealed class InMemoryStockDocumentRepository(InMemoryOperationRepository 
     public Task<int> CountByNumberPrefixAsync(string prefix) =>
         Task.FromResult(_documents.Count(d => d.Number.StartsWith(prefix, StringComparison.Ordinal)));
 
-    public async Task AddAsync(StockDocument document, IReadOnlyList<Operation> lines)
+    public Task AddAsync(StockDocument document, IReadOnlyList<Operation> lines) => AddAsync([(document, lines)]);
+
+    public async Task AddAsync(IReadOnlyList<(StockDocument Document, IReadOnlyList<Operation> Operations)> batch)
     {
         if (FailWith is { } failure)
         {
             throw failure;
         }
 
-        _documents.Add(document);
-        foreach (var line in lines)
+        foreach (var (document, lines) in batch)
         {
-            await operations.AddAsync(line);
+            _documents.Add(document);
+            foreach (var line in lines)
+            {
+                await operations.AddAsync(line);
+            }
         }
     }
 }

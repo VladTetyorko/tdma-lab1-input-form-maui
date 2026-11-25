@@ -66,28 +66,41 @@ public sealed class SqliteStockDocumentRepository(
             "SELECT COUNT(*) FROM StockDocuments WHERE substr(Number, 1, ?) = ?", prefix.Length, prefix);
     }
 
-    public async Task AddAsync(StockDocument document, IReadOnlyList<Operation> operations)
+    public Task AddAsync(StockDocument document, IReadOnlyList<Operation> operations) => AddAsync([(document, operations)]);
+
+    public async Task AddAsync(IReadOnlyList<(StockDocument Document, IReadOnlyList<Operation> Operations)> batch)
     {
-        ArgumentNullException.ThrowIfNull(document);
-        ArgumentNullException.ThrowIfNull(operations);
-        if (operations.Count == 0 || operations.Any(o => o.DocumentId != document.Id || o.Counterparty is not null))
+        ArgumentNullException.ThrowIfNull(batch);
+        foreach (var (document, operations) in batch)
         {
-            throw new ArgumentException("A document needs operations that point to it and carry no counterparty.", nameof(operations));
+            ArgumentNullException.ThrowIfNull(document);
+            ArgumentNullException.ThrowIfNull(operations);
+            if (operations.Count == 0 || operations.Any(o => o.DocumentId != document.Id || o.Counterparty is not null))
+            {
+                throw new ArgumentException("A document needs operations that point to it and carry no counterparty.", nameof(batch));
+            }
         }
 
         // Encryption is async, so every row is prepared before the (synchronous) transaction starts
-        var documentRow = await ToRowAsync(document);
-        var rows = operations.Select(o => (Row: OperationRowMapper.ToRow(o, null), o.UpdatedAt)).ToList();
+        var prepared = new List<(StockDocument Document, StockDocumentRow Row, List<(OperationRow Row, DateTime ChangedAt)> Lines)>();
+        foreach (var (document, operations) in batch)
+        {
+            prepared.Add((document, await ToRowAsync(document),
+                [.. operations.Select(o => (OperationRowMapper.ToRow(o, null), o.UpdatedAt))]));
+        }
 
         await InTransactionAsync(transaction =>
         {
-            // The document goes first, so a server applying the queue in order never sees a dangling DocumentId
-            transaction.Insert(documentRow);
-            _journal.Record(transaction, documentRow, SyncOperation.Insert, document.UpdatedAt);
-            foreach (var (row, changedAt) in rows)
+            foreach (var (document, documentRow, rows) in prepared)
             {
-                transaction.Insert(row);
-                _journal.Record(transaction, row, SyncOperation.Insert, changedAt);
+                // The document goes first, so a server applying the queue in order never sees a dangling DocumentId
+                transaction.Insert(documentRow);
+                _journal.Record(transaction, documentRow, SyncOperation.Insert, document.UpdatedAt);
+                foreach (var (row, changedAt) in rows)
+                {
+                    transaction.Insert(row);
+                    _journal.Record(transaction, row, SyncOperation.Insert, changedAt);
+                }
             }
         });
     }

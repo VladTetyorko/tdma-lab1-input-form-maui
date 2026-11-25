@@ -13,6 +13,8 @@ Read this file, [`README.md`](README.md), [`docs/plan.md`](docs/plan.md) and
   scan plus a quantity records many units.
 - No dashboards, approvals, prices, several warehouses or real authentication
   unless the plan says so. Anything outside scope needs a written decision.
+- Approved in design revision 4: a simple **stock count** (Manager only, the quantity in the database is shown while
+  counting, the differences are posted as compensating operations after a confirmation).
 - Scanning accepts 1-D barcodes **and QR codes**. A QR code may carry a plain
   barcode or a StockRoom deep link (`stockroom://product/{barcode}`).
 - Unknown barcodes can be looked up in the **Open Food Facts** open database

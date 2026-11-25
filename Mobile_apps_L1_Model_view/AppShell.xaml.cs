@@ -25,6 +25,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Receive, typeof(ReceivePage));
         Routing.RegisterRoute(Routes.Issue, typeof(IssuePage));
         Routing.RegisterRoute(Routes.Settings, typeof(SettingsPage));
+        Routing.RegisterRoute(Routes.StockCount, typeof(StockCountPage));
 
         AddRootPage("Home", Routes.Home, services.GetRequiredService<HomePage>);
         AddRootPage("Products", Routes.Products, services.GetRequiredService<ProductsPage>);
