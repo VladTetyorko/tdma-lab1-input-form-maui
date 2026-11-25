@@ -4,6 +4,7 @@ using Sentry;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Views;
+using Mobile_apps_L1_Model_view.Views.Components;
 using Serilog;
 #if ANDROID || IOS
 using Microsoft.Maui.Controls.Maps;
@@ -26,6 +27,8 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 fonts.AddFont("FluentSystemIcons-Regular.ttf", "FluentIcons");
             });
+
+        BorderlessEntryMapping.Apply();
 
 #if ANDROID || IOS
         builder.UseBarcodeReader();

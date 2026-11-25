@@ -22,6 +22,22 @@ public class ThemeDictionaryTests
         Assert.All(SemanticKeys, key => Assert.Equal("Color", keys.GetValueOrDefault(key)));
     }
 
+    // Brush-typed properties set by the drawer, the outlined fields and the banners
+    [Theory]
+    [InlineData("LightGreen.xaml")]
+    [InlineData("Dark.xaml")]
+    public void Theme_DefinesTheBrushesUsedByComponents(string file)
+    {
+        var keys = XamlFiles.Keys(XamlFiles.Load("Resources", "Styles", "Themes", file));
+
+        string[] brushes =
+        [
+            "BackgroundBrush", "SurfaceBrush", "BorderBrush", "BorderStrongBrush", "PrimaryBrush", "PrimarySoftBrush",
+            "DangerBrush", "WarningSoftBrush", "OverlayBrush", "FocusRingBrush"
+        ];
+        Assert.All(brushes, key => Assert.Equal("SolidColorBrush", keys.GetValueOrDefault(key)));
+    }
+
     [Fact]
     public void Themes_HaveTheSameKeys()
     {

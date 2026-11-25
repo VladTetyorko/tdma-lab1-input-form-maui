@@ -61,8 +61,8 @@
         <Setter Property="BorderWidth" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Padding" Value="14,10" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -90,8 +90,8 @@
 
     <Style TargetType="CheckBox">
         <Setter Property="Color" Value="{DynamicResource Primary}" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -111,8 +111,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
     </Style>
 
     <Style TargetType="Editor">
@@ -121,8 +121,8 @@
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="PlaceholderColor" Value="{DynamicResource TextSecondary}" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -143,8 +143,8 @@
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="PlaceholderColor" Value="{DynamicResource TextSecondary}" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -164,8 +164,8 @@
         <Setter Property="BorderColor" Value="Transparent" />
         <Setter Property="BorderWidth" Value="0" />
         <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -221,8 +221,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -247,8 +247,8 @@
         <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
     </Style>
 
     <Style TargetType="RefreshView">
@@ -262,8 +262,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
     </Style>
 
     <Style TargetType="SearchHandler">
@@ -318,8 +318,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="MinimumWidthRequest" Value="{OnIdiom 48, Desktop=40}" />
     </Style>
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
@@ -373,8 +373,7 @@
     <Style TargetType="Button" Class="Compact">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Padding" Value="10,0" />
-        <Setter Property="MinimumHeightRequest" Value="32" />
-        <Setter Property="HeightRequest" Value="32" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 48, Desktop=40}" />
     </Style>
 
     <!-- Product photo thumbnail on the form and the detail page -->
@@ -421,6 +420,8 @@
                         <VisualState.Setters>
                             <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAlt}" />
                             <Setter Property="TextColor" Value="{DynamicResource TextDisabled}" />
+                            <Setter Property="BorderColor" Value="{DynamicResource BorderStrong}" />
+                            <Setter Property="BorderWidth" Value="1" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -542,8 +543,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="TextColor" Value="{DynamicResource PrimaryText}" />
         <Setter Property="BorderWidth" Value="0" />
-        <Setter Property="WidthRequest" Value="44" />
-        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="WidthRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="HeightRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="FontFamily" Value="FluentIcons" />
         <Setter Property="FontSize" Value="20" />
@@ -581,8 +582,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="TextColor" Value="{DynamicResource Danger}" />
         <Setter Property="BorderWidth" Value="0" />
-        <Setter Property="WidthRequest" Value="44" />
-        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="WidthRequest" Value="{OnIdiom 48, Desktop=40}" />
+        <Setter Property="HeightRequest" Value="{OnIdiom 48, Desktop=40}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="FontFamily" Value="FluentIcons" />
         <Setter Property="FontSize" Value="20" />

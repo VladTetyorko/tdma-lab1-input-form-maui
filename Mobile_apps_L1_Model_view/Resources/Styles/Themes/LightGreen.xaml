@@ -34,6 +34,7 @@
     <!-- Brush-typed properties (Border.Stroke, Border.Background) need brushes; a DynamicResource colour is not converted -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource Background}" />
     <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource Overlay}" />
+    <SolidColorBrush x:Key="FocusRingBrush" Color="{StaticResource FocusRing}" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}" />
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAlt}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource Border}" />

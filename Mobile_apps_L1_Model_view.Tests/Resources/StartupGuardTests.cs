@@ -117,7 +117,7 @@ public class StartupGuardTests
             XamlFiles.Load("Resources", "Styles", "Icons.xaml"),
             XamlFiles.Load("Resources", "Styles", "Themes", "LightGreen.xaml")
         }.SelectMany(document => XamlFiles.Keys(document).Keys).ToHashSet();
-        var reference = new Regex(@"(?:SetDynamicResource\([^,]+,\s*|Resources\[)""(?<key>\w+)""|""(?<key>Icon[A-Z]\w+)""");
+        var reference = new Regex(@"(?:SetDynamicResource\([^,]+,\s*|Application\.Current[!?]?\.Resources\[)""(?<key>\w+)""|""(?<key>Icon[A-Z]\w+)""");
 
         var missing = SourceFiles(XamlFiles.App, "*.cs")
             .SelectMany(file => reference.Matches(File.ReadAllText(file)))

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Label, an outlined box (1 px, 2 px focus ring, red on error) with a clear button, and the error under it -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.OutlinedField">
+    <VerticalStackLayout Spacing="4">
+        <Label x:Name="CaptionText" Style="{StaticResource TextCaption}" IsVisible="False" />
+        <Border x:Name="Outline" StrokeShape="RoundRectangle 6" StrokeThickness="1" Padding="8,0,0,0"
+                Stroke="{DynamicResource BorderStrongBrush}" Background="{DynamicResource BackgroundBrush}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4">
+                <Label x:Name="LeadingIcon" Style="{StaticResource IconGlyph}" IsVisible="False"
+                       TextColor="{DynamicResource TextSecondary}" />
+                <components:BorderlessEntry x:Name="Input" Grid.Column="1" MinimumHeightRequest="{OnIdiom 48, Desktop=40}"
+                                            ClearButtonVisibility="Never"
+                                            TextChanged="OnInputTextChanged" Focused="OnInputFocusChanged"
+                                            Unfocused="OnInputFocusChanged" Completed="OnInputCompleted" />
+                <Button x:Name="ClearButton" Grid.Column="2" Text="{StaticResource IconDismiss}" StyleClass="Icon"
+                        IsVisible="False" Clicked="OnClearClicked" SemanticProperties.Description="Clear" />
+            </Grid>
+        </Border>
+        <Label x:Name="ErrorLabelView" Style="{StaticResource ErrorLabel}" IsVisible="False" />
+    </VerticalStackLayout>
+</ContentView>
