@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sheets="clr-namespace:Mobile_apps_L1_Model_view.ViewModels.Sheets;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Sheets.ConfirmContent"
+             x:DataType="sheets:ConfirmSheetViewModel">
+    <VerticalStackLayout Spacing="4">
+        <Label Text="{Binding Message}" Style="{StaticResource TextBody}" AutomationId="ConfirmMessage" />
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}" Spacing="4">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <Label Text="{Binding .}" Style="{StaticResource TextBodyStrong}" />
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+</ContentView>

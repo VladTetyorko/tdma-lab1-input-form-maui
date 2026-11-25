@@ -7,7 +7,7 @@ namespace Mobile_apps_L1_Model_view.Views;
 // (DRY: one behavior instead of OnAppearing/OnDisappearing overrides in every code-behind)
 public sealed class PageLifecycleBehavior : Behavior<Page>
 {
-    // The page a confirm sheet lies on: it was not left, so neither event reaches its ViewModel
+    // The page a sheet lies on: it was not left, so neither event reaches its ViewModel
     private Page? _covered;
 
     protected override void OnAttachedTo(Page page)
@@ -37,7 +37,7 @@ public sealed class PageLifecycleBehavior : Behavior<Page>
 
     private void OnDisappearing(object? sender, EventArgs e)
     {
-        if (MauiConfirmSheet.IsOpen)
+        if (MauiSheetService.IsOpen)
         {
             _covered = sender as Page;
             return;

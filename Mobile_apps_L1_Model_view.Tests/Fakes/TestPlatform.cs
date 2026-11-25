@@ -42,6 +42,8 @@ public static class TestPlatform
         services.AddSingleton<IBarcodeScanner, FakeBarcodeScanner>();
         services.AddSingleton<FakeConfirmSheet>();
         services.AddSingleton<IConfirmSheet>(provider => provider.GetRequiredService<FakeConfirmSheet>());
+        services.AddSingleton<FakeSheetService>();
+        services.AddSingleton<ISheetService>(provider => provider.GetRequiredService<FakeSheetService>());
         services.AddSingleton<FakeKeyboard>();
         services.AddSingleton<IKeyboard>(provider => provider.GetRequiredService<FakeKeyboard>());
         services.AddSingleton<FakeMainThread>();

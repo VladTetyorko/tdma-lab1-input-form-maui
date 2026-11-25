@@ -14,6 +14,7 @@ public sealed class StockDocumentService(
     ILogger<StockDocumentService> logger) : IStockDocumentService
 {
     public const string NotSaved = "Not saved, nothing was recorded. Try again.";
+    public const int RecentNames = 3;
 
     public async Task<Result<StockDocument>> CommitAsync(StockDocumentDraft draft)
     {
@@ -57,6 +58,27 @@ public sealed class StockDocumentService(
         }
 
         return await SaveAsync(draft, user, lines);
+    }
+
+    public async Task<IReadOnlyList<string>> GetRecentCounterpartiesAsync(OperationDirection direction)
+    {
+        if (currentUser.CurrentUser is not { } user || !RolePermissions.CanRecord(user.Role, direction))
+        {
+            logger.LogWarning("Recent {Direction} names refused for user {UserId}", direction, currentUser.CurrentUser?.Id);
+            return [];
+        }
+
+        try
+        {
+            return await documents.GetRecentCounterpartiesAsync(direction, RecentNames,
+                RolePermissions.CanViewAllOperations(user.Role) ? null : user.Id);
+        }
+        catch (Exception ex)
+        {
+            // The chips are a help: the review works without them
+            logger.LogWarning(ex, "Recent {Direction} names could not be read", direction);
+            return [];
+        }
     }
 
     private async Task<Result<StockDocument>> SaveAsync(

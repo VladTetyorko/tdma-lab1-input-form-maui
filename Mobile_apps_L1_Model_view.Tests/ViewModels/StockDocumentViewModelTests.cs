@@ -3,6 +3,7 @@ using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
 using Mobile_apps_L1_Model_view.ViewModels;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.Tests.ViewModels;
 
@@ -19,6 +20,7 @@ public class StockDocumentViewModelTests
     private readonly FakeToastService _toasts = new();
     private readonly FakeBarcodeScanner _scanner = new() { IsCameraSupported = false };
     private readonly StockChanges _changes = new();
+    private readonly FakeSheetService _sheets = new();
 
     public StockDocumentViewModelTests()
     {
@@ -44,7 +46,7 @@ public class StockDocumentViewModelTests
         var search = new QuickSearchViewModel(_store.Catalog, _store.CharacteristicService, _store.CurrentUser,
             _store.Guard, _store.Navigation, _store.Keyboard, _store.Logger<QuickSearchViewModel>());
         var viewModel = new StockDocumentViewModel(_drafts, service, _store.Catalog, _store.CurrentUser, _scanner,
-            _feedback, _toasts, _store.Confirm, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
+            _feedback, _toasts, _store.Confirm, _sheets, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
             _store.Logger<StockDocumentViewModel>())
         {
             Direction = direction,
@@ -70,7 +72,7 @@ public class StockDocumentViewModelTests
 
         var line = Assert.Single(viewModel.Lines);
         Assert.Equal(("Drill", 2, "on hand 0 → 2"), (line.Name, line.Quantity, line.StockText));
-        Assert.Equal("Receive 2 units", viewModel.CommitText);
+        Assert.Equal("Review 2 units", viewModel.CommitText);
         Assert.Equal("Draft · 1 line · 2 units", viewModel.SummaryText);
         Assert.Equal(string.Empty, viewModel.QuickSearch.Query);
         Assert.Equal(2, _feedback.Successes);
@@ -236,9 +238,9 @@ public class StockDocumentViewModelTests
         Assert.Equal(string.Empty, viewModel.StatusMessage);
         Assert.Equal(0, _drafts.LineCount(OperationDirection.In));
         Assert.Equal(1, _changes.Version);
-        var asked = _store.Confirm.Asked.Single();
-        Assert.Equal(("Receive 2 units of 2 products?", "Receive 2 units"), (asked.Message, asked.Accept));
-        Assert.Equal(["Saw  +1", "Drill  +1"], asked.Lines); // the order of the page: newest first
+        var review = Assert.IsType<DocumentReviewViewModel>(Assert.Single(_sheets.Shown));
+        Assert.Equal("Receive 2 units", review.PrimaryText);
+        Assert.Equal(["Saw", "Drill"], review.Lines.Select(l => l.Name)); // the order of the page: newest first
 
         await TypeAsync(viewModel, Drill);
         Assert.Equal(string.Empty, viewModel.SuccessText);
@@ -249,13 +251,63 @@ public class StockDocumentViewModelTests
     {
         var viewModel = await OpenAsync();
         await TypeAsync(viewModel, Drill);
-        _store.Confirm.Answer = false;
+        _sheets.OnShow = sheet =>
+        {
+            ((DocumentReviewViewModel)sheet).Note = "Waybill 3";
+            return FakeSheetService.DismissAsync(sheet);
+        };
 
         await viewModel.CommitCommand.ExecuteAsync(null);
 
         Assert.Empty(_documents.Documents);
         Assert.Single(viewModel.Lines);
         Assert.False(viewModel.IsBusy);
+        Assert.Equal("Waybill 3", viewModel.Note);
+    }
+
+    [Fact]
+    public async Task Review_OffersTheLastThreeSuppliersAndSavesTheChosenOne()
+    {
+        var viewModel = await OpenAsync();
+        foreach (var name in new[] { "One", "Two", "Three", "Four", "Two" })
+        {
+            await TypeAsync(viewModel, Drill);
+            viewModel.Counterparty = name;
+            await viewModel.CommitCommand.ExecuteAsync(null);
+        }
+
+        await TypeAsync(viewModel, Drill);
+        IReadOnlyList<string> offered = [];
+        _sheets.OnShow = async sheet =>
+        {
+            var review = (DocumentReviewViewModel)sheet;
+            offered = [.. review.Names.Select(chip => chip.Name)];
+            review.PickNameCommand.Execute(review.Names[1]);
+            await FakeSheetService.AcceptAsync(sheet);
+        };
+        await viewModel.CommitCommand.ExecuteAsync(null);
+
+        Assert.Equal(["Two", "Four", "Three"], offered);
+        Assert.Equal("Four", _documents.Documents[^1].Counterparty);
+        Assert.DoesNotContain(_store.Logs, log => log.Message.Contains("Four"));
+    }
+
+    [Fact]
+    public async Task Menu_DiscardsAfterAQuestion()
+    {
+        var viewModel = await OpenAsync();
+        await TypeAsync(viewModel, Drill);
+        _sheets.OnShow = sheet =>
+        {
+            var menu = (ActionSheetViewModel)sheet;
+            menu.ChooseCommand.Execute(menu.Actions.Single());
+            return Task.CompletedTask;
+        };
+
+        await viewModel.OpenMenuCommand.ExecuteAsync(null);
+
+        Assert.Single(_store.Confirm.Asked);
+        Assert.Empty(viewModel.Lines);
     }
 
     [Fact]
@@ -282,9 +334,9 @@ public class StockDocumentViewModelTests
         Assert.True(line.IsInvalid);
         Assert.Equal(("Out of stock", "on hand 0 → 0, short by 1"), (line.Problem, line.StockText));
         Assert.Equal("Drill −1", viewModel.StatusMessage);
-        Assert.Equal(("Issue 1 unit", "Draft · 1 line · 1 unit"), (viewModel.CommitText, viewModel.SummaryText));
+        Assert.Equal(("Review 1 unit", "Draft · 1 line · 1 unit"), (viewModel.CommitText, viewModel.SummaryText));
         Assert.False(viewModel.CommitCommand.CanExecute(null));
-        Assert.Equal(("Issue goods", "Recipient (optional)"), (viewModel.Title, viewModel.CounterpartyLabel));
+        Assert.Equal("Issue goods", viewModel.Title);
     }
 
     [Fact]
@@ -428,16 +480,19 @@ public class StockDocumentViewModelTests
     }
 
     [Fact]
-    public async Task SavedSupplier_OpensTheDetails()
+    public async Task SavedNote_IsInTheReviewAgain()
     {
         var viewModel = await OpenAsync();
-        Assert.False(viewModel.IsDetailsOpen);
-        viewModel.ToggleDetailsCommand.Execute(null);
+        await TypeAsync(viewModel, Drill);
         viewModel.Note = "Waybill 7";
         await Eventually.WaitAsync(() => _store.AppState.GetDraft<StockDocumentDraftStore.StoredDocuments>() is not null);
+        _sheets.OnShow = FakeSheetService.DismissAsync;
 
         var reopened = await OpenAsync();
+        await reopened.CommitCommand.ExecuteAsync(null);
 
-        Assert.True(reopened.IsDetailsOpen);
+        var review = Assert.IsType<DocumentReviewViewModel>(Assert.Single(_sheets.Shown));
+        Assert.True(review.IsNoteOpen);
+        Assert.Equal("Waybill 7", review.Note);
     }
 }

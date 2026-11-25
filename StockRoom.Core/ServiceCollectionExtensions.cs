@@ -69,6 +69,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IStockService, StockService>();
         services.AddSingleton<IProductCatalog, ProductCatalog>();
         services.AddSingleton<StockChanges>();
+        // Every question and message is one sheet; the host shows it (ISheetService)
+        services.AddSingleton<IConfirmSheet, SheetConfirm>();
+        services.AddSingleton<IAlertService, SheetAlertService>();
         services.AddSingleton<IStockDocumentDraftStore, StockDocumentDraftStore>();
         services.AddSingleton<IStockDocumentService, StockDocumentService>();
 

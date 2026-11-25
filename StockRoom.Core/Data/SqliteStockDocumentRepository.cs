@@ -32,6 +32,33 @@ public sealed class SqliteStockDocumentRepository(
         return documents;
     }
 
+    public async Task<IReadOnlyList<string>> GetRecentCounterpartiesAsync(
+        OperationDirection direction, int count, Guid? createdBy = null)
+    {
+        var connection = await _database.GetConnectionAsync();
+        var rows = await connection.QueryAsync<StockDocumentRow>(
+            "SELECT * FROM StockDocuments WHERE Direction = ? AND Counterparty IS NOT NULL AND (? IS NULL OR CreatedByUserId = ?) "
+            + "ORDER BY CreatedAt DESC, rowid DESC LIMIT 100",
+            RowFormat.Text(direction), createdBy is { } user ? RowFormat.Text(user) : null,
+            createdBy is { } same ? RowFormat.Text(same) : null);
+
+        var names = new List<string>();
+        foreach (var row in rows)
+        {
+            var name = await DecryptAsync(row);
+            if (name != SqliteOperationRepository.UnreadableCounterparty && !names.Contains(name, StringComparer.OrdinalIgnoreCase))
+            {
+                names.Add(name);
+                if (names.Count == count)
+                {
+                    break;
+                }
+            }
+        }
+
+        return names;
+    }
+
     public async Task<int> CountByNumberPrefixAsync(string prefix)
     {
         var connection = await _database.GetConnectionAsync();

@@ -18,6 +18,14 @@ public sealed class InMemoryStockDocumentRepository(InMemoryOperationRepository 
     public Task<IReadOnlyList<StockDocument>> GetRecentAsync(int count) =>
         Task.FromResult<IReadOnlyList<StockDocument>>([.. Enumerable.Reverse(_documents).Take(count)]);
 
+    public Task<IReadOnlyList<string>> GetRecentCounterpartiesAsync(
+        OperationDirection direction, int count, Guid? createdBy = null) =>
+        Task.FromResult<IReadOnlyList<string>>([.. Enumerable.Reverse(_documents)
+            .Where(d => d.Direction == direction && d.Counterparty is not null && (createdBy is null || d.CreatedByUserId == createdBy))
+            .Select(d => d.Counterparty!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(count)]);
+
     public Task<int> CountByNumberPrefixAsync(string prefix) =>
         Task.FromResult(_documents.Count(d => d.Number.StartsWith(prefix, StringComparison.Ordinal)));
 

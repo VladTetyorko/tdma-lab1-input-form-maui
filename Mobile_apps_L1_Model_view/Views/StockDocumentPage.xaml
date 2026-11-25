@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Order: identify the product (camera, or typing), lines and quantities, optional details, one big action at the
-     bottom. Discard is destructive, so it sits in the app bar, away from the main action -->
+<!-- Order: identify the product (camera, or typing), lines and quantities, one big action that opens the review.
+     Discard is destructive, so it sits in the ⋮ menu, away from the main action -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
@@ -17,9 +17,9 @@
     </ContentPage.Behaviors>
 
     <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
-        <components:AppBar Title="{Binding Title}" BackCommand="{Binding GoBackCommand}" ActionGlyph="{StaticResource IconDelete}"
-                           ActionDescription="Discard draft" ActionCommand="{Binding DiscardCommand}"
-                           ActionId="DiscardDraftButton" IsActionShown="{Binding HasLines}" />
+        <components:AppBar Title="{Binding Title}" BackCommand="{Binding GoBackCommand}" ActionGlyph="{StaticResource IconMore}"
+                           ActionDescription="More actions" ActionCommand="{Binding OpenMenuCommand}"
+                           ActionId="DocumentMenuButton" IsActionShown="{Binding HasLines}" />
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="1200">
                 <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
@@ -108,13 +108,6 @@
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
 
-                <Button Text="{Binding CounterpartyLabel, StringFormat='{0} and note  ▾'}" StyleClass="Outlined" Command="{Binding ToggleDetailsCommand}" AutomationId="DetailsButton" />
-                <VerticalStackLayout Spacing="8" IsVisible="{Binding IsDetailsOpen}" MaximumWidthRequest="720">
-                    <components:OutlinedField Label="{Binding CounterpartyLabel}" EntryId="CounterpartyEntry"
-                                              Text="{Binding Counterparty, Mode=TwoWay}" />
-                    <components:OutlinedField Label="Note (waybill or order number, optional)" EntryId="NoteEntry"
-                                              Text="{Binding Note, Mode=TwoWay}" />
-                </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
 

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
@@ -21,6 +22,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     private readonly IScanFeedback feedback;
     private readonly IToastService toast;
     private readonly IConfirmSheet confirm;
+    private readonly ISheetService sheets;
     private readonly IPermissionGuard guard;
     private readonly INavigationService navigation;
     private readonly StockChanges changes;
@@ -47,6 +49,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         IScanFeedback feedback,
         IToastService toast,
         IConfirmSheet confirm,
+        ISheetService sheets,
         IPermissionGuard guard,
         INavigationService navigation,
         StockChanges changes,
@@ -62,6 +65,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         this.feedback = feedback;
         this.toast = toast;
         this.confirm = confirm;
+        this.sheets = sheets;
         this.guard = guard;
         this.navigation = navigation;
         this.changes = changes;
@@ -90,8 +94,6 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
     public string Title => IsIssue ? "Issue goods" : "Receive goods";
 
-    public string CounterpartyLabel => IsIssue ? "Recipient (optional)" : "Supplier (optional)";
-
     public ObservableCollection<StockDocumentLineItem> Lines { get; } = [];
 
     // Units a typed or picked product adds; camera reads always add one
@@ -115,10 +117,6 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
     // The preview is shown and reads only while nothing is being typed
     public bool IsCameraActive => CameraState == CameraState.Active && !IsTyping && !QuickSearch.IsOpen;
-
-    // Supplier / recipient and note are behind an expander
-    [ObservableProperty]
-    public partial bool IsDetailsOpen { get; set; }
 
     // Why the main button is disabled, or empty
     [ObservableProperty]
@@ -198,9 +196,6 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     [RelayCommand]
     private Task RetryCameraAsync() => StartCameraAsync();
 
-    [RelayCommand]
-    private void ToggleDetails() => IsDetailsOpen = !IsDetailsOpen;
-
     private async Task StartCameraAsync()
     {
         if (!scanner.IsCameraSupported)
@@ -242,7 +237,6 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         Counterparty = _draft.Counterparty;
         Note = _draft.Note;
         _loading = false;
-        IsDetailsOpen = Counterparty.Length > 0 || Note.Length > 0;
         EntryQuantity = "1";
         QuickSearch.InStockFirst = IsIssue;
         await QuickSearch.LoadCommand.ExecuteAsync(null);
@@ -398,6 +392,18 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             new Dictionary<string, object> { [NavigationKeys.Barcode] = line.Barcode });
     }
 
+    // The ⋮ menu of the page
+    [RelayCommand]
+    private async Task OpenMenuAsync()
+    {
+        var menu = new ActionSheetViewModel(Title, new SheetAction("DiscardDraftButton", "Discard draft", true));
+        await sheets.ShowAsync(menu);
+        if (menu.Chosen is not null)
+        {
+            await DiscardCommand.ExecuteAsync(null);
+        }
+    }
+
     [RelayCommand]
     private async Task DiscardAsync()
     {
@@ -415,6 +421,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         StatusMessage = string.Empty;
     }
 
+    // "Review N units": the sheet shows what will move, takes the optional facts and records the document
     [RelayCommand(CanExecute = nameof(CanCommit))]
     private async Task CommitAsync()
     {
@@ -422,19 +429,24 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         try
         {
             var units = _draft.TotalUnits;
-            var verb = IsIssue ? "Issue" : "Receive";
-            var question = new ConfirmRequest(Title,
-                $"{verb} {Plural.Units(units)} of {Plural.Products(_draft.Lines.Count)}?",
-                $"{verb} {Plural.Units(units)}", "Cancel")
+            Result<StockDocument>? result = null;
+            var review = new DocumentReviewViewModel(Direction, [.. Lines],
+                await documents.GetRecentCounterpartiesAsync(Direction), Counterparty, Note,
+                async (counterparty, note) =>
+                {
+                    Counterparty = counterparty;
+                    Note = note;
+                    result = await documents.CommitAsync(_draft);
+                });
+            await sheets.ShowAsync(review);
+            if (result is null)
             {
-                Lines = [.. Lines.Select(line => $"{line.Name}  {Signed(line.Quantity)}")]
-            };
-            if (!await confirm.AskAsync(question))
-            {
+                // Back: what was typed in the sheet stays with the draft
+                Counterparty = review.Counterparty;
+                Note = review.Note;
                 return;
             }
 
-            var result = await documents.CommitAsync(_draft);
             if (!result.IsSuccess)
             {
                 // The draft stays; stock is read again so the lines show what changed
@@ -580,7 +592,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
         var units = _draft.TotalUnits;
         SummaryText = Lines.Count == 0 ? string.Empty : $"Draft · {Plural.Lines(Lines.Count)} · {Plural.Units(units)}";
-        CommitText = $"{(IsIssue ? "Issue" : "Receive")} {Plural.Units(units)}";
+        CommitText = $"Review {Plural.Units(units)}";
         CommitHint = Lines.Count == 0 ? "Add a product first"
             : Lines.Any(line => line.IsInvalid) ? "Fix the red lines first"
             : string.Empty;

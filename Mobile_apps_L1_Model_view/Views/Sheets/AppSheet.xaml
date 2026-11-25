@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The one sheet of the app (design revision 4, R5): scrim, handle, the question, what is needed, and a footer with
+     one filled action named after its result. Bottom of a phone, centred and at most 480 wide on a wide window.
+     No shadow: the scrim and a 1 px edge -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sheets="clr-namespace:Mobile_apps_L1_Model_view.ViewModels.Sheets;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Sheets.AppSheet"
+             x:DataType="sheets:SheetViewModel">
+    <Grid RowDefinitions="*,Auto" SafeAreaEdges="All">
+        <BoxView BackgroundColor="Transparent" Grid.RowSpan="2">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnDismiss" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        <Border Grid.Row="{OnIdiom 1, Desktop=0}" VerticalOptions="{OnIdiom End, Desktop=Center}"
+                Background="{DynamicResource SurfaceBrush}" MaximumWidthRequest="{OnIdiom 640, Desktop=480}"
+                StrokeShape="RoundRectangle 16,16,0,0" Padding="16,0,16,12" AutomationId="ConfirmSheet">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+                <Grid HeightRequest="20">
+                    <BoxView WidthRequest="40" HeightRequest="4" CornerRadius="2" HorizontalOptions="Center"
+                             VerticalOptions="Center" Color="{DynamicResource BorderStrong}" />
+                    <Grid.GestureRecognizers>
+                        <SwipeGestureRecognizer Direction="Down" Swiped="OnDismiss" />
+                        <TapGestureRecognizer Tapped="OnDismiss" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+                <VerticalStackLayout Grid.Row="1">
+                    <Label Text="{Binding StepText}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasStep}" />
+                    <Label Text="{Binding Title}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1"
+                           AutomationId="SheetTitle" />
+                </VerticalStackLayout>
+                <ScrollView x:Name="Body" Grid.Row="2" MaximumHeightRequest="380" />
+                <Label Grid.Row="3" Text="{Binding Hint}" Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasHint}"
+                       AutomationId="SheetHint" />
+                <Grid Grid.Row="4" ColumnDefinitions="Auto,*" Margin="0,4,0,0">
+                    <Button Text="{Binding SecondaryText}" StyleClass="Outlined" HeightRequest="56" MinimumWidthRequest="104"
+                            Margin="0,0,8,0" IsVisible="{Binding HasSecondary}" Command="{Binding SecondaryCommand}"
+                            AutomationId="ConfirmCancelButton" />
+                    <Button x:Name="PrimaryButton" Grid.Column="1" Text="{Binding PrimaryText}" FontSize="17"
+                            HeightRequest="56" IsVisible="{Binding HasPrimary}" Command="{Binding PrimaryCommand}"
+                            AutomationId="ConfirmAcceptButton" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

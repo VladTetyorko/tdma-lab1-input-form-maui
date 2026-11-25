@@ -786,6 +786,18 @@
         <Setter Property="TextColor" Value="{DynamicResource Info}" />
     </Style>
 
+    <!-- A chip that can be chosen (sheets, filters): outlined, 40 high; the chosen one is filled soft by its page -->
+    <Style TargetType="Button" Class="Choice">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{DynamicResource PrimaryText}" />
+        <Setter Property="BorderColor" Value="{DynamicResource BorderStrong}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="HeightRequest" Value="40" />
+        <Setter Property="MinimumHeightRequest" Value="40" />
+    </Style>
+
     <!-- Bottom bar (design revision 4): the halves of the pill, their draft badge and the overlay of a place -->
     <Style x:Key="PillHalf" TargetType="Button">
         <Setter Property="BackgroundColor" Value="Transparent" />
