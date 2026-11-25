@@ -127,6 +127,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 09 | 9 | [Final module: search, ER and screen map, role matrix, DI table, offline scenario, demo script, APK, v1.0](docs/steps/09-final.md) | done (1226 tests + 42 AppTests + 2 UI tests not run; ViewModels 97.4 % coverage; APK artifact in CI; tag by the owner) |
 | 10 | — | [UI redesign: themes, tabs / side panel, product table, batch Receive and Issue](docs/steps/10-design.md) | implemented, not checked on screen (1309 tests + 42 AppTests) |
 | 11 | — | [Design revision 2: Home tiles, drawer, camera first, quick search, bottom action bar, APK script](docs/steps/11-design-revision.md) | implemented, not checked on screen or on a device (1387 tests + 42 AppTests) |
+| 12 | — | [Design revision 3: camera safety, own app bar, tolerant search, counter feedback, polished pages](docs/steps/12-design-revision-3.md) | implemented, checked on an emulator, not on a phone (1454 tests + 44 AppTests) |
 
 ## Decision log
 
@@ -236,6 +237,15 @@ Every architectural decision, newest last. Details are in the step documents.
 | 100 | — | Outlined inputs are `OutlinedField` with a `BorderlessEntry` handler mapping filtered by subclass | A MAUI `Entry` has no outline or focus ring; a global mapping would change every entry |
 | 101 | — | `StartupGuardTests` read the app sources to check registrations, resource keys and XAML type assemblies | The app has no screen test; these mistakes compile and crash at run time |
 | 102 | — | `scripts/build-apk.ps1` builds the debug-signed Release APK into the ignored `artifacts/apk/`, and never uninstalls | One command for the owner; uninstalling would delete the phone data |
+| 103 | — | Camera support is checked on the device (feature + camera ids) before a reader is created; only CameraX start failures are marked handled | The app crashed on a device without a camera |
+| 104 | — | Our own `AppBar` (`48 \| * \| 48`) on every page, Shell navigation bar hidden; status bar in the page background colour | The native bar gave three left edges, a green status bar in the dark theme and the hamburger on pushed pages |
+| 105 | — | Own table kept and polished; no grid library | About ten rows; the gaps were alignment, not features |
+| 106 | — | `ProductMatcher`: words with AND, code tiers without fuzziness, name tiers with n-gram overlap and Damerau–Levenshtein, highlight ranges; one matcher for quick search and table | Typos must find products; one rule for both searches |
+| 107 | — | Enter never picks a similar name; a barcode always goes the exact path | A keyboard scanner must never add "the closest" product |
+| 108 | — | Scan sound behind `ITonePlayer`, with a Settings switch, on by default | Feedback without looking at the screen |
+| 109 | — | Confirmations before commit, discard and leaving a typed form are a themed bottom sheet (`IConfirmSheet`) | The native dialog was unthemed; the action sits where the main button was |
+| 110 | — | Page grids avoid system bars and the keyboard on the bottom edge (`SafeAreaEdges All`) | `adjustResize` alone left the main button under the keyboard |
+| 111 | — | Undo after commit, minimum stock, packs, CSV, labels and a History page are deferred, each needing a domain decision | `Operation` is immutable; these change the data model |
 
 ## Architecture
 
