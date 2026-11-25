@@ -617,48 +617,6 @@
         </Setter>
     </Style>
 
-    <Style TargetType="Button" Class="Fab">
-        <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
-        <Setter Property="TextColor" Value="{DynamicResource OnPrimary}" />
-        <Setter Property="BorderColor" Value="{DynamicResource Background}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="WidthRequest" Value="56" />
-        <Setter Property="HeightRequest" Value="56" />
-        <Setter Property="CornerRadius" Value="28" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="FontFamily" Value="FluentIcons" />
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
-                            <Setter Property="TextColor" Value="{DynamicResource OnPrimary}" />
-                            <Setter Property="BorderColor" Value="{DynamicResource Background}" />
-                            <Setter Property="BorderWidth" Value="1" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="PointerOver">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryHover}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="Pressed">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryPressed}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAlt}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
-
     <!-- Text styles (design-system.md section 5) -->
 
     <Style TargetType="Label" x:Key="TextDisplay">

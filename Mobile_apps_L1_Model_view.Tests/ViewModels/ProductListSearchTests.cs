@@ -78,14 +78,45 @@ public class ProductListSearchTests
         Assert.Equal(string.Empty, _viewModel.EmptyText);
     }
 
-    [Fact]
-    public async Task EmptyWarehouse_ShowsNoMessage()
+    [Theory]
+    [InlineData(Role.Manager, "Add the first product.")]
+    [InlineData(Role.Storekeeper, "A manager adds them.")]
+    [InlineData(Role.Driver, "A manager adds them.")]
+    public async Task EmptyWarehouse_SaysWhoCanFillIt(Role role, string hint)
     {
+        await _store.SignInAsync(role);
+
         await _viewModel.LoadCommand.ExecuteAsync(null);
 
-        _viewModel.SearchText = "anything";
+        Assert.True(_viewModel.IsEmptyShown);
+        Assert.Equal(("No products yet.", hint, string.Empty),
+            (_viewModel.EmptyText, _viewModel.EmptyHint, _viewModel.EmptyActionText));
+    }
 
-        Assert.Equal(string.Empty, _viewModel.EmptyText);
+    [Fact]
+    public async Task ClearSearch_ShowsEverythingAgain()
+    {
+        await AddSampleProductsAsync();
+        _viewModel.SearchText = "zzz";
+        Assert.Equal("Clear search", _viewModel.EmptyActionText);
+
+        _viewModel.ClearSearchCommand.Execute(null);
+
+        Assert.Equal(3, _viewModel.Products.Count);
+        Assert.False(_viewModel.IsEmptyShown);
+    }
+
+    [Fact]
+    public async Task Refresh_ReadsTheProductsAgainAndStopsTheSpinner()
+    {
+        await AddSampleProductsAsync();
+        await _store.AddProductAsync("Hammer", Ean13.WithCheckDigit("482000100009"));
+        _viewModel.IsRefreshing = true;
+
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.Equal(4, _viewModel.Products.Count);
+        Assert.False(_viewModel.IsRefreshing);
     }
 
     [Fact]

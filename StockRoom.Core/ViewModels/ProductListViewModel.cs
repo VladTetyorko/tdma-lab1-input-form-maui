@@ -25,6 +25,7 @@ public partial class ProductListViewModel(
     private bool _sortOptionsStale;
     private bool _productsStale;
     private int _stockVersion;
+    private bool _loaded;
 
     // What the list shows: _all, filtered by SearchText, then sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
@@ -60,9 +61,24 @@ public partial class ProductListViewModel(
     [ObservableProperty]
     public partial string SearchText { get; set; } = string.Empty;
 
-    // Shown instead of the list when nothing matches
+    // Shown instead of the list when there is nothing in it: no match, or no product at all
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmptyShown))]
     public partial string EmptyText { get; set; } = string.Empty;
+
+    // What to do about it
+    [ObservableProperty]
+    public partial string EmptyHint { get; set; } = string.Empty;
+
+    // "Clear search" when the search is the reason, else empty
+    [ObservableProperty]
+    public partial string EmptyActionText { get; set; } = string.Empty;
+
+    public bool IsEmptyShown => EmptyText.Length > 0;
+
+    // Pull to refresh
+    [ObservableProperty]
+    public partial bool IsRefreshing { get; set; }
 
     [ObservableProperty]
     public partial string CurrentUserName { get; set; } = string.Empty;
@@ -155,12 +171,35 @@ public partial class ProductListViewModel(
 
         _stockVersion = stockChanges?.Version ?? 0;
         _all = [.. await catalog.GetSummariesAsync()];
+        _loaded = true;
         await SyncSortOptionsAsync();
         _loadedForUserId = user?.Id;
         _productsStale = false;
         ApplySort();
         logger.LogInformation("Product list loaded: {Count} products for user {UserId}", _all.Count, user?.Id);
     }
+
+    [RelayCommand]
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            // The list keeps what it showed
+            logger.LogWarning(ex, "The product list could not be refreshed");
+            StatusMessage = "The products could not be read. Try again.";
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ClearSearch() => SearchText = string.Empty;
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
@@ -317,7 +356,21 @@ public partial class ProductListViewModel(
 
         ApplyTable(SelectedSortOption);
 
-        EmptyText = Products.Count == 0 && _all.Count > 0 ? $"No products match \"{SearchText.Trim()}\"." : string.Empty;
+        ApplyEmptyState();
+    }
+
+    private void ApplyEmptyState()
+    {
+        var noMatch = Products.Count == 0 && _all.Count > 0;
+        var noProducts = _loaded && _all.Count == 0;
+        EmptyText = noMatch ? $"No products match \"{SearchText.Trim()}\"."
+            : noProducts ? "No products yet."
+            : string.Empty;
+        EmptyHint = !noProducts ? string.Empty
+            : currentUser.CurrentUser is { } user && RolePermissions.CanManageProducts(user.Role)
+                ? "Add the first product."
+                : "A manager adds them.";
+        EmptyActionText = noMatch ? "Clear search" : string.Empty;
     }
 
     private void ApplyTable(SortOption sorted)
