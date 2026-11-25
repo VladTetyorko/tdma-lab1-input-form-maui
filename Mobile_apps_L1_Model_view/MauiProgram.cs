@@ -60,6 +60,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMainThread, MauiMainThread>();
         builder.Services.AddSingleton<IAlertService, ShellAlertService>();
         builder.Services.AddSingleton<IToastService, MauiToastService>();
+        builder.Services.AddSingleton<IVibration>(Vibration.Default);
+        builder.Services.AddSingleton<IScanFeedback, MauiScanFeedback>();
         builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddTransient<LoginPage>();
@@ -72,8 +74,6 @@ public static class MauiProgram
         builder.Services.AddTransient<ScannerPage>();
         builder.Services.AddTransient<LogsPage>();
         builder.Services.AddTransient<MapPage>();
-        builder.Services.AddTransient<ReceivePage>();
-        builder.Services.AddTransient<IssuePage>();
 
         ConfigureLogging(builder);
         var settingsFile = ReadSettingsFile();

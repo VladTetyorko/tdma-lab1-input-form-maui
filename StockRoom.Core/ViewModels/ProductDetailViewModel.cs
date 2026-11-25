@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Mobile_apps_L1_Model_view.Models;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,7 +23,8 @@ public partial class ProductDetailViewModel(
     ProductPhotoEditor photo,
     IMapLauncher maps,
     IDeviceFeedback feedback,
-    ILogger<ProductDetailViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
+    ILogger<ProductDetailViewModel> logger,
+    IStockDocumentDraftStore drafts) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private ProductSummary? _product;
 
@@ -190,6 +192,37 @@ public partial class ProductDetailViewModel(
     }
 
     // The draft stays: the edits are still on screen when this page appears again
+    // Hidden for a role that may not issue; StartAsync refuses it too
+    public bool CanIssue =>
+        currentUser.CurrentUser is { } user && RolePermissions.CanRecord(user.Role, OperationDirection.Out);
+
+    [RelayCommand]
+    private Task StartReceiveAsync() => StartDocumentAsync(OperationDirection.In, Routes.Receive);
+
+    [RelayCommand]
+    private Task StartIssueAsync() => StartDocumentAsync(OperationDirection.Out, Routes.Issue);
+
+    // Puts this product on the batch draft and opens it
+    private async Task StartDocumentAsync(OperationDirection direction, string route)
+    {
+        if (_product is null)
+        {
+            return;
+        }
+
+        if (currentUser.CurrentUser is not { } user || OperationRules.RoleRefusal(user.Role, direction) is not null)
+        {
+            StatusMessage = "You cannot record this kind of operation.";
+            logger.LogWarning("Denied: {Direction} draft for product {ProductId}", direction, _product.Id);
+            return;
+        }
+
+        var draft = await drafts.LoadAsync(direction);
+        draft.Add(_product.Barcode);
+        await drafts.SaveAsync(draft);
+        await navigation.GoToAsync(Routes.Absolute(route));
+    }
+
     [RelayCommand]
     private Task OpenOperationAsync() =>
         _product is null

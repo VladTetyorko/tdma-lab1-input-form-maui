@@ -12,11 +12,14 @@ public class SessionStatusViewModelTests
 
     private readonly TestStore _store = new();
     private readonly SessionStatusViewModel _status;
+    private readonly StockDocumentDraftStore _drafts;
 
     public SessionStatusViewModelTests()
     {
+        _drafts = new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets),
+            new CapturingLogger<StockDocumentDraftStore>());
         _status = new SessionStatusViewModel(_store.CurrentUser, _store.Session, _store.AppState, _store.Banner,
-            _store.Navigation, _store.Logger<SessionStatusViewModel>());
+            _store.Navigation, _drafts, _store.Logger<SessionStatusViewModel>());
     }
 
     [Theory]
@@ -95,6 +98,20 @@ public class SessionStatusViewModelTests
         Assert.Null(_store.CurrentUser.CurrentUser);
         Assert.Equal(Routes.Absolute(Routes.Login), Assert.Single(_store.Navigation.RequestedRoutes));
         Assert.Contains(_store.Logs, l => l.Level == LogLevel.Warning);
+    }
+
+    [Fact]
+    public async Task DraftCounts_FollowTheDraftsAndVanishOnSignOut()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var draft = new StockDocumentDraft(OperationDirection.In);
+        draft.Add(DrillBarcode, 4);
+
+        await _drafts.SaveAsync(draft);
+
+        Assert.Equal(("Receive (1)", "Issue"), (_status.ReceiveTitle, _status.IssueTitle));
+        await _status.SignOutCommand.ExecuteAsync(null);
+        Assert.Equal("Receive", _status.ReceiveTitle);
     }
 
     [Fact]

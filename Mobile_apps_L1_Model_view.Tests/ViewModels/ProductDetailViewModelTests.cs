@@ -19,7 +19,7 @@ public class ProductDetailViewModelTests
 
     private ProductDetailViewModel NewViewModel() => new(
         _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
-        _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback, _store.Logger<ProductDetailViewModel>());
+        _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback, _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()));
 
     [Fact]
     public async Task ApplyQueryAttributes_ShowsTheSelectedProductBeforeLoad()
@@ -387,5 +387,22 @@ public class ProductDetailViewModelTests
             [NavigationKeys.SelectedProduct] = summary!
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
+    }
+
+    [Fact]
+    public async Task StartReceive_PutsTheProductOnTheDraftAndOpensReceive()
+    {
+        await _store.SignInAsync(Role.Driver);
+        var product = await _store.AddProductAsync("Drill", "4006381333931");
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.SelectedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
+        });
+
+        await _viewModel.StartReceiveCommand.ExecuteAsync(null);
+        await _viewModel.StartIssueCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.CanIssue);
+        Assert.Equal(Routes.Absolute(Routes.Receive), Assert.Single(_store.Navigation.RequestedRoutes));
     }
 }

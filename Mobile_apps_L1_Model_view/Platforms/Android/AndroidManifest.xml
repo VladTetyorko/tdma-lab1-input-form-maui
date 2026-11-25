@@ -30,4 +30,6 @@
     </queries>
     <!-- Biometric unlock (fingerprint / face) on the login page; the password always works -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Short buzz after a scan on the receive and issue pages -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
 </manifest>

@@ -15,6 +15,7 @@ public partial class AppShell : Shell
 
     // Route -> the element that has to be hidden when the role does not include it
     private readonly Dictionary<string, BaseShellItem> _entries = [];
+    private readonly SessionStatusViewModel _status;
 
     // startRoute: the top-level page to show first (Routes.Login or Routes.Products)
     public AppShell(IServiceProvider services, string startRoute = Routes.Login)
@@ -29,9 +30,12 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Map, typeof(MapPage));
 
         AddMainEntries(services);
+        _status = services.GetRequiredService<SessionStatusViewModel>();
+        var status = _status;
+        status.PropertyChanged += (_, _) => Dispatcher.Dispatch(ApplyDraftCounts);
+        ApplyDraftCounts();
         if (_sidePanel)
         {
-            var status = services.GetRequiredService<SessionStatusViewModel>();
             var header = new SidePanelHeader();
             header.Content.BindingContext = status;
             var footer = new SidePanelFooter();
@@ -60,11 +64,14 @@ public partial class AppShell : Shell
 
     private static (string Glyph, Func<object> Page) Look(IServiceProvider services, string route) => route switch
     {
-        Routes.Receive => ("IconReceive", services.GetRequiredService<ReceivePage>),
-        Routes.Issue => ("IconIssue", services.GetRequiredService<IssuePage>),
+        Routes.Receive => ("IconReceive", () => Document(services, OperationDirection.In)),
+        Routes.Issue => ("IconIssue", () => Document(services, OperationDirection.Out)),
         Routes.Settings => ("IconSettings", services.GetRequiredService<SettingsPage>),
         _ => ("IconBox", services.GetRequiredService<ProductsPage>)
     };
+
+    private static StockDocumentPage Document(IServiceProvider services, OperationDirection direction) =>
+        new(services.GetRequiredService<StockDocumentViewModel>(), direction);
 
     private void AddMainEntries(IServiceProvider services)
     {
@@ -96,6 +103,21 @@ public partial class AppShell : Shell
         if (!_sidePanel)
         {
             Items.Add(tabs);
+        }
+    }
+
+    // A half-done delivery is never forgotten: "Receive (5)"
+    private void ApplyDraftCounts()
+    {
+        SetTitle(Routes.Receive, _status.ReceiveTitle);
+        SetTitle(Routes.Issue, _status.IssueTitle);
+    }
+
+    private void SetTitle(string route, string title)
+    {
+        if (_entries.TryGetValue(route, out var item))
+        {
+            item.Title = title;
         }
     }
 

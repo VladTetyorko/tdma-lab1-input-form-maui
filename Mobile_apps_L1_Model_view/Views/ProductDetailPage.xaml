@@ -52,11 +52,14 @@
             </VerticalStackLayout>
             <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
 
-            <HorizontalStackLayout Spacing="10">
+            <FlexLayout Wrap="Wrap">
                 <Button StyleClass="Outlined" Text="Save" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" />
                 <Button StyleClass="Primary" Text="Record In/Out" Command="{Binding OpenOperationCommand}" />
+                <Button StyleClass="Outlined" Text="Receive" Command="{Binding StartReceiveCommand}" AutomationId="DetailReceiveButton" />
+                <Button StyleClass="Outlined" Text="Issue" Command="{Binding StartIssueCommand}" IsVisible="{Binding CanIssue}"
+                        AutomationId="DetailIssueButton" />
                 <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" />
-            </HorizontalStackLayout>
+            </FlexLayout>
 
             <Label Text="History" Style="{StaticResource SectionLabel}" />
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding History}" Spacing="6">
