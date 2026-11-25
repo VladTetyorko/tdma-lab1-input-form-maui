@@ -11,6 +11,8 @@ public sealed record TableColumn(string Title, SortOption? Sort, double Width, b
 
     public bool IsSortedDescending => IsSorted && IsDescending;
 
+    public string AutomationId => Sort is null ? $"Header_{Title}" : $"SortHeader_{Sort.Title}";
+
     // The header text with the direction arrow, so the state never depends on colour alone
     public string Header => IsSorted ? $"{Title} {(IsDescending ? "▼" : "▲")}" : Title;
 

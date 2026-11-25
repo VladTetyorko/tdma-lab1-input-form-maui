@@ -65,8 +65,10 @@ public class ProductTableTests
 
         var row = ProductTable.Row(product, columns);
 
-        Assert.Equal(["3017620422003", "0", "Ferrero", ProductTable.Missing], row.Cells.Select(cell => cell.Text));
-        Assert.True(row.IsOutOfStock);
+        Assert.Equal(["3017620422003", ProductTable.OutOfStock, "Ferrero", ProductTable.Missing], row.Cells.Select(cell => cell.Text));
+        Assert.True(row.Cells[1].IsAlert);
+        Assert.False(row.Cells[2].IsAlert);
+        Assert.Equal(["Header_Barcode", "SortHeader_Quantity"], columns.Take(2).Select(column => column.AutomationId));
         Assert.True(row.CanDelete);
     }
 }

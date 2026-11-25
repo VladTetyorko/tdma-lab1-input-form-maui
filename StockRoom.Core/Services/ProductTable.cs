@@ -7,9 +7,10 @@ namespace Mobile_apps_L1_Model_view.Services;
 public static class ProductTable
 {
     public const string Missing = "—";
+    public const string OutOfStock = "Out of stock";
 
     private const double BarcodeWidth = 130;
-    private const double QuantityWidth = 80;
+    private const double QuantityWidth = 96;
     private const double ValueWidth = 110;
 
     public static TableColumn NameColumn(SortOption sorted, bool descending) =>
@@ -38,7 +39,12 @@ public static class ProductTable
         clicked == current ? (current, !descending) : (clicked, false);
 
     public static ProductTableRow Row(ProductSummary product, IReadOnlyList<TableColumn> columns) =>
-        new(product, [.. columns.Select(column => new ProductTableCell(Text(product, column), column.Width, column.IsNumeric))]);
+        new(product, [.. columns.Select(column => Cell(product, column))]);
+
+    private static ProductTableCell Cell(ProductSummary product, TableColumn column) =>
+        column.Sort == SortOption.ByQuantity && product.Quantity == 0
+            ? new ProductTableCell(OutOfStock, column.Width, column.IsNumeric) { IsAlert = true }
+            : new ProductTableCell(Text(product, column), column.Width, column.IsNumeric);
 
     private static IEnumerable<SortOption> Chosen(List<SortOption> characteristics, SortOption? extra) =>
         extra is not null && characteristics.Contains(extra) ? [extra] : characteristics.Take(1);
