@@ -36,6 +36,9 @@ public sealed partial class QuickSearchViewModel(
     // The text is the field's own value (the product form's name): picking keeps it, and "no match" is good news
     public bool IsSelectMode { get; set; }
 
+    // Issuing goods: products in stock come first
+    public bool InStockFirst { get; set; }
+
     // The product being edited is not suggested to itself
     public Guid? ExcludedProductId { get; set; }
 
@@ -131,7 +134,8 @@ public sealed partial class QuickSearchViewModel(
     [RelayCommand]
     private void MovePrevious() => Move(-1);
 
-    // A highlighted row wins; then a barcode goes the exact-barcode way; then a single suggestion. Else nothing
+    // A highlighted row wins; then a barcode goes the exact-barcode way; then a single suggestion that really
+    // matches (never one that is only similar). Else nothing
     [RelayCommand]
     private void Submit()
     {
@@ -144,7 +148,7 @@ public sealed partial class QuickSearchViewModel(
             IsOpen = false;
             SubmittedText?.Invoke(this, Query);
         }
-        else if (IsOpen && Suggestions.Count == 1)
+        else if (IsOpen && Suggestions.Count == 1 && !Suggestions[0].Suggestion.IsFuzzy)
         {
             Pick(Suggestions[0]);
         }
@@ -191,7 +195,7 @@ public sealed partial class QuickSearchViewModel(
         HighlightedIndex = -1;
         Suggestions.Clear();
         var searched = _products.Where(product => product.Id != ExcludedProductId);
-        foreach (var suggestion in ProductSuggestions.Find(searched, _characteristics, Query, MaxSuggestions))
+        foreach (var suggestion in ProductSuggestions.Find(searched, _characteristics, Query, MaxSuggestions, InStockFirst))
         {
             Suggestions.Add(new QuickSearchRow(suggestion));
         }

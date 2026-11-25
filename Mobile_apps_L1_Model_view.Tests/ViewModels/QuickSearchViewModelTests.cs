@@ -43,6 +43,31 @@ public class QuickSearchViewModelTests
     }
 
     [Fact]
+    public async Task Enter_NeverPicksASimilarName()
+    {
+        var viewModel = await OpenAsync();
+        viewModel.Query = "drlil smal";
+        Assert.True(Assert.Single(viewModel.Suggestions).Suggestion.IsFuzzy);
+
+        viewModel.SubmitCommand.Execute(null);
+
+        Assert.Empty(_picked);
+        Assert.Empty(_submitted);
+    }
+
+    [Fact]
+    public async Task Enter_OnACode_TakesTheExactBarcodeWay()
+    {
+        var viewModel = await OpenAsync();
+        viewModel.Query = Unknown;
+
+        viewModel.SubmitCommand.Execute(null);
+
+        Assert.Equal([Unknown], _submitted);
+        Assert.Empty(_picked);
+    }
+
+    [Fact]
     public async Task UnreadableCatalog_IsLoggedAndNothingBreaks()
     {
         var catalog = new Mock<IProductCatalog>();

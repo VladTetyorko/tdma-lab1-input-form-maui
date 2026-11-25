@@ -230,6 +230,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         _loading = false;
         IsDetailsOpen = Counterparty.Length > 0 || Note.Length > 0;
         EntryQuantity = "1";
+        QuickSearch.InStockFirst = IsIssue;
         await QuickSearch.LoadCommand.ExecuteAsync(null);
 
         StatusMessage = string.Empty;

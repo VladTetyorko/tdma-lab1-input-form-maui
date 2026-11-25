@@ -1,9 +1,10 @@
 using Mobile_apps_L1_Model_view.Models;
+using Mobile_apps_L1_Model_view.Services.Search;
 
 namespace Mobile_apps_L1_Model_view.Services;
 
-// Which products to suggest for typed text. Name and code only (the list search also matches characteristic values).
-// Pure and without I/O: a handful of products filter instantly, so there is no debounce
+// Which products to suggest for typed text: ProductMatcher on name and code (the table also searches characteristic
+// values). Pure and without I/O: a handful of products filter instantly, so there is no debounce
 public static class ProductSuggestions
 {
     private const int MinimumLetters = 2;
@@ -15,11 +16,13 @@ public static class ProductSuggestions
         return query.Length >= MinimumLetters || (query.Length > 0 && query.All(char.IsAsciiDigit));
     }
 
+    // Similar rows only fill the places the exact ones left free
     public static IReadOnlyList<ProductSuggestion> Find(
         IEnumerable<ProductSummary> products,
         IReadOnlyList<Characteristic> characteristics,
         string? text,
-        int max)
+        int max,
+        bool inStockFirst = false)
     {
         if (!IsSearchable(text))
         {
@@ -29,53 +32,35 @@ public static class ProductSuggestions
         var query = text!.Trim();
         return
         [
-            .. products
-                .Select(product => (Product: product, Rank: Rank(product, query)))
-                .Where(match => match.Rank is not null)
-                .OrderBy(match => match.Rank)
-                .ThenBy(match => match.Product.Name, StringComparer.OrdinalIgnoreCase)
+            .. ProductMatcher.Rank(products, query, inStockFirst)
+                .OrderBy(match => match.IsFuzzy)
                 .Take(max)
-                .Select(match => Describe(match.Product, characteristics, query))
+                .Select(match => Describe(match, characteristics, query))
         ];
     }
 
-    // Lower is better: exact code, code prefix, name prefix, word prefix, anywhere. Null = no match
-    private static int? Rank(ProductSummary product, string query)
-    {
-        if (string.Equals(product.Barcode, query, StringComparison.OrdinalIgnoreCase))
-        {
-            return 0;
-        }
-
-        if (TextMatch.StartsWith(product.Barcode, query))
-        {
-            return 1;
-        }
-
-        if (TextMatch.StartsWith(product.Name, query))
-        {
-            return 2;
-        }
-
-        if (product.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Any(word => TextMatch.StartsWith(word, query)))
-        {
-            return 3;
-        }
-
-        return TextMatch.Contains(product.Name, query) || TextMatch.Contains(product.Barcode, query) ? 4 : null;
-    }
-
     private static ProductSuggestion Describe(
-        ProductSummary product, IReadOnlyList<Characteristic> characteristics, string query)
+        MatchResult match, IReadOnlyList<Characteristic> characteristics, string query)
     {
+        var product = match.Product;
+
+        // A bare number says nothing: it gets the name of its characteristic
         var details = characteristics
-            .Select(characteristic => product.Values.GetValueOrDefault(characteristic.Id))
-            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(characteristic => (characteristic, Value: product.Values.GetValueOrDefault(characteristic.Id)))
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Value))
+            .Select(pair => pair.characteristic.ValueType == CharacteristicValueType.Number
+                ? $"{pair.characteristic.Name} {pair.Value}"
+                : pair.Value!)
             .Take(2);
         return new ProductSuggestion(
             product,
             string.Join(" · ", details),
             product.Quantity > 0 ? $"{product.Quantity} on hand" : "Out of stock",
-            product.Barcode == query);
+            product.Barcode == query)
+        {
+            IsFuzzy = match.IsFuzzy,
+            NameRanges = match.NameRanges,
+            CodeRanges = match.CodeRanges
+        };
     }
 }

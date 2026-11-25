@@ -21,14 +21,14 @@ public class ProductSuggestionsTests
     {
         var products = new[]
         {
-            Product("Anywhere", "9912300000000"),
+            Product("Last digits", "9900000000123"),
             Product("Oil 123 extra", "5000000000000"),
             Product("123 glue", "6000000000000"),
             Product("Code prefix", "1230000000000"),
             Product("Exact", "123")
         };
 
-        Assert.Equal(["Exact", "Code prefix", "123 glue", "Oil 123 extra", "Anywhere"], Names("123", 8, products));
+        Assert.Equal(["Exact", "Code prefix", "Last digits", "123 glue", "Oil 123 extra"], Names("123", 8, products));
     }
 
     [Fact]
@@ -66,6 +66,27 @@ public class ProductSuggestionsTests
         Assert.Equal("24 on hand", suggestion.StockText);
         Assert.False(suggestion.IsExactCode);
         Assert.Empty(ProductSuggestions.Find([product], Characteristics, "Ferrero", 5));
+    }
+
+    [Fact]
+    public void SimilarNames_AreMarkedAndOnlyFillFreePlaces()
+    {
+        var products = new[] { Product("Nutella", "1"), Product("Nutela spread", "2") };
+
+        var found = ProductSuggestions.Find(products, Characteristics, "nutela", 5);
+
+        Assert.Equal([("Nutela spread", false), ("Nutella", true)], found.Select(s => (s.Title, s.IsFuzzy)));
+        Assert.NotEmpty(found[1].NameRanges);
+        Assert.Single(ProductSuggestions.Find(products, Characteristics, "nutela", 1), s => !s.IsFuzzy);
+    }
+
+    [Fact]
+    public void ANumberValue_IsShownWithItsName()
+    {
+        var weight = new Characteristic { Name = "Weight (kg)", ValueType = CharacteristicValueType.Number };
+        var product = Product("Nutella", "1") with { Values = new Dictionary<Guid, string> { [weight.Id] = "0.4" } };
+
+        Assert.Equal("Weight (kg) 0.4", ProductSuggestions.Find([product], [weight], "nut", 5)[0].Details);
     }
 
     [Fact]
