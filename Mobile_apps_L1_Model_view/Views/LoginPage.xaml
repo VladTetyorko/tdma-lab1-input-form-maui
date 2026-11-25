@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- No app bar: the name is on the card. The card sits in the upper third, so Sign in stays above the keyboard -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.LoginPage"
              x:DataType="viewModels:LoginViewModel"
@@ -13,35 +15,28 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <ScrollView>
-        <Grid Padding="{OnIdiom Default=24, Phone=16}">
-            <Border StyleClass="SectionCard" MaximumWidthRequest="400" VerticalOptions="Center">
-                <VerticalStackLayout Spacing="12">
-                <Label Text="StockRoom" Style="{StaticResource Headline}" />
-                <Label Text="Warehouse. Sign in with the login and password you were given." Style="{StaticResource CaptionLabel}" />
-
-                <Entry Text="{Binding Login, Mode=TwoWay}"
-                       Placeholder="Login"
-                       Keyboard="Plain"
-                       AutomationId="LoginEntry" />
-                <Entry Text="{Binding Password, Mode=TwoWay}"
-                       Placeholder="Password"
-                       IsPassword="True"
-                       ReturnCommand="{Binding SignInCommand}"
-                       AutomationId="PasswordEntry" />
-
-                <Label Text="{Binding ErrorMessage}"
-                       IsVisible="{Binding HasError}"
-                       Style="{StaticResource ErrorLabel}"
-                       AutomationId="ErrorLabel" />
-
-                <Button StyleClass="Primary" Text="Sign in" Command="{Binding SignInCommand}" AutomationId="LoginButton" />
-                <Button StyleClass="Outlined" Text="Unlock with biometrics"
-                        Command="{Binding BiometricSignInCommand}"
-                        IsVisible="{Binding IsBiometricAvailable}"
-                        AutomationId="BiometricButton" />
-                </VerticalStackLayout>
-            </Border>
-        </Grid>
-    </ScrollView>
+    <Grid SafeAreaEdges="Container">
+        <ScrollView>
+            <VerticalStackLayout Padding="{OnIdiom Default='24,64', Phone='16,48'}">
+                <Border StyleClass="SectionCard" MaximumWidthRequest="400">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="StockRoom" Style="{StaticResource Headline}" />
+                        <Label Text="Warehouse. Sign in with the login and password you were given."
+                               Style="{StaticResource TextCaption}" HorizontalTextAlignment="Center" />
+                        <components:OutlinedField Label="Login" EntryId="LoginEntry" Keyboard="Plain" ShowClear="False"
+                                                  Text="{Binding Login, Mode=TwoWay}" />
+                        <components:OutlinedField Label="Password" EntryId="PasswordEntry" IsPassword="True"
+                                                  Text="{Binding Password, Mode=TwoWay}"
+                                                  ReturnCommand="{Binding SignInCommand}" />
+                        <Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}"
+                               Style="{StaticResource ErrorLabel}" AutomationId="ErrorLabel" />
+                        <Button StyleClass="Primary" Text="Sign in" FontSize="17" HeightRequest="56"
+                                Command="{Binding SignInCommand}" AutomationId="LoginButton" />
+                        <Button StyleClass="Outlined" Text="Unlock with biometrics" Command="{Binding BiometricSignInCommand}"
+                                IsVisible="{Binding IsBiometricAvailable}" AutomationId="BiometricButton" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

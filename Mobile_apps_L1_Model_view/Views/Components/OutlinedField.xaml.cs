@@ -88,6 +88,18 @@ public partial class OutlinedField : ContentView
         set => Input.MaxLength = value;
     }
 
+    // Hidden characters, with a button that shows them. Such a field has no clear button
+    public bool IsPassword
+    {
+        get => RevealButton.IsVisible;
+        set
+        {
+            Input.IsPassword = value;
+            RevealButton.IsVisible = value;
+            ShowClear = !value;
+        }
+    }
+
     // A narrow box (a quantity) has no room for the clear button
     public bool ShowClear { get; set; } = true;
 
@@ -155,6 +167,13 @@ public partial class OutlinedField : ContentView
     }
 
     private void OnInputCompleted(object? sender, EventArgs e) => Completed?.Invoke(this, EventArgs.Empty);
+
+    private void OnRevealClicked(object? sender, EventArgs e)
+    {
+        Input.IsPassword = !Input.IsPassword;
+        RevealButton.Text = (string)Application.Current!.Resources[Input.IsPassword ? "IconEye" : "IconEyeOff"];
+        SemanticProperties.SetDescription(RevealButton, Input.IsPassword ? "Show password" : "Hide password");
+    }
 
     private void OnClearClicked(object? sender, EventArgs e)
     {

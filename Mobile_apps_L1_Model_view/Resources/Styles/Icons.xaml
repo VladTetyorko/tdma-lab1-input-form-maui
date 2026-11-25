@@ -31,4 +31,6 @@
     <x:String x:Key="IconCamera">&#xF255;</x:String>
     <x:String x:Key="IconArrowLeft">&#xF15C;</x:String>
     <x:String x:Key="IconCheckmarkCircle">&#xF299;</x:String>
+    <x:String x:Key="IconEye">&#xE5F3;</x:String>
+    <x:String x:Key="IconEyeOff">&#xE5F6;</x:String>
 </ResourceDictionary>

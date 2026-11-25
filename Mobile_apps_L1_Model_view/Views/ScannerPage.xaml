@@ -13,40 +13,32 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
         <components:AppBar Title="Scan barcode" BackCommand="{Binding GoBackCommand}" />
         <ScrollView Grid.Row="1">
-        <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
-            <views:CameraScannerView HeightRequest="280"
-                                     IsVisible="{Binding IsCameraSupported}"
-                                     IsActive="{Binding IsCameraActive}"
-                                     DetectedCommand="{Binding BarcodeDetectedCommand}" />
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
+                <Border HeightRequest="280" IsVisible="{Binding IsCameraSupported}" StrokeShape="RoundRectangle 10">
+                    <views:CameraScannerView IsActive="{Binding IsCameraActive}"
+                                             DetectedCommand="{Binding BarcodeDetectedCommand}" />
+                </Border>
+                <components:CameraStatusBanner Message="{Binding UnavailableText}" />
 
-            <Label Text="Camera scanning is not available on this device. Type the barcode instead."
-                   Style="{StaticResource CaptionLabel}"
-                   IsVisible="{Binding IsCameraUnavailable}" />
+                <components:OutlinedField Label="Barcode" Placeholder="EAN-13 or UPC-A" Keyboard="Numeric"
+                                          EntryId="ManualBarcodeEntry" Text="{Binding ManualBarcode, Mode=TwoWay}"
+                                          ReturnCommand="{Binding LookUpCommand}" />
+                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="ScannerStatusLabel" />
 
-            <Label Text="Barcode" Style="{StaticResource SectionLabel}" />
-            <Entry Text="{Binding ManualBarcode, Mode=TwoWay}"
-                   Placeholder="EAN-13 or UPC-A"
-                   Keyboard="Numeric"
-                   ReturnCommand="{Binding LookUpCommand}" AutomationId="ManualBarcodeEntry" />
-            <Button StyleClass="Primary" Text="Find product" Command="{Binding LookUpCommand}" HorizontalOptions="Start" AutomationId="FindProductButton" />
-
-            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="ScannerStatusLabel" />
-
-            <HorizontalStackLayout Spacing="10">
                 <Button StyleClass="Outlined" Text="Add this product" Command="{Binding CreateProductCommand}"
                         IsVisible="{Binding CanCreateProduct}" AutomationId="AddThisProductButton" />
-                <Button StyleClass="Outlined" Text="Create from Open Food Facts" Command="{Binding CreateFromLookupCommand}" AutomationId="CreateFromLookupButton"
-                        IsVisible="{Binding CanCreateProduct}" />
-                <Button StyleClass="Outlined" Text="Scan again" Command="{Binding ScanAgainCommand}" AutomationId="ScanAgainButton"
-                        IsVisible="{Binding CanScanAgain}" />
-            </HorizontalStackLayout>
-
-            <Label Text="{Binding LookupAttribution}" Style="{StaticResource CaptionLabel}"
-                   IsVisible="{Binding CanCreateProduct}" />
-        </VerticalStackLayout>
-    </ScrollView>
+                <Button StyleClass="Outlined" Text="Create from Open Food Facts" Command="{Binding CreateFromLookupCommand}"
+                        IsVisible="{Binding CanCreateProduct}" AutomationId="CreateFromLookupButton" />
+                <Button StyleClass="Outlined" Text="Scan again" Command="{Binding ScanAgainCommand}"
+                        IsVisible="{Binding CanScanAgain}" AutomationId="ScanAgainButton" />
+                <Label Text="{Binding LookupAttribution}" Style="{StaticResource CaptionLabel}"
+                       IsVisible="{Binding CanCreateProduct}" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <components:BottomActionBar Grid.Row="2" ButtonId="FindProductButton" Text="Find product"
+                                    Command="{Binding LookUpCommand}" />
     </Grid>
 </ContentPage>

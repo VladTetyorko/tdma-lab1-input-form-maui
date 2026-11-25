@@ -4,8 +4,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
              xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
-             xmlns:models="clr-namespace:Mobile_apps_L1_Model_view.Models;assembly=StockRoom.Core"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             xmlns:models="clr-namespace:Mobile_apps_L1_Model_view.Models;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.CharacteristicsPage"
              x:DataType="viewModels:CharacteristicsViewModel"
              Title="Characteristics">
@@ -14,32 +14,38 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*">
-    <components:AppBar Title="Characteristics" BackCommand="{Binding GoBackCommand}" />
-    <Grid Grid.Row="1" RowDefinitions="*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowSpacing="10">
-        <CollectionView Grid.Row="0" ItemsSource="{Binding Items}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:Characteristic">
-                    <VerticalStackLayout Padding="0,6">
-                        <Label Text="{Binding Name}" FontAttributes="Bold" />
-                        <Label Text="{Binding ValueType}" Style="{StaticResource CaptionLabel}" />
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+        <components:AppBar Title="Characteristics" BackCommand="{Binding GoBackCommand}" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="16" MaximumWidthRequest="720">
+                <Border StyleClass="SectionCard">
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:Characteristic">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" />
+                                    <Label Grid.Column="1" Text="{Binding ValueType}" Style="{StaticResource TextCaption}" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                </Border>
 
-        <VerticalStackLayout Grid.Row="1" Spacing="6">
-            <VerticalStackLayout IsVisible="{Binding CanManage}" Spacing="6">
-                <Label Text="New characteristic" Style="{StaticResource SectionLabel}" />
-                <Entry Text="{Binding NewName, Mode=TwoWay}" AutomationId="CharacteristicNameEntry" Placeholder="Name" />
-                <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" />
-                <Picker ItemsSource="{Binding ValueTypes}"
-                        SelectedItem="{Binding NewValueType, Mode=TwoWay}" AutomationId="ValueTypePicker"
-                        Title="Value type" />
-                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
-                <Button StyleClass="Primary" Text="Add" Command="{Binding AddCommand}" AutomationId="AddCharacteristicButton" />
+                <VerticalStackLayout IsVisible="{Binding CanManage}" Spacing="8">
+                    <components:OutlinedField Label="New characteristic" Placeholder="Name" EntryId="CharacteristicNameEntry"
+                                              Text="{Binding NewName, Mode=TwoWay}" ErrorText="{Binding NameError}" />
+                    <!-- Two chips of equal width; the chosen one is filled and says so to a screen reader -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Text="{Binding TextChip}" StyleClass="Outlined" AutomationId="TextTypeButton"
+                                Command="{Binding SelectTypeCommand}" CommandParameter="{x:Static models:CharacteristicValueType.Text}" />
+                        <Button Grid.Column="1" Text="{Binding NumberChip}" StyleClass="Outlined" AutomationId="NumberTypeButton"
+                                Command="{Binding SelectTypeCommand}" CommandParameter="{x:Static models:CharacteristicValueType.Number}" />
+                    </Grid>
+                    <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+                </VerticalStackLayout>
             </VerticalStackLayout>
-        </VerticalStackLayout>
-    </Grid>
+        </ScrollView>
+        <components:BottomActionBar Grid.Row="2" ButtonId="AddCharacteristicButton" Text="Add characteristic"
+                                    Command="{Binding AddCommand}" IsVisible="{Binding CanManage}" />
     </Grid>
 </ContentPage>

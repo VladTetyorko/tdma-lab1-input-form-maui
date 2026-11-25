@@ -25,6 +25,9 @@ public partial class ScannerViewModel(
 
     public bool IsCameraUnavailable => !scanner.IsCameraSupported;
 
+    // The banner of a device without a camera, empty otherwise
+    public string UnavailableText => IsCameraUnavailable ? CameraMessages.Unsupported : string.Empty;
+
     // The camera view binds to this: true = camera on and reading, false = camera released
     [ObservableProperty]
     public partial bool IsCameraActive { get; set; }

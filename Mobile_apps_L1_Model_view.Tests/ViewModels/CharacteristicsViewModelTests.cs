@@ -17,6 +17,17 @@ public class CharacteristicsViewModelTests
     }
 
     [Fact]
+    public void TheTypeChips_MarkTheChosenType()
+    {
+        Assert.Equal(("✓ Text", "Number"), (_viewModel.TextChip, _viewModel.NumberChip));
+
+        _viewModel.SelectTypeCommand.Execute(CharacteristicValueType.Number);
+
+        Assert.Equal(CharacteristicValueType.Number, _viewModel.NewValueType);
+        Assert.Equal(("Text", "✓ Number"), (_viewModel.TextChip, _viewModel.NumberChip));
+    }
+
+    [Fact]
     public async Task Load_ListsExistingCharacteristics()
     {
         await _store.AddCharacteristicAsync("Color", CharacteristicValueType.Text);

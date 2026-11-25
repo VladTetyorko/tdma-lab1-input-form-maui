@@ -18,6 +18,9 @@
                                             Unfocused="OnInputFocusChanged" Completed="OnInputCompleted" />
                 <Button x:Name="ClearButton" Grid.Column="2" Text="{StaticResource IconDismiss}" StyleClass="Icon"
                         IsVisible="False" Clicked="OnClearClicked" SemanticProperties.Description="Clear" />
+                <Button x:Name="RevealButton" Grid.Column="2" Text="{StaticResource IconEye}" StyleClass="Icon"
+                        IsVisible="False" Clicked="OnRevealClicked" SemanticProperties.Description="Show password"
+                        AutomationId="ShowPasswordButton" />
             </Grid>
         </Border>
         <Label x:Name="ErrorLabelView" Style="{StaticResource ErrorLabel}" IsVisible="False" />

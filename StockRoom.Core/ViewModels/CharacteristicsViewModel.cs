@@ -17,8 +17,6 @@ public partial class CharacteristicsViewModel(
 
     public ObservableCollection<Characteristic> Items { get; } = [];
 
-    public IReadOnlyList<CharacteristicValueType> ValueTypes { get; } = Enum.GetValues<CharacteristicValueType>();
-
     [ObservableProperty]
     public partial bool CanManage { get; set; }
 
@@ -27,7 +25,14 @@ public partial class CharacteristicsViewModel(
     public partial string NewName { get; set; } = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TextChip))]
+    [NotifyPropertyChangedFor(nameof(NumberChip))]
     public partial CharacteristicValueType NewValueType { get; set; }
+
+    // The two type chips; the chosen one is marked by a check, not by colour alone
+    public string TextChip => Chip(CharacteristicValueType.Text);
+
+    public string NumberChip => Chip(CharacteristicValueType.Number);
 
     // Empty string = no error (keeps XAML bindings simple)
     [ObservableProperty]
@@ -39,6 +44,11 @@ public partial class CharacteristicsViewModel(
     partial void OnNewNameChanged(string value) => NameError = validator.ValidateName(value) ?? string.Empty;
 
     public void OnAppearing() => LoadCommand.Execute(null);
+
+    [RelayCommand]
+    private void SelectType(CharacteristicValueType type) => NewValueType = type;
+
+    private string Chip(CharacteristicValueType type) => NewValueType == type ? $"✓ {type}" : type.ToString();
 
     [RelayCommand]
     private async Task LoadAsync()

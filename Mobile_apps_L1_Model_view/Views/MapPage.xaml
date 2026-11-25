@@ -19,14 +19,15 @@
     <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowSpacing="8">
         <Label Grid.Row="0"
                Text="Operations recorded with a location. Tap Open in maps to see a place in your maps app."
-               Style="{StaticResource CaptionLabel}" />
+               Style="{StaticResource CaptionLabel}" IsVisible="{Binding HasPins}" />
 
         <!-- Android and iOS only: hidden where there is no Map control (Windows) -->
         <views:PinMapView Grid.Row="1" HeightRequest="260" ItemsSource="{Binding Pins}"
                           IsVisible="{Binding HasPins}" AutomationId="OperationsMap" />
 
-        <Label Grid.Row="2" Text="No operation has a location yet. Attach one when you record an In or Out."
-               Style="{StaticResource CaptionLabel}" IsVisible="{Binding HasNoPins}" AutomationId="NoPinsLabel" />
+        <components:EmptyState Grid.Row="2" Glyph="{StaticResource IconMap}" Title="No places yet"
+                               Message="No operation has a location yet. Attach one when you record an In or Out."
+                               IsVisible="{Binding HasNoPins}" VerticalOptions="Center" AutomationId="NoPinsLabel" />
 
         <CollectionView Grid.Row="2" ItemsSource="{Binding Pins}" IsVisible="{Binding HasPins}"
                         AutomationId="PinList">
