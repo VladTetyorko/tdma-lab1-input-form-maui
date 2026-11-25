@@ -7,6 +7,7 @@ public class CameraMessagesTests
     [Theory]
     [InlineData(CameraState.Unsupported, CameraMessages.Unsupported, "")]
     [InlineData(CameraState.Denied, CameraMessages.Denied, CameraMessages.AllowAction)]
+    [InlineData(CameraState.Failed, CameraMessages.Failed, CameraMessages.RetryAction)]
     [InlineData(CameraState.Active, "", "")]
     [InlineData(CameraState.Off, "", "")]
     public void EveryState_HasItsMessageAndAction(CameraState state, string message, string action)

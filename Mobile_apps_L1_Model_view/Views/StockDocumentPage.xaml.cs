@@ -27,7 +27,7 @@ public partial class StockDocumentPage : ContentPage
         viewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(StockDocumentViewModel.CameraState)
-                && viewModel.CameraState is CameraState.Unsupported or CameraState.Denied)
+                && viewModel.CameraState is CameraState.Unsupported or CameraState.Denied or CameraState.Failed)
             {
                 FocusSearch();
             }

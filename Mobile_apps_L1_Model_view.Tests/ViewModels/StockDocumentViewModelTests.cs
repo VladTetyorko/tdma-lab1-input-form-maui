@@ -285,6 +285,27 @@ public class StockDocumentViewModelTests
     }
 
     [Fact]
+    public async Task CameraThatCannotStart_FallsBackToTypingAndCanBeRetried()
+    {
+        _scanner.IsCameraSupported = true;
+        var viewModel = await OpenAsync();
+
+        _scanner.ReportStartFailure();
+
+        Assert.False(viewModel.IsCameraActive);
+        Assert.Equal((CameraMessages.Failed, CameraMessages.RetryAction),
+            (viewModel.CameraMessage, viewModel.CameraActionText));
+
+        await viewModel.RetryCameraCommand.ExecuteAsync(null);
+        Assert.True(viewModel.IsCameraActive);
+
+        // A failure after the page was left changes nothing
+        viewModel.OnDisappearing();
+        _scanner.ReportStartFailure();
+        Assert.Equal(CameraState.Off, viewModel.CameraState);
+    }
+
+    [Fact]
     public async Task Camera_MakesRoomWhileTypingAndIsReleasedWhenLeaving()
     {
         _scanner.IsCameraSupported = true;

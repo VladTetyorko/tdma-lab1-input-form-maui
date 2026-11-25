@@ -204,6 +204,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
 
     public void OnDisappearing()
     {
+        scanner.Failed -= OnCameraFailed;
         CameraState = CameraState.Off;
         IsTyping = false;
     }
@@ -310,6 +311,8 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         }
         else if (await scanner.RequestCameraAccessAsync())
         {
+            scanner.Failed -= OnCameraFailed;
+            scanner.Failed += OnCameraFailed;
             CameraState = CameraState.Active;
         }
         else
@@ -317,6 +320,12 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
             CameraState = CameraState.Denied;
             logger.LogWarning("Camera access was denied, the barcode must be typed");
         }
+    }
+
+    private void OnCameraFailed(object? sender, EventArgs e)
+    {
+        CameraState = CameraState.Failed;
+        logger.LogWarning("The camera could not start, the barcode must be typed");
     }
 
     // The product the user tapped, or one with exactly this barcode or name (never the one being edited)

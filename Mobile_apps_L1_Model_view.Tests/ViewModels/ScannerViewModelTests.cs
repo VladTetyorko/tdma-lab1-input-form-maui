@@ -354,6 +354,17 @@ public class ScannerViewModelTests
     }
 
     [Fact]
+    public async Task CameraThatCannotStart_StopsThePreviewAndSaysSo()
+    {
+        await _viewModel.StartCommand.ExecuteAsync(null);
+
+        _scanner.ReportStartFailure();
+
+        Assert.False(_viewModel.IsCameraActive);
+        Assert.Equal(CameraMessages.Failed, _viewModel.StatusMessage);
+    }
+
+    [Fact]
     public void IsCameraSupported_MirrorsTheScanner()
     {
         Assert.True(_viewModel.IsCameraSupported);

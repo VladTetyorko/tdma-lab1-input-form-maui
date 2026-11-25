@@ -65,6 +65,7 @@ public partial class ScannerViewModel(
     // The camera and the shake sensor must not keep running behind another page or in the background
     public void OnDisappearing()
     {
+        scanner.Failed -= OnCameraFailed;
         IsCameraActive = false;
         shake.Stop();
     }
@@ -81,12 +82,26 @@ public partial class ScannerViewModel(
             return;
         }
 
-        IsCameraActive = await scanner.RequestCameraAccessAsync();
+        var granted = await scanner.RequestCameraAccessAsync();
+        if (granted)
+        {
+            scanner.Failed -= OnCameraFailed;
+            scanner.Failed += OnCameraFailed;
+        }
+
+        IsCameraActive = granted;
         if (!IsCameraActive)
         {
             StatusMessage = "Camera access was denied. Type the barcode instead.";
             logger.LogWarning("Camera access was denied, the barcode must be typed");
         }
+    }
+
+    private void OnCameraFailed(object? sender, EventArgs e)
+    {
+        IsCameraActive = false;
+        StatusMessage = CameraMessages.Failed;
+        logger.LogWarning("The camera could not start, the barcode must be typed");
     }
 
     // The camera view calls this for every barcode it reads; only the first one counts

@@ -156,6 +156,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
     public void OnDisappearing()
     {
+        scanner.Failed -= OnCameraFailed;
         CameraState = CameraState.Off;
         IsTyping = false;
         QuickSearch.CloseCommand.Execute(null);
@@ -194,6 +195,8 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
         if (await scanner.RequestCameraAccessAsync())
         {
+            scanner.Failed -= OnCameraFailed;
+            scanner.Failed += OnCameraFailed;
             CameraState = CameraState.Active;
         }
         else
@@ -201,6 +204,12 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             CameraState = CameraState.Denied;
             logger.LogWarning("Camera access was denied, barcodes must be typed");
         }
+    }
+
+    private void OnCameraFailed(object? sender, EventArgs e)
+    {
+        CameraState = CameraState.Failed;
+        logger.LogWarning("The camera could not start, barcodes must be typed");
     }
 
     [RelayCommand]

@@ -13,5 +13,8 @@ public enum CameraState
     Denied,
 
     // No camera scanning on this device
-    Unsupported
+    Unsupported,
+
+    // The camera exists but could not start
+    Failed
 }

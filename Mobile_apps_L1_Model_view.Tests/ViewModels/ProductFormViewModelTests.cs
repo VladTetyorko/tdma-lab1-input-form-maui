@@ -84,6 +84,18 @@ public class ProductFormViewModelTests
     }
 
     [Fact]
+    public async Task CameraThatCannotStart_ShowsTheBannerWithTryAgain()
+    {
+        await _viewModel.AppearCommand.ExecuteAsync(null);
+
+        _scanner.ReportStartFailure();
+
+        Assert.False(_viewModel.IsCameraActive);
+        Assert.Equal((CameraMessages.Failed, CameraMessages.RetryAction),
+            (_viewModel.CameraMessage, _viewModel.CameraActionText));
+    }
+
+    [Fact]
     public async Task Lookup_FillsTheNameOnlyWhenItIsEmpty()
     {
         _currentUser.SignIn(new User { FullName = "Olena", Role = Role.Manager });
