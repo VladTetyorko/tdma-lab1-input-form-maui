@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The typing field with its drop-down. The list lies in the page flow under the field (not a popup), so it works the
+     same on both platforms and the Android keyboard cannot cover it. Product name first, code last; no inner scrolling -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.QuickSearchBox"
+             x:DataType="viewModels:QuickSearchViewModel"
+             x:Name="ThisBox">
+    <VerticalStackLayout Spacing="4">
+        <components:OutlinedField x:Name="Field" Icon="{StaticResource IconSearch}" EntryId="QuickSearchEntry"
+                                  ClearId="QuickSearchClearButton" Text="{Binding Query, Mode=TwoWay}"
+                                  ReturnCommand="{Binding SubmitCommand}" />
+
+        <Border IsVisible="{Binding IsOpen}" StrokeShape="RoundRectangle 6" Background="{DynamicResource BackgroundBrush}"
+                Stroke="{DynamicResource BorderStrongBrush}">
+            <VerticalStackLayout>
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Suggestions}" AutomationId="QuickSearchSuggestions">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:QuickSearchRow">
+                            <Grid RowDefinitions="Auto,1">
+                                <Grid MinimumHeightRequest="{OnIdiom 56, Desktop=44}">
+                                    <BoxView Color="{DynamicResource PrimarySoft}" IsVisible="{Binding IsHighlighted}" />
+                                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="12,6" ColumnSpacing="8">
+                                        <Label Text="{Binding Suggestion.Title}" Style="{StaticResource TextBodyStrong}" />
+                                        <Label Grid.Column="1" Text="{Binding Suggestion.StockText}" Style="{StaticResource TextCaption}" />
+                                        <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Suggestion.Details}"
+                                               Style="{StaticResource TextCaption}" />
+                                        <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Suggestion.Code}"
+                                               Style="{StaticResource TextCaption}" />
+                                    </Grid>
+                                    <Button StyleClass="RowOverlay" CommandParameter="{Binding .}"
+                                            Command="{Binding BindingContext.PickCommand, Source={x:Reference ThisBox}}"
+                                            SemanticProperties.Description="{Binding Suggestion.Title}"
+                                            AutomationId="{Binding AutomationId}" />
+                                </Grid>
+                                <BoxView Grid.Row="1" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout IsVisible="{Binding HasNoMatch}" Padding="12,8" Spacing="8">
+                    <Label Text="{Binding NoMatchText}" Style="{StaticResource TextBody}" AutomationId="QuickSearchNoMatch" />
+                    <Button Text="{Binding CreateText}" StyleClass="Outlined" HorizontalOptions="Start"
+                            IsVisible="{Binding CanCreate}" Command="{Binding CreateCommand}"
+                            AutomationId="QuickSearchCreateButton" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+    </VerticalStackLayout>
+</ContentView>
