@@ -1,6 +1,6 @@
 # Design revision 2 — counter-first StockRoom
 
-Status: **implemented, not checked on screen** (see [`../steps/11-design-revision.md`](../steps/11-design-revision.md),
+Status: **implemented; first seen on an emulator in [`revision-3.md`](revision-3.md)** (findings and the next plan there; see [`../steps/11-design-revision.md`](../steps/11-design-revision.md),
 which also lists the deviations). It revises [`ux-plan.md`](ux-plan.md) and
 [`design-system.md`](design-system.md) where they disagree; everything else in them still holds (green light / dark violet
 themes, no shadows, outlined secondary buttons, no neon, sortable table, batch documents in one transaction, role rules,
