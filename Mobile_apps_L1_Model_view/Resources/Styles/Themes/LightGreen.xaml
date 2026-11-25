@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Light theme, white and green: the semantic keys of docs/design/design-system.md section 3 (same keys in every theme dictionary).
+     The only place with raw hex values; the comment names the palette primitive. A Color element cannot alias another resource in MAUI XAML. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="Mobile_apps_L1_Model_view.Resources.Styles.Themes.LightGreen">
+
+    <Color x:Key="Background">#FFFFFF</Color>  <!-- white -->
+    <Color x:Key="Surface">#F6F8F6</Color>  <!-- surface -->
+    <Color x:Key="SurfaceAlt">#EEF3EF</Color>  <!-- surface alt -->
+    <Color x:Key="Border">#D5DED7</Color>  <!-- border -->
+    <Color x:Key="BorderStrong">#7C8C7F</Color>  <!-- border strong -->
+    <Color x:Key="TextPrimary">#1A2B1E</Color>  <!-- text -->
+    <Color x:Key="TextSecondary">#536357</Color>  <!-- text secondary -->
+    <Color x:Key="TextDisabled">#9AA59C</Color>  <!-- text disabled -->
+    <Color x:Key="Primary">#1F7A3A</Color>  <!-- Green600 -->
+    <Color x:Key="PrimaryHover">#196631</Color>  <!-- Green700 -->
+    <Color x:Key="PrimaryPressed">#14592A</Color>  <!-- Green800 -->
+    <Color x:Key="PrimarySoft">#E7F4EA</Color>  <!-- Green50 -->
+    <Color x:Key="OnPrimary">#FFFFFF</Color>  <!-- white -->
+    <Color x:Key="PrimaryText">#1F7A3A</Color>  <!-- Green600 -->
+    <Color x:Key="ChipSuccessText">#14592A</Color>  <!-- Green800 -->
+    <Color x:Key="Danger">#C62828</Color>  <!-- danger -->
+    <Color x:Key="DangerSoft">#FDECEC</Color>  <!-- danger soft -->
+    <Color x:Key="OnDanger">#FFFFFF</Color>  <!-- white -->
+    <Color x:Key="Warning">#A15C07</Color>  <!-- warning -->
+    <Color x:Key="WarningSoft">#FFF4E0</Color>  <!-- warning soft -->
+    <Color x:Key="Info">#1D5FA8</Color>  <!-- info -->
+    <Color x:Key="Success">#1F7A3A</Color>  <!-- Green600 -->
+    <Color x:Key="FocusRing">#1F7A3A</Color>  <!-- Green600 -->
+    <Color x:Key="Overlay">#66000000</Color>  <!-- 40 % black scrim -->
+
+    <!-- Brush-typed properties (Border.Stroke, Border.Background) need brushes; a DynamicResource colour is not converted -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource Background}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAlt}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource Border}" />
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrong}" />
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
+    <SolidColorBrush x:Key="PrimarySoftBrush" Color="{StaticResource PrimarySoft}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource Danger}" />
+    <SolidColorBrush x:Key="DangerSoftBrush" Color="{StaticResource DangerSoft}" />
+    <SolidColorBrush x:Key="WarningSoftBrush" Color="{StaticResource WarningSoft}" />
+</ResourceDictionary>

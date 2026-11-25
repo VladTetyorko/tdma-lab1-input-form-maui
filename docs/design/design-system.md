@@ -13,7 +13,8 @@ Status: **proposal** (branch `design`). Tokens are the contract between this doc
 
 ## 2. Palette primitives
 
-Primitives live in `Colors.xaml` and are used **only** by the theme dictionaries, never by pages.
+Primitives are written as literal values inside the theme dictionaries (`Resources/Styles/Themes`), named in comments;
+a MAUI `Color` element cannot alias another resource, so there is no separate `Colors.xaml`. Pages never use them.
 
 ### Green (light theme, default)
 
@@ -269,7 +270,7 @@ build) is an optional size optimisation, not required.
 
 - **Setting**: existing `ThemeSetting` (System / Light / Dark) in `IThemeService`, persisted via `IPreferencesStore`
   (key `theme`, unchanged). Optional accent (Q1) = new `AccentSetting` (Green / Blue), key `accent`.
-- **Mechanism: resource dictionary swap.** `App.xaml` merges `Colors.xaml` (primitives), one *theme dictionary*
+- **Mechanism: resource dictionary swap.** `App.xaml` merges one *theme dictionary*
   (semantic keys) and `Styles.xaml`. Styles and pages refer to semantic keys with **`DynamicResource`**. The app's
   `IThemeApplier` implementation removes the current theme dictionary and adds `LightGreen` / `LightBlue` / `Dark`,
   and also sets `Application.UserAppTheme` so native parts (status bar, pickers, WinUI chrome) follow.

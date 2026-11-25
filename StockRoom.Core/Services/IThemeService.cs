@@ -1,7 +1,7 @@
 namespace Mobile_apps_L1_Model_view.Services;
 
 // The user's theme choice: saved in preferences and applied to every page
-// (styles use AppThemeBinding, so changing the theme restyles the whole app)
+// (styles use DynamicResource, so swapping the theme dictionary restyles the whole app)
 public interface IThemeService
 {
     ThemeSetting Current { get; }
