@@ -18,7 +18,7 @@
     <components:AppBar Title="Operations map" />
     <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowSpacing="8">
         <Label Grid.Row="0"
-               Text="Operations recorded with a location. Tap Open in maps to see a place in your maps app."
+               Text="Operations recorded with a location. Tap one to see the place in your maps app."
                Style="{StaticResource CaptionLabel}" IsVisible="{Binding HasPins}" />
 
         <!-- Android and iOS only: hidden where there is no Map control (Windows) -->
@@ -33,15 +33,17 @@
                         AutomationId="PinList">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="services:LocatedOperation">
-                    <Grid ColumnDefinitions="*,Auto" Padding="0,6" ColumnSpacing="10">
-                        <VerticalStackLayout Grid.Column="0">
-                            <Label Text="{Binding Label}" FontAttributes="Bold" />
-                            <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
+                    <Grid RowDefinitions="Auto,1">
+                        <VerticalStackLayout Padding="0,8" MinimumHeightRequest="56">
+                            <Label Text="{Binding Label}" Style="{StaticResource TextBodyStrong}" />
+                            <Label Text="{Binding Details}" Style="{StaticResource TextCaption}" />
                         </VerticalStackLayout>
-                        <Button Grid.Column="1" Text="Open in maps" StyleClass="Compact,Outlined"
-                                AutomationId="OpenInMapsButton"
+                        <!-- The row is the button -->
+                        <Button StyleClass="RowOverlay" AutomationId="OpenInMapsButton"
+                                SemanticProperties.Description="{Binding Label, StringFormat='Open in maps: {0}'}"
                                 Command="{Binding OpenInMapsCommand, Source={RelativeSource AncestorType={x:Type viewModels:MapViewModel}}}"
                                 CommandParameter="{Binding .}" />
+                        <BoxView Grid.Row="1" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

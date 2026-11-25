@@ -27,6 +27,30 @@ public partial class OperationViewModel(
     // Only the directions the current role may record (a Driver can only bring goods In)
     public IReadOnlyList<OperationDirection> AvailableDirections { get; private set; } = [];
 
+    public string Barcode => _barcode;
+
+    public bool CanOut => AvailableDirections.Contains(OperationDirection.Out);
+
+    public bool IsIn => SelectedDirection == OperationDirection.In;
+
+    public bool IsOut => SelectedDirection == OperationDirection.Out;
+
+    // The main button is named after its result
+    public string SaveText => $"{(IsOut ? "Issue" : "Receive")} {Plural.Units(Quantity)}";
+
+    [RelayCommand]
+    private void SelectIn() => SelectedDirection = OperationDirection.In;
+
+    // Not offered to a role that may not issue; Save refuses it too
+    [RelayCommand]
+    private void SelectOut()
+    {
+        if (CanOut)
+        {
+            SelectedDirection = OperationDirection.Out;
+        }
+    }
+
     [ObservableProperty]
     public partial string ProductName { get; set; } = string.Empty;
 
@@ -67,9 +91,19 @@ public partial class OperationViewModel(
     [ObservableProperty]
     public partial bool IsLocating { get; set; }
 
-    partial void OnSelectedDirectionChanged(OperationDirection value) => SaveDraft();
+    partial void OnSelectedDirectionChanged(OperationDirection value)
+    {
+        OnPropertyChanged(nameof(IsIn));
+        OnPropertyChanged(nameof(IsOut));
+        OnPropertyChanged(nameof(SaveText));
+        SaveDraft();
+    }
 
-    partial void OnQuantityChanged(int value) => SaveDraft();
+    partial void OnQuantityChanged(int value)
+    {
+        OnPropertyChanged(nameof(SaveText));
+        SaveDraft();
+    }
 
     partial void OnCounterpartyChanged(string value) => SaveDraft();
 
@@ -84,6 +118,7 @@ public partial class OperationViewModel(
             _productId = product.Id;
             _barcode = product.Barcode;
             ProductName = product.Name;
+            OnPropertyChanged(nameof(Barcode));
             QuantityOnHand = product.Quantity;
             _restoring = RestoreDraftAsync();
         }
@@ -100,6 +135,7 @@ public partial class OperationViewModel(
             ? []
             : Enum.GetValues<OperationDirection>().Where(d => RolePermissions.CanRecord(user.Role, d)).ToList();
         OnPropertyChanged(nameof(AvailableDirections));
+        OnPropertyChanged(nameof(CanOut));
         if (!AvailableDirections.Contains(SelectedDirection) && AvailableDirections.Count > 0)
         {
             SelectedDirection = AvailableDirections[0];

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- A list and one action; the form of a new characteristic is a sheet -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
@@ -17,35 +18,25 @@
     <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
         <components:AppBar Title="Characteristics" BackCommand="{Binding GoBackCommand}" />
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="16" MaximumWidthRequest="720">
-                <Border StyleClass="SectionCard">
-                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}" Spacing="8">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="models:Characteristic">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" />
-                                    <Label Grid.Column="1" Text="{Binding ValueType}" Style="{StaticResource TextCaption}" />
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="models:Characteristic">
+                            <Grid RowDefinitions="Auto,1">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="12,0" MinimumHeightRequest="56">
+                                    <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="{Binding ValueType}" Style="{StaticResource TextCaption}"
+                                           VerticalOptions="Center" />
                                 </Grid>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-                </Border>
-
-                <VerticalStackLayout IsVisible="{Binding CanManage}" Spacing="8">
-                    <components:OutlinedField Label="New characteristic" Placeholder="Name" EntryId="CharacteristicNameEntry"
-                                              Text="{Binding NewName, Mode=TwoWay}" ErrorText="{Binding NameError}" />
-                    <!-- Two chips of equal width; the chosen one is filled and says so to a screen reader -->
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                        <Button Text="{Binding TextChip}" StyleClass="Outlined" AutomationId="TextTypeButton"
-                                Command="{Binding SelectTypeCommand}" CommandParameter="{x:Static models:CharacteristicValueType.Text}" />
-                        <Button Grid.Column="1" Text="{Binding NumberChip}" StyleClass="Outlined" AutomationId="NumberTypeButton"
-                                Command="{Binding SelectTypeCommand}" CommandParameter="{x:Static models:CharacteristicValueType.Number}" />
-                    </Grid>
-                    <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+                                <BoxView Grid.Row="1" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
+                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
             </VerticalStackLayout>
         </ScrollView>
-        <components:BottomActionBar Grid.Row="2" ButtonId="AddCharacteristicButton" Text="Add characteristic"
-                                    Command="{Binding AddCommand}" IsVisible="{Binding CanManage}" />
+        <components:BottomActionBar Grid.Row="2" ButtonId="AddCharacteristicButton" Text="+ New characteristic"
+                                    Command="{Binding NewCommand}" IsVisible="{Binding CanManage}" />
     </Grid>
 </ContentPage>

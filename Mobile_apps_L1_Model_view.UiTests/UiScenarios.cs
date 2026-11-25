@@ -20,7 +20,7 @@ public class UiScenarios : IDisposable
     {
         _screen.SignInAsManager();
 
-        Assert.True(_screen.IsShown("HomeReceiveTile"), "Home should be visible after signing in.");
+        Assert.True(_screen.IsShown("NavReceive"), "Home should be visible after signing in.");
         _screen.Tap("NavProducts");
         Assert.True(_screen.IsShown("ProductsCollection"), "The product list should open from Home.");
         Assert.True(_screen.IsShown("AddProductButton"), "The Manager may add products.");
@@ -34,13 +34,15 @@ public class UiScenarios : IDisposable
         var barcode = NewValidBarcode();
         _screen.SignInAsManager();
 
-        _screen.Tap("HomeAddProductButton");
-        _screen.Type("BarcodeEntry", barcode);
-        _screen.Type("ProductNameEntry", name);
-        _screen.Tap("SaveProductButton");
-
-        Assert.True(_screen.IsShown("HomeReceiveTile"), "Save returns to Home.");
         _screen.Tap("NavProducts");
+        _screen.Tap("AddProductButton");
+        _screen.Type("BarcodeEntry", barcode);
+        _screen.Tap("SaveProductButton"); // Next: name and photo
+        _screen.Type("ProductNameEntry", name);
+        _screen.Tap("SaveProductButton"); // Next: details
+        _screen.Tap("SaveProductButton"); // Add product
+
+        Assert.True(_screen.IsShown("ProductsCollection"), "The wizard returns to where it was started.");
         Assert.True(_screen.IsTextShown(name), $"The new product '{name}' should be in the list.");
     }
 

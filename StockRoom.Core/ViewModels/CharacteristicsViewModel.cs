@@ -3,15 +3,18 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
+// The list of characteristics; a new one is typed in a sheet (the same one the new-product wizard offers)
 public partial class CharacteristicsViewModel(
     ICharacteristicService characteristics,
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
     IPermissionGuard guard,
-    INavigationService navigation) : ObservableObject, IPageLifecycleAware
+    INavigationService navigation,
+    ISheetService sheets) : ObservableObject, IPageLifecycleAware
 {
     private bool _changed;
 
@@ -21,34 +24,9 @@ public partial class CharacteristicsViewModel(
     public partial bool CanManage { get; set; }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(AddCommand))]
-    public partial string NewName { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(TextChip))]
-    [NotifyPropertyChangedFor(nameof(NumberChip))]
-    public partial CharacteristicValueType NewValueType { get; set; }
-
-    // The two type chips; the chosen one is marked by a check, not by colour alone
-    public string TextChip => Chip(CharacteristicValueType.Text);
-
-    public string NumberChip => Chip(CharacteristicValueType.Number);
-
-    // Empty string = no error (keeps XAML bindings simple)
-    [ObservableProperty]
-    public partial string NameError { get; set; } = string.Empty;
-
-    [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
 
-    partial void OnNewNameChanged(string value) => NameError = validator.ValidateName(value) ?? string.Empty;
-
     public void OnAppearing() => LoadCommand.Execute(null);
-
-    [RelayCommand]
-    private void SelectType(CharacteristicValueType type) => NewValueType = type;
-
-    private string Chip(CharacteristicValueType type) => NewValueType == type ? $"✓ {type}" : type.ToString();
 
     [RelayCommand]
     private async Task LoadAsync()
@@ -63,8 +41,9 @@ public partial class CharacteristicsViewModel(
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanAdd))]
-    private async Task AddAsync()
+    // Manager only (the service refuses it as well)
+    [RelayCommand]
+    private async Task NewAsync()
     {
         if (await guard.CheckAsync(RolePermissions.CanManageProducts, "add characteristics") is { } refusal)
         {
@@ -72,32 +51,14 @@ public partial class CharacteristicsViewModel(
             return;
         }
 
-        // Uniqueness needs the repository, so it is checked on Add, not on every keystroke
-        var error = await validator.ValidateNameAsync(NewName);
-        if (error is not null)
-        {
-            NameError = error;
-            return;
-        }
-
-        var result = await characteristics.AddAsync(NewName, NewValueType);
-        if (!result.IsSuccess)
-        {
-            StatusMessage = result.Error!;
-            return;
-        }
-
-        Items.Add(result.Value!);
-        _changed = true;
         StatusMessage = string.Empty;
-        ResetForm();
-    }
-
-    // Clearing the name fires live validation ("required"); an untouched form should show no error
-    private void ResetForm()
-    {
-        NewName = string.Empty;
-        NameError = string.Empty;
+        var sheet = new NewCharacteristicViewModel(characteristics, validator);
+        await sheets.ShowAsync(sheet);
+        if (sheet.Added is { } added)
+        {
+            Items.Add(added);
+            _changed = true;
+        }
     }
 
     // Tells the list to rebuild its sort options only when something was added
@@ -107,8 +68,4 @@ public partial class CharacteristicsViewModel(
             ? navigation.GoToAsync(Routes.Back,
                 new Dictionary<string, object> { [NavigationKeys.CharacteristicsChanged] = true })
             : navigation.GoToAsync(Routes.Back);
-
-    private bool CanAdd() => CanManage && validator.ValidateName(NewName) is null;
-
-    partial void OnCanManageChanged(bool value) => AddCommand.NotifyCanExecuteChanged();
 }

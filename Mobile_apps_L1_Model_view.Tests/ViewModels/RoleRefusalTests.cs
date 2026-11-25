@@ -102,9 +102,9 @@ public class RoleRefusalTests
     {
         await _store.SignInAsync(role);
         var viewModel = new CharacteristicsViewModel(_store.CharacteristicService, _store.Validator, _store.CurrentUser,
-            _store.Guard, _store.Navigation) { NewName = "Color" };
+            _store.Guard, _store.Navigation, _store.Sheets);
 
-        await viewModel.AddCommand.ExecuteAsync(null);
+        await viewModel.NewCommand.ExecuteAsync(null);
 
         AssertRefused($"Your role ({role}) cannot add characteristics.");
         Assert.Equal($"Your role ({role}) cannot add characteristics.", viewModel.StatusMessage);
@@ -182,9 +182,9 @@ public class RoleRefusalTests
     public async Task Command_WhenNobodyIsSignedIn_AsksToSignIn()
     {
         var viewModel = new CharacteristicsViewModel(_store.CharacteristicService, _store.Validator, _store.CurrentUser,
-            _store.Guard, _store.Navigation) { NewName = "Color" };
+            _store.Guard, _store.Navigation, _store.Sheets);
 
-        await viewModel.AddCommand.ExecuteAsync(null);
+        await viewModel.NewCommand.ExecuteAsync(null);
 
         AssertRefused("Sign in before you add characteristics.");
     }

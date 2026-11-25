@@ -159,9 +159,14 @@ public class StockRoomFlowTests : IDisposable
 
         var characteristics = _provider.GetRequiredService<CharacteristicsViewModel>();
         await characteristics.LoadCommand.ExecuteAsync(null);
-        characteristics.NewName = "Shelf";
-        characteristics.NewValueType = CharacteristicValueType.Number;
-        await characteristics.AddCommand.ExecuteAsync(null);
+        _provider.GetRequiredService<FakeSheetService>().OnShow = async sheet =>
+        {
+            var form = (Mobile_apps_L1_Model_view.ViewModels.Sheets.NewCharacteristicViewModel)sheet;
+            form.Name = "Shelf";
+            form.ValueType = CharacteristicValueType.Number;
+            await FakeSheetService.AcceptAsync(sheet);
+        };
+        await characteristics.NewCommand.ExecuteAsync(null);
         await characteristics.GoBackCommand.ExecuteAsync(null);
 
         Assert.Equal(Routes.Back, _navigation.RequestedRoutes.Last());

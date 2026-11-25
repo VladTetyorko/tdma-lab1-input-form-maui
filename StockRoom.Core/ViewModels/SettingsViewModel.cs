@@ -25,6 +25,22 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial ThemeSetting SelectedTheme { get; set; } = themeService.Current;
 
+    public bool IsSystemTheme => SelectedTheme == ThemeSetting.System;
+
+    public bool IsLightTheme => SelectedTheme == ThemeSetting.Light;
+
+    public bool IsDarkTheme => SelectedTheme == ThemeSetting.Dark;
+
+    [RelayCommand]
+    private void SelectTheme(ThemeSetting theme) => SelectedTheme = theme;
+
+    // Diagnostics are collapsed until asked for
+    [ObservableProperty]
+    public partial bool IsDiagnosticsOpen { get; set; }
+
+    [RelayCommand]
+    private void ToggleDiagnostics() => IsDiagnosticsOpen = ShowDiagnostics && !IsDiagnosticsOpen;
+
     // A stockroom:// link typed by hand: the way to try deep links where no other app can send one (Windows)
     [ObservableProperty]
     public partial string LinkText { get; set; } = string.Empty;
@@ -79,6 +95,9 @@ public partial class SettingsViewModel(
     partial void OnSelectedThemeChanged(ThemeSetting value)
     {
         themeService.Set(value);
+        OnPropertyChanged(nameof(IsSystemTheme));
+        OnPropertyChanged(nameof(IsLightTheme));
+        OnPropertyChanged(nameof(IsDarkTheme));
         logger.LogInformation("Theme set to {Theme}", value);
     }
 
