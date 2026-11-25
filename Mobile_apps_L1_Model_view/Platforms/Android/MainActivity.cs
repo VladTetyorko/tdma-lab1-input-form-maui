@@ -9,6 +9,7 @@ namespace Mobile_apps_L1_Model_view;
 
 // stockroom://product/{barcode} opens this activity (see the IntentFilter); the link goes to IDeepLinkHandler
 [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop,
+    WindowSoftInputMode = Android.Views.SoftInput.AdjustResize,
     ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode |
                            ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 [IntentFilter([Intent.ActionView],

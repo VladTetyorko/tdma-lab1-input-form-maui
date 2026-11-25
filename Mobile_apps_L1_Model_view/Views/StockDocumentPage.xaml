@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!-- Order: identify the product (camera, or typing), lines and quantities, optional details, one big action at the
-     bottom. Discard is destructive, so it sits in the toolbar, away from the main action -->
+     bottom. Discard is destructive, so it sits in the app bar, away from the main action -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
@@ -16,14 +16,12 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Discard draft" Order="Secondary" Command="{Binding DiscardCommand}"
-                     AutomationId="DiscardDraftButton" />
-    </ContentPage.ToolbarItems>
-
-    <Grid RowDefinitions="*,Auto" SafeAreaEdges="Container, Container, Container, SoftInput">
-        <ScrollView>
-            <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="1200">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+        <components:AppBar Title="{Binding Title}" ActionGlyph="{StaticResource IconDelete}"
+                           ActionDescription="Discard draft" ActionCommand="{Binding DiscardCommand}"
+                           ActionId="DiscardDraftButton" IsActionShown="{Binding HasLines}" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="1200">
                 <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
                 <Label Text="{Binding SummaryText}" Style="{StaticResource TextCaption}" AutomationId="DocumentSummary" />
 
@@ -112,7 +110,7 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <components:BottomActionBar Grid.Row="1" ButtonId="CommitDocumentButton" Text="{Binding CommitText}"
+        <components:BottomActionBar Grid.Row="2" ButtonId="CommitDocumentButton" Text="{Binding CommitText}"
                                     Command="{Binding CommitCommand}" Caption="{Binding CommitHint}" />
     </Grid>
 </ContentPage>

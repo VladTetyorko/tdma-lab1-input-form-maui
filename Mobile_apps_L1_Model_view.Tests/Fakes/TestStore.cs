@@ -33,6 +33,7 @@ public sealed class TestStore
     public SessionStore Session { get; }
     public OperationDraftStore Drafts { get; }
     public FakeAlertService Alerts { get; } = new();
+    public FakeKeyboard Keyboard { get; } = new();
     public DeepLinkHandler DeepLinks { get; }
     public StartupNavigator Startup { get; }
 
@@ -83,7 +84,7 @@ public sealed class TestStore
     public FakeProductLookup Lookup { get; } = new();
 
     public QuickSearchViewModel QuickSearch =>
-        new(Catalog, CharacteristicService, CurrentUser, Guard, Navigation, Logger<QuickSearchViewModel>());
+        new(Catalog, CharacteristicService, CurrentUser, Guard, Navigation, Keyboard, Logger<QuickSearchViewModel>());
 
     public ProductFormViewModel ProductForm => new(new ProductValidator(Products), ProductService, CurrentUser, Guard,
         AppState, Navigation, PhotoEditor, Scanner, Lookup, QuickSearch, Logger<ProductFormViewModel>());

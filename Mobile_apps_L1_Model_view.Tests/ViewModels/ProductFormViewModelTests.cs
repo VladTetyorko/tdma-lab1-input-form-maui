@@ -43,6 +43,7 @@ public class ProductFormViewModelTests
             new CharacteristicValidator(characteristics), _currentUser, new FakeClock(),
             NullLogger<CharacteristicService>.Instance);
         var search = new QuickSearchViewModel(catalog, characteristicService, _currentUser, guard, _navigation,
+            new FakeKeyboard(),
             NullLogger<QuickSearchViewModel>.Instance);
         return new ProductFormViewModel(validator, service, _currentUser, guard, appState, _navigation, photo,
             _scanner, _lookup, search, NullLogger<ProductFormViewModel>.Instance);

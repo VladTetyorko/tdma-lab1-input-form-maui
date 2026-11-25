@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The top bar of every signed-in page, a symmetric 48 | title | 48 grid: menu or Back, the title, one action.
+     The title is centred on a phone and starts after the button on a desktop. Same colour as the page -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.AppBar">
+    <Grid ColumnDefinitions="48,*,48" ColumnSpacing="8" HeightRequest="{StaticResource AppBarHeight}"
+          Padding="{OnIdiom Default='12,0', Phone='4,0'}" BackgroundColor="{DynamicResource Background}">
+        <Button x:Name="LeftButton" Style="{StaticResource AppBarButton}" Clicked="OnLeftClicked" />
+        <Label x:Name="TitleText" Grid.Column="1" Style="{StaticResource TextHeading}" FontSize="20" MaxLines="1"
+               LineBreakMode="TailTruncation" VerticalOptions="Center" SemanticProperties.HeadingLevel="Level1"
+               HorizontalTextAlignment="{OnIdiom Default=Start, Phone=Center}" />
+        <Button x:Name="ActionButton" Grid.Column="2" Style="{StaticResource AppBarButton}" IsVisible="False" />
+    </Grid>
+</ContentView>

@@ -53,6 +53,7 @@ public class SqliteFlowTests : IDisposable
         services.AddSingleton<IShakeDetector>(new FakeShakeDetector());
         services.AddSingleton<IMapLauncher>(new FakeMapLauncher());
         services.AddSingleton<IMainThread>(new FakeMainThread());
+        services.AddSingleton<IKeyboard>(new FakeKeyboard());
         _app = services.BuildServiceProvider();
         return _app;
     }

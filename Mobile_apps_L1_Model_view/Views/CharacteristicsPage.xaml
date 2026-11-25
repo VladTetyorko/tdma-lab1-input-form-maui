@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              xmlns:models="clr-namespace:Mobile_apps_L1_Model_view.Models;assembly=StockRoom.Core"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.CharacteristicsPage"
@@ -13,11 +14,9 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior Command="{Binding GoBackCommand}" />
-    </Shell.BackButtonBehavior>
-
-    <Grid RowDefinitions="*,Auto" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="10">
+    <Grid RowDefinitions="Auto,*">
+    <components:AppBar Title="Characteristics" BackCommand="{Binding GoBackCommand}" />
+    <Grid Grid.Row="1" RowDefinitions="*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowSpacing="10">
         <CollectionView Grid.Row="0" ItemsSource="{Binding Items}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Characteristic">
@@ -40,7 +39,7 @@
                 <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
                 <Button StyleClass="Primary" Text="Add" Command="{Binding AddCommand}" AutomationId="AddCharacteristicButton" />
             </VerticalStackLayout>
-            <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" />
         </VerticalStackLayout>
+    </Grid>
     </Grid>
 </ContentPage>

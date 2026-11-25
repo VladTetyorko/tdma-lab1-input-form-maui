@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.ProductDetailPage"
@@ -13,12 +14,10 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior Command="{Binding GoBackCommand}" />
-    </Shell.BackButtonBehavior>
-
-    <ScrollView>
-        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
+    <Grid RowDefinitions="Auto,*">
+        <components:AppBar Title="Product" BackCommand="{Binding GoBackCommand}" />
+        <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
             <Label Text="{Binding Name}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
             <Label Text="{Binding Barcode, StringFormat='Barcode {0}'}" Style="{StaticResource CaptionLabel}" />
             <Label Text="{Binding Quantity, StringFormat='On hand: {0} pcs'}" Style="{StaticResource TextDisplay}" />
@@ -62,7 +61,6 @@
                 <Button StyleClass="Outlined" Text="Receive" Command="{Binding StartReceiveCommand}" AutomationId="DetailReceiveButton" />
                 <Button StyleClass="Outlined" Text="Issue" Command="{Binding StartIssueCommand}" IsVisible="{Binding CanIssue}"
                         AutomationId="DetailIssueButton" />
-                <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" AutomationId="BackButton" />
             </FlexLayout>
 
             <Border StyleClass="SectionCard">
@@ -104,4 +102,5 @@
 
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 </ContentPage>

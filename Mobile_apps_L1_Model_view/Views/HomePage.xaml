@@ -13,18 +13,12 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Scan" Command="{Binding ScanCommand}" AutomationId="HomeScanButton"
-                     SemanticProperties.Description="Scan a barcode">
-            <ToolbarItem.IconImageSource>
-                <FontImageSource FontFamily="FluentIcons" Glyph="{StaticResource IconScan}" Size="24"
-                                 Color="{DynamicResource TextPrimary}" />
-            </ToolbarItem.IconImageSource>
-        </ToolbarItem>
-    </ContentPage.ToolbarItems>
-
-    <ScrollView>
-        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="12" MaximumWidthRequest="1200">
+    <Grid RowDefinitions="Auto,*">
+        <components:AppBar Title="StockRoom" Route="home"
+                           ActionGlyph="{StaticResource IconScan}" ActionDescription="Scan a barcode"
+                           ActionCommand="{Binding ScanCommand}" ActionId="HomeScanButton" />
+        <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="12" MaximumWidthRequest="1200">
             <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
 
             <VerticalStackLayout>
@@ -55,4 +49,5 @@
             <components:RecentActivityPanel x:Name="Recent" />
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 </ContentPage>

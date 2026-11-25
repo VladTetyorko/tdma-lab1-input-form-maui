@@ -143,6 +143,8 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
     public bool IsEmpty => Lines.Count == 0;
 
+    public bool HasLines => !IsEmpty;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CommitCommand))]
     public partial bool IsBusy { get; set; }
@@ -532,6 +534,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             : Lines.Any(line => line.IsInvalid) ? "Fix the red lines first"
             : string.Empty;
         OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(HasLines));
         CommitCommand.NotifyCanExecuteChanged();
     }
 }

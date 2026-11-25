@@ -16,6 +16,11 @@ public partial class App : Application
         _lifecycle = lifecycle;
         _services = services;
         InitializeComponent();
+#if ANDROID
+        // The window shrinks when the keyboard opens, so the bottom action bar stays above it
+        Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.SetWindowSoftInputModeAdjust(this,
+            Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.WindowSoftInputModeAdjust.Resize);
+#endif
     }
 
     protected override Window CreateWindow(IActivationState? activationState)

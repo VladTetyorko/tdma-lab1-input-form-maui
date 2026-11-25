@@ -65,6 +65,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IToastService, MauiToastService>();
         builder.Services.AddSingleton<IVibration>(Vibration.Default);
         builder.Services.AddSingleton<IScanFeedback, MauiScanFeedback>();
+        builder.Services.AddSingleton<IKeyboard, MauiKeyboard>();
         builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddSingleton<INavigationDrawer, ShellNavigationDrawer>();

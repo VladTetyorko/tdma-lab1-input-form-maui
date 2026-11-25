@@ -15,14 +15,11 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior Command="{Binding CancelCommand}" />
-    </Shell.BackButtonBehavior>
-
-    <Grid RowDefinitions="*,Auto" SafeAreaEdges="Container, Container, Container, SoftInput">
-        <ScrollView>
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+        <components:AppBar Title="{Binding PageTitle}" BackCommand="{Binding CancelCommand}" />
+        <ScrollView Grid.Row="1">
             <!-- One column on a phone, photo beside the fields on a wide window (code-behind) -->
-            <Grid x:Name="Columns" Padding="{OnIdiom Default=24, Phone=16}" RowDefinitions="Auto,Auto"
+            <Grid x:Name="Columns" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowDefinitions="Auto,Auto"
                   ColumnSpacing="24" RowSpacing="16" MaximumWidthRequest="1200">
                 <VerticalStackLayout Spacing="8">
                     <Border HeightRequest="200" IsVisible="{Binding IsCameraActive}" StrokeShape="RoundRectangle 10">
@@ -71,7 +68,7 @@
             </Grid>
         </ScrollView>
 
-        <components:BottomActionBar Grid.Row="1" ButtonId="SaveProductButton" Text="{Binding SaveText}"
+        <components:BottomActionBar Grid.Row="2" ButtonId="SaveProductButton" Text="{Binding SaveText}"
                                     Command="{Binding SaveCommand}" Caption="{Binding SaveHint}"
                                     SecondaryText="Cancel" SecondaryId="CancelProductButton"
                                     SecondaryCommand="{Binding CancelCommand}" />

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!-- The one main action of a page: a big filled button at the bottom, full width on a phone, never smaller than an input.
-     The page puts it in the last row of a grid with SafeAreaEdges "...SoftInput", so it stays above the keyboard -->
+     The page puts it in the last row of a grid with SafeAreaEdges "Container"; the window shrinks when the keyboard
+     opens (App.xaml.cs), so it stays above the keyboard and above the system navigation bar -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Mobile_apps_L1_Model_view.Views.Components.BottomActionBar">

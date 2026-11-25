@@ -30,7 +30,8 @@ public class ProductFormViewModelMoqTests
             NullLogger<ProductPhotoEditor>.Instance);
 
         var search = new QuickSearchViewModel(Mock.Of<IProductCatalog>(), Mock.Of<ICharacteristicService>(),
-            _currentUser.Object, guard, _navigation.Object, NullLogger<QuickSearchViewModel>.Instance);
+            _currentUser.Object, guard, _navigation.Object, Mock.Of<IKeyboard>(),
+            NullLogger<QuickSearchViewModel>.Instance);
 
         _viewModel = new ProductFormViewModel(validator, _productService.Object, _currentUser.Object, guard,
             Mock.Of<IAppStateService>(), _navigation.Object, photo, Mock.Of<IBarcodeScanner>(),

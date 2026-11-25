@@ -42,7 +42,7 @@ public class StockDocumentViewModelTests
         var service = new StockDocumentService(_documents, _store.Products, stock, _store.CurrentUser, _store.Clock,
             _changes, new CapturingLogger<StockDocumentService>());
         var search = new QuickSearchViewModel(_store.Catalog, _store.CharacteristicService, _store.CurrentUser,
-            _store.Guard, _store.Navigation, _store.Logger<QuickSearchViewModel>());
+            _store.Guard, _store.Navigation, _store.Keyboard, _store.Logger<QuickSearchViewModel>());
         var viewModel = new StockDocumentViewModel(_drafts, service, _store.Catalog, _store.CurrentUser, _scanner,
             _feedback, _toasts, _store.Alerts, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
             _store.Logger<StockDocumentViewModel>())

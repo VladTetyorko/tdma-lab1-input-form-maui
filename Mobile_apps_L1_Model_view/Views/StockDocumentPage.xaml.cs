@@ -36,16 +36,17 @@ public partial class StockDocumentPage : ContentPage
 
     private void FocusSearch() => Dispatcher.Dispatch(Search.FocusInput);
 
-    // On a phone with a working camera the keyboard goes away after a pick, so the preview comes back
+    // On a phone the keyboard has been closed by the search; with a working camera the box also gives up the focus,
+    // so the preview comes back. On a desktop the box keeps the focus for the next code
     private void AfterPick()
     {
-        if (_phone && _viewModel.CameraState == CameraState.Active)
-        {
-            Dispatcher.Dispatch(Search.UnfocusInput);
-        }
-        else
+        if (!_phone)
         {
             FocusSearch();
+        }
+        else if (_viewModel.CameraState == CameraState.Active)
+        {
+            Dispatcher.Dispatch(Search.UnfocusInput);
         }
     }
 

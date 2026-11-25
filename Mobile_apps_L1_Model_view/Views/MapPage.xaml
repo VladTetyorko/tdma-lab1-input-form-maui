@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.MapPage"
@@ -13,7 +14,9 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="8">
+    <Grid RowDefinitions="Auto,*">
+    <components:AppBar Title="Operations map" />
+    <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowSpacing="8">
         <Label Grid.Row="0"
                Text="Operations recorded with a location. Tap Open in maps to see a place in your maps app."
                Style="{StaticResource CaptionLabel}" />
@@ -44,5 +47,6 @@
         </CollectionView>
 
         <Label Grid.Row="3" Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+    </Grid>
     </Grid>
 </ContentPage>

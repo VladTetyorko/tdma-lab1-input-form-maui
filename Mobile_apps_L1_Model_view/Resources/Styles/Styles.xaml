@@ -8,6 +8,7 @@
 
     <!-- Sizes (design-system.md section 6) -->
     <x:Double x:Key="DrawerWidth">320</x:Double>
+    <x:Double x:Key="AppBarHeight">56</x:Double>
 
     <!-- Transparent button laid over a composed row, which makes the row one focusable button -->
     <Style TargetType="Button" Class="RowOverlay">
@@ -324,6 +325,8 @@
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="Padding" Value="0" />
+        <!-- Every page draws its own bar (Views/Components/AppBar) -->
+        <Setter Property="Shell.NavBarIsVisible" Value="False" />
         <Setter Property="BackgroundColor" Value="{DynamicResource Background}" />
     </Style>
 
@@ -576,6 +579,20 @@
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
+    </Style>
+
+    <!-- The two buttons of the app bar: a 24 px glyph in a 48 px touch area -->
+    <Style TargetType="Button" x:Key="AppBarButton">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="CornerRadius" Value="24" />
+        <Setter Property="WidthRequest" Value="48" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="FontFamily" Value="FluentIcons" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
     <Style TargetType="Button" Class="IconDanger">

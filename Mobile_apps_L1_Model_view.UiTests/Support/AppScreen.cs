@@ -69,11 +69,10 @@ public sealed class AppScreen(AppSession session)
     {
         if (!IsShown("LoginEntry", TimeSpan.FromSeconds(8)))
         {
-            // Sign out is at the bottom of the drawer. The hamburger has no AutomationId (it belongs to the platform)
+            // Sign out is at the bottom of the drawer, which the menu button of the app bar opens
             if (!IsShown("SignOutButton", TimeSpan.FromSeconds(2)))
             {
-                Driver.FindElement(By.XPath(
-                    "//*[@content-desc='Open navigation drawer' or @Name='Open Navigation' or @AutomationId='TogglePaneButton']")).Click();
+                Tap("MenuButton");
             }
 
             Tap("SignOutButton");

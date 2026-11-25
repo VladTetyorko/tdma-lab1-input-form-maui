@@ -100,6 +100,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<RecentActivityViewModel>();
         services.AddTransient<QuickSearchViewModel>();
         services.AddTransient<MapViewModel>();
+        services.AddSingleton<AppBarViewModel>();
 
         return services;
     }

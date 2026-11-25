@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.ScannerPage"
              x:DataType="viewModels:ScannerViewModel"
@@ -12,12 +13,10 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior Command="{Binding GoBackCommand}" />
-    </Shell.BackButtonBehavior>
-
-    <ScrollView>
-        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
+    <Grid RowDefinitions="Auto,*">
+        <components:AppBar Title="Scan barcode" BackCommand="{Binding GoBackCommand}" />
+        <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
             <views:CameraScannerView HeightRequest="280"
                                      IsVisible="{Binding IsCameraSupported}"
                                      IsActive="{Binding IsCameraActive}"
@@ -49,4 +48,5 @@
                    IsVisible="{Binding CanCreateProduct}" />
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 </ContentPage>

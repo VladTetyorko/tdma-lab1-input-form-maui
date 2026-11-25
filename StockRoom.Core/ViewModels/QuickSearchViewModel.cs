@@ -15,6 +15,7 @@ public sealed partial class QuickSearchViewModel(
     ICurrentUserService currentUser,
     IPermissionGuard guard,
     INavigationService navigation,
+    IKeyboard keyboard,
     ILogger<QuickSearchViewModel> logger) : ObservableObject
 {
     private IReadOnlyList<ProductSummary> _products = [];
@@ -119,6 +120,8 @@ public sealed partial class QuickSearchViewModel(
             Query = string.Empty;
         }
 
+        // The choice is made: the keyboard must not cover the lines and the main button
+        keyboard.Hide();
         Picked?.Invoke(this, product);
     }
 

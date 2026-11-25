@@ -23,11 +23,23 @@ public class QuickSearchViewModelTests
         await _store.AddProductAsync("Drill small", Drill);
         await _store.AddProductAsync("Drill big", Saw);
         var viewModel = new QuickSearchViewModel(_store.Catalog, _store.CharacteristicService, _store.CurrentUser,
-            _store.Guard, _store.Navigation, _store.Logger<QuickSearchViewModel>());
+            _store.Guard, _store.Navigation, _store.Keyboard, _store.Logger<QuickSearchViewModel>());
         viewModel.Picked += (_, product) => _picked.Add(product.Name);
         viewModel.SubmittedText += (_, text) => _submitted.Add(text);
         await viewModel.LoadCommand.ExecuteAsync(null);
         return viewModel;
+    }
+
+    [Fact]
+    public async Task Picking_HidesTheKeyboard_TypingDoesNot()
+    {
+        var viewModel = await OpenAsync();
+        viewModel.Query = "dri";
+        Assert.Equal(0, _store.Keyboard.Hides);
+
+        viewModel.PickCommand.Execute(viewModel.Suggestions[0]);
+
+        Assert.Equal(1, _store.Keyboard.Hides);
     }
 
     [Fact]
@@ -36,7 +48,7 @@ public class QuickSearchViewModelTests
         var catalog = new Mock<IProductCatalog>();
         catalog.Setup(c => c.GetSummariesAsync()).ThrowsAsync(new IOException("no database"));
         var viewModel = new QuickSearchViewModel(catalog.Object, _store.CharacteristicService, _store.CurrentUser,
-            _store.Guard, _store.Navigation, _store.Logger<QuickSearchViewModel>());
+            _store.Guard, _store.Navigation, _store.Keyboard, _store.Logger<QuickSearchViewModel>());
 
         await viewModel.LoadCommand.ExecuteAsync(null);
         viewModel.Query = "dri";

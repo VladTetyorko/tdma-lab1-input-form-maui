@@ -18,6 +18,9 @@ public static class Routes
     public const string Issue = "issue";
     public const string Back = "..";
 
+    // The pages of the drawer's own level: they show the menu button, every other page shows Back
+    public static bool IsRoot(string? route) => route is Home or Products or Settings;
+
     // "//products/productform" -> "productform": the page that is open, without the route path to it
     public static string Leaf(string? location) =>
         location is null ? string.Empty : location[(location.LastIndexOf('/') + 1)..];

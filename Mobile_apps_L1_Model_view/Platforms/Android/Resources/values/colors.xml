@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Green palette (docs/design/design-system.md); page colours come from the theme dictionaries at runtime -->
+    <!-- Green palette (docs/design/design-system.md); page colours come from the theme dictionaries at runtime.
+         colorPrimaryDark is the status bar before the theme is applied: the page background -->
     <color name="colorPrimary">#1F7A3A</color>
-    <color name="colorPrimaryDark">#14592A</color>
+    <color name="colorPrimaryDark">#FFFFFF</color>
     <color name="colorAccent">#1F7A3A</color>
 </resources>

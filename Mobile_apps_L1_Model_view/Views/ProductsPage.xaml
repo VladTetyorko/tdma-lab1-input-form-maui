@@ -15,19 +15,13 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Scan" Command="{Binding ScanCommand}" AutomationId="ScanButton"
-                     SemanticProperties.Description="Scan a barcode">
-            <ToolbarItem.IconImageSource>
-                <FontImageSource FontFamily="FluentIcons" Glyph="{StaticResource IconScan}" Size="24"
-                                 Color="{DynamicResource TextPrimary}" />
-            </ToolbarItem.IconImageSource>
-        </ToolbarItem>
-    </ContentPage.ToolbarItems>
-
     <!-- Map and Characteristics are in the drawer; the Manager adds a product with the button at the bottom -->
-    <Grid RowDefinitions="*,Auto" SafeAreaEdges="Container, Container, Container, SoftInput">
-        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="8">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+        <components:AppBar Title="Products" Route="products"
+                           ActionGlyph="{StaticResource IconScan}" ActionDescription="Scan a barcode"
+                           ActionCommand="{Binding ScanCommand}" ActionId="ScanButton" />
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}"
+              RowSpacing="8">
             <components:SyncChip Grid.Row="0" OnlyWhenNeeded="True" HorizontalOptions="End" />
 
             <VerticalStackLayout Grid.Row="1">
@@ -151,7 +145,7 @@
             </VerticalStackLayout>
         </Grid>
 
-        <components:BottomActionBar Grid.Row="1" ButtonId="AddProductButton" Text="Add product"
+        <components:BottomActionBar Grid.Row="2" ButtonId="AddProductButton" Text="Add product"
                                     Command="{Binding AddProductCommand}" IsVisible="{Binding CanAddProduct}" />
     </Grid>
 </ContentPage>

@@ -32,15 +32,6 @@ public partial class AppShell : Shell
         FlyoutContent = new DrawerContent(_drawer);
         FlyoutWidth = DrawerWidthOfThisDevice();
 
-        var hamburger = new FontImageSource
-        {
-            FontFamily = "FluentIcons",
-            Glyph = (string)Application.Current!.Resources["IconNavigation"],
-            Size = 24
-        };
-        hamburger.SetDynamicResource(FontImageSource.ColorProperty, "TextPrimary");
-        FlyoutIcon = hamburger;
-
         // Set before the Shell is shown, so there is no flash of the sign-in page
         CurrentItem = Items.FirstOrDefault(item => Contains(item, startRoute)) ?? CurrentItem;
     }
@@ -49,6 +40,7 @@ public partial class AppShell : Shell
     {
         base.OnNavigated(args);
         _drawer.Select(Routes.Leaf(CurrentState?.Location?.OriginalString));
+        MauiThemeApplier.ShowStatusBar();
     }
 
     private static bool Contains(ShellItem item, string route) =>
