@@ -30,6 +30,21 @@ public class ProductListSearchTests
     }
 
     [Fact]
+    public async Task ATypo_ShowsMarkedSimilarRows_AndKeepsTheSort()
+    {
+        await AddSampleProductsAsync();
+        _viewModel.SelectedSortOption = SortOption.ByQuantity;
+
+        _viewModel.SearchText = "nutela";
+
+        Assert.Equal(new[] { "Nutella 500 g", "Nutella 400 g" }, _viewModel.Rows.Select(row => row.Name));
+        Assert.All(_viewModel.Rows, row => Assert.True(row.IsSimilar && row.NameRanges.Count > 0));
+
+        _viewModel.SearchText = string.Empty;
+        Assert.All(_viewModel.Rows, row => Assert.False(row.IsSimilar || row.NameRanges.Count > 0));
+    }
+
+    [Fact]
     public async Task SearchText_MatchesTheBarcode()
     {
         await AddSampleProductsAsync();

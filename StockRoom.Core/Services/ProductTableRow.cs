@@ -5,6 +5,11 @@ public sealed record ProductTableRow(ProductSummary Product, IReadOnlyList<Produ
 {
     public string Name => Product.Name;
 
+    // What the search matched in the name; IsSimilar = the name is only similar to what was typed
+    public IReadOnlyList<Search.TextRange> NameRanges { get; init; } = [];
+
+    public bool IsSimilar { get; init; }
+
     public string Barcode => Product.Barcode;
 
     public bool CanDelete => Product.CanDelete;

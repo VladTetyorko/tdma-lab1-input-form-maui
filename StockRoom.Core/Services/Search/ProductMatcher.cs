@@ -33,10 +33,13 @@ public static class ProductMatcher
         var codeRanges = new List<TextRange>();
         double score = 0;
         var fuzzy = false;
+
+        // Next to a word, digits are a size or a weight ("nutella 400"), not the start of a barcode
+        var codes = query.Tokens.All(token => token.IsDigits);
         foreach (var token in query.Tokens)
         {
             var alone = query.Tokens.Count == 1;
-            if (token.IsDigits && Code(product.Barcode, token.Text) is { } code)
+            if (codes && Code(product.Barcode, token.Text) is { } code)
             {
                 score += code.Score;
                 codeRanges.Add(code.Range);

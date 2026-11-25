@@ -1,20 +1,16 @@
+using Mobile_apps_L1_Model_view.Services.Search;
+
 namespace Mobile_apps_L1_Model_view.Services;
 
-// Pure filtering of product rows by what the user typed, so the rule is testable without a ViewModel.
-// A product matches when the trimmed text appears (ignoring case) in its name, its barcode or
-// any of its characteristic values. Empty or blank text matches everything. Order is kept.
+// The filter of the product table: ProductMatcher over name, barcode and characteristic values. Empty or blank text
+// matches everything. The order is kept, so the sort of the table stays what the user chose
 public static class ProductSearch
 {
-    public static IReadOnlyList<ProductSummary> Filter(IEnumerable<ProductSummary> products, string? text)
+    public static IReadOnlyList<MatchResult> Filter(IEnumerable<ProductSummary> products, string? text)
     {
-        var query = text?.Trim();
-        return string.IsNullOrEmpty(query)
-            ? [.. products]
-            : [.. products.Where(p => Matches(p, query))];
+        var query = SearchQuery.Parse(text);
+        return query.IsEmpty
+            ? [.. products.Select(product => new MatchResult(product, 0, false, [], []))]
+            : [.. products.Select(product => ProductMatcher.Match(product, query, includeValues: true)).OfType<MatchResult>()];
     }
-
-    private static bool Matches(ProductSummary product, string query) =>
-        TextMatch.Contains(product.Name, query)
-        || TextMatch.Contains(product.Barcode, query)
-        || product.Values.Values.Any(value => TextMatch.Contains(value, query));
 }

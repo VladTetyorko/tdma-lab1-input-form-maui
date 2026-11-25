@@ -27,7 +27,7 @@ public class ProductSearchTests
     {
         var found = ProductSearch.Filter(Products, text);
 
-        Assert.Equal(expected, found.Select(p => p.Name).ToArray());
+        Assert.Equal(expected, found.Select(match => match.Product.Name).ToArray());
     }
 
     [Theory]
@@ -38,7 +38,16 @@ public class ProductSearchTests
     {
         var found = ProductSearch.Filter(Products, text);
 
-        Assert.Equal(Products.Select(p => p.Name), found.Select(p => p.Name));
+        Assert.Equal(Products.Select(p => p.Name), found.Select(match => match.Product.Name));
+    }
+
+    [Fact]
+    public void Filter_FindsATypoAndMarksIt()
+    {
+        var found = ProductSearch.Filter(Products, "nutela");
+
+        Assert.Equal(["Nutella 400 g", "Nutella 500 g"], found.Select(match => match.Product.Name));
+        Assert.All(found, match => Assert.True(match.IsFuzzy && match.NameRanges.Count > 0));
     }
 
     [Fact]

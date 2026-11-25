@@ -24,12 +24,18 @@
                                 <Grid MinimumHeightRequest="{OnIdiom 56, Desktop=44}">
                                     <BoxView Color="{DynamicResource PrimarySoft}" IsVisible="{Binding IsHighlighted}" />
                                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="12,6" ColumnSpacing="8">
-                                        <Label Text="{Binding Suggestion.Title}" Style="{StaticResource TextBodyStrong}" />
+                                        <components:HighlightedLabel Value="{Binding Suggestion.Title}"
+                                                                     Ranges="{Binding Suggestion.NameRanges}"
+                                                                     Style="{StaticResource TextBodyStrong}" />
                                         <Label Grid.Column="1" Text="{Binding Suggestion.StockText}" Style="{StaticResource TextCaption}" />
                                         <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Suggestion.Details}"
                                                Style="{StaticResource TextCaption}" />
-                                        <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Suggestion.Code}"
-                                               Style="{StaticResource TextCaption}" />
+                                        <components:HighlightedLabel Grid.Row="2" Value="{Binding Suggestion.Code}"
+                                                                     Ranges="{Binding Suggestion.CodeRanges}"
+                                                                     Style="{StaticResource TextCaption}" />
+                                        <Label Grid.Row="2" Grid.Column="1" Text="Similar name" HorizontalTextAlignment="End"
+                                               Style="{StaticResource TextCaption}" IsVisible="{Binding Suggestion.IsFuzzy}"
+                                               AutomationId="SuggestionSimilarLabel" />
                                     </Grid>
                                     <Button StyleClass="RowOverlay" CommandParameter="{Binding .}"
                                             Command="{Binding BindingContext.PickCommand, Source={x:Reference ThisBox}}"

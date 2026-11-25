@@ -51,6 +51,7 @@ public class ProductMatcherTests
     [Theory]
     [InlineData("nutela")]  // one letter missing
     [InlineData("nutlela")] // one letter too many
+    [InlineData("nutlela 400")]
     public void ATypo_IsFoundAsSimilar(string text)
     {
         var matches = ProductMatcher.Rank(All, text);
@@ -64,6 +65,7 @@ public class ProductMatcherTests
     {
         Assert.Equal(["Nutella 500 g"], Found("nut 500"));
         Assert.Equal(["Nutella 500 g"], Found("500 g"));
+        Assert.Equal(["Nutella 400 g"], Found("nutella 400")); // not the 500 g whose barcode starts with 400
         Assert.Empty(Found("nut zzz"));
     }
 

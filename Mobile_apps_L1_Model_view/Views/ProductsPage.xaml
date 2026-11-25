@@ -26,8 +26,9 @@
 
             <VerticalStackLayout Grid.Row="1">
                 <!-- Filters by name, barcode and characteristic values; combined with the sort of the table -->
-                <SearchBar Placeholder="Search by name, barcode or value" Text="{Binding SearchText, Mode=TwoWay}"
-                           AutomationId="SearchEntry" />
+                <components:OutlinedField Icon="{StaticResource IconSearch}" Placeholder="Search by name, barcode or value"
+                                          EntryId="SearchEntry" ClearId="SearchClearButton"
+                                          Text="{Binding SearchText, Mode=TwoWay}" />
                 <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsNarrow}">
                     <Label Text="Extra column" Style="{StaticResource TextCaption}" VerticalOptions="Center" />
                     <Picker ItemsSource="{Binding ExtraColumnOptions}"
@@ -85,7 +86,11 @@
                                                 CommandParameter="{Binding Product}" />
                                         </Grid.GestureRecognizers>
                                         <VerticalStackLayout VerticalOptions="Center" Padding="14,0,0,0">
-                                            <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" AutomationId="ProductNameLabel" />
+                                            <components:HighlightedLabel Value="{Binding Name}" Ranges="{Binding NameRanges}"
+                                                                         Style="{StaticResource TextBodyStrong}"
+                                                                         AutomationId="ProductNameLabel" />
+                                            <Label Text="Similar name" Style="{StaticResource TextCaption}"
+                                                   IsVisible="{Binding IsSimilar}" />
                                             <Label Text="{Binding Barcode}" Style="{StaticResource TextCaption}"
                                                    IsVisible="{OnIdiom Default=False, Phone=True}" />
                                         </VerticalStackLayout>

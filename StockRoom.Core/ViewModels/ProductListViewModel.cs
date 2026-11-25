@@ -21,6 +21,7 @@ public partial class ProductListViewModel(
     StockChanges? stockChanges = null) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
+    private Dictionary<Guid, Services.Search.MatchResult> _matches = [];
     private Guid? _loadedForUserId;
     private bool _sortOptionsStale;
     private bool _productsStale;
@@ -348,8 +349,10 @@ public partial class ProductListViewModel(
         }
 
         Products.Clear();
-        var matching = ProductSearch.Filter(_all, SearchText);
-        foreach (var product in ProductSorter.Sort(matching, SelectedSortOption, SortDescending))
+        var matches = ProductSearch.Filter(_all, SearchText);
+        _matches = matches.ToDictionary(match => match.Product.Id);
+        foreach (var product in ProductSorter.Sort(matches.Select(match => match.Product), SelectedSortOption,
+                     SortDescending))
         {
             Products.Add(product);
         }
@@ -391,7 +394,8 @@ public partial class ProductListViewModel(
         Rows.Clear();
         foreach (var product in Products)
         {
-            Rows.Add(ProductTable.Row(product, columns));
+            var match = _matches[product.Id];
+            Rows.Add(ProductTable.Row(product, columns) with { NameRanges = match.NameRanges, IsSimilar = match.IsFuzzy });
         }
     }
 }

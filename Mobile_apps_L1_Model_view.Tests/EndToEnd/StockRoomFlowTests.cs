@@ -19,10 +19,31 @@ public class StockRoomFlowTests : IDisposable
         services.AddSingleton<INavigationService>(_navigation);
         services.AddSingleton<IPreferencesStore>(new FakePreferencesStore());
         services.AddSingleton<IAlertService>(new FakeAlertService());
+        services.AddSingleton<IScanFeedback>(new FakeScanFeedback());
+        services.AddSingleton<IToastService>(new FakeToastService());
         _provider = services.BuildServiceProvider();
     }
 
     public void Dispose() => _provider.Dispose();
+
+    [Fact]
+    public async Task Receive_ATypoSuggestsButNeverAdds_UntilItIsTapped()
+    {
+        await SignInAsync(Role.Manager);
+        var receive = _provider.GetRequiredService<StockDocumentViewModel>();
+        await receive.AppearCommand.ExecuteAsync(null);
+
+        receive.QuickSearch.Query = "nutela";
+        receive.QuickSearch.SubmitCommand.Execute(null);
+        Assert.Empty(receive.Lines);
+        var suggestion = receive.QuickSearch.Suggestions.First(row => row.Suggestion.Title == "Nutella 400 g");
+        Assert.True(suggestion.Suggestion.IsFuzzy);
+
+        receive.QuickSearch.PickCommand.Execute(suggestion);
+        await Eventually.WaitAsync(() => receive.Lines.Count == 1);
+
+        Assert.Equal("Nutella 400 g", receive.Lines[0].Name);
+    }
 
     [Fact]
     public async Task Manager_AddsProduct_AndListShowsItWithZeroQuantity()

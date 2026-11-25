@@ -82,7 +82,7 @@ public class ProductListTableTests
         await LoadTwoAsync();
         _viewModel.SortByColumnCommand.Execute(_viewModel.NameColumn);
 
-        _viewModel.SearchText = "a";
+        _viewModel.SearchText = "sa";
 
         Assert.Equal(["Saw"], Names);
         Assert.True(_viewModel.NameColumn.IsSortedDescending);
