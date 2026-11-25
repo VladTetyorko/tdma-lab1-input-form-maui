@@ -67,6 +67,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICharacteristicService, CharacteristicService>();
         services.AddSingleton<IStockService, StockService>();
         services.AddSingleton<IProductCatalog, ProductCatalog>();
+        services.AddSingleton<StockChanges>();
+        services.AddSingleton<IStockDocumentDraftStore, StockDocumentDraftStore>();
+        services.AddSingleton<IStockDocumentService, StockDocumentService>();
 
         // Logging tools: the log folder is a platform service (ILogPathProvider), the crash reporter is chosen by the host
         services.AddSingleton<ILogReader, LogReader>();
