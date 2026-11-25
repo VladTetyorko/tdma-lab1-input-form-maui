@@ -142,7 +142,7 @@ public class SqliteFlowTests : IDisposable
         var restarted = Start();
         var route = await restarted.GetRequiredService<IAppLifecycleService>().RestoreAsync();
 
-        Assert.Equal(Routes.Products, route);
+        Assert.Equal(Routes.Home, route);
         var list = restarted.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
         Assert.Equal(13, list.Products.Count);

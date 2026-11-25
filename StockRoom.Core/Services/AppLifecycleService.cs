@@ -34,7 +34,7 @@ public sealed class AppLifecycleService(
             {
                 currentUser.SignIn(user);
                 logger.LogInformation("Restored the session of user {UserId}, last page {Route}", user.Id, state.LastRoute);
-                return Routes.Products;
+                return Routes.Home;
             }
         }
         catch (Exception ex)

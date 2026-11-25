@@ -7,17 +7,33 @@ public class NavigationMenuTests
 {
     private static IEnumerable<string> RoutesFor(Role role) => NavigationMenu.For(role).Select(entry => entry.Route);
 
-    [Theory]
-    [InlineData(Role.Manager)]
-    [InlineData(Role.Storekeeper)]
-    public void For_RolesThatMayIssue_SeeEveryEntryInOrder(Role role)
+    [Fact]
+    public void For_Manager_SeesEveryEntryInOrder()
     {
-        Assert.Equal([Routes.Products, Routes.Receive, Routes.Issue, Routes.Settings], RoutesFor(role));
+        Assert.Equal(
+            [Routes.Home, Routes.Receive, Routes.Issue, Routes.Products, Routes.Map, Routes.Characteristics, Routes.Settings],
+            RoutesFor(Role.Manager));
     }
 
     [Fact]
-    public void For_Driver_HasNoIssue()
+    public void For_Storekeeper_HasNoCharacteristics()
     {
-        Assert.Equal([Routes.Products, Routes.Receive, Routes.Settings], RoutesFor(Role.Driver));
+        Assert.Equal([Routes.Home, Routes.Receive, Routes.Issue, Routes.Products, Routes.Map, Routes.Settings],
+            RoutesFor(Role.Storekeeper));
+    }
+
+    [Fact]
+    public void For_Driver_HasNoIssueAndNoCharacteristics()
+    {
+        Assert.Equal([Routes.Home, Routes.Receive, Routes.Products, Routes.Map, Routes.Settings], RoutesFor(Role.Driver));
+    }
+
+    [Fact]
+    public void OnlyHomeProductsAndSettingsAreTopLevelPages()
+    {
+        var top = NavigationMenu.For(Role.Manager).Where(entry => entry.Kind == MenuEntryKind.Top).Select(entry => entry.Route);
+
+        Assert.Equal([Routes.Home, Routes.Products, Routes.Settings], top);
+        Assert.All(NavigationMenu.For(Role.Manager), entry => Assert.StartsWith("Icon", entry.Glyph));
     }
 }

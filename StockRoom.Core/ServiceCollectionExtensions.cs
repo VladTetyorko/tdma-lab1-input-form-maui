@@ -83,6 +83,7 @@ public static class ServiceCollectionExtensions
             provider.GetRequiredService<ILogger<OpenFoodFactsLookup>>()));
 
         services.AddTransient<LoginViewModel>();
+        services.AddTransient<HomeViewModel>();
         services.AddTransient<ProductListViewModel>();
         services.AddTransient<ProductPhotoEditor>();
         services.AddTransient<ConnectivityBannerViewModel>();

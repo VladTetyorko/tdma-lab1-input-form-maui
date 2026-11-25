@@ -76,7 +76,7 @@ public class LoginViewModelTests
         Assert.Same(_storekeeper, _store.CurrentUser.CurrentUser);
         Assert.Equal(Role.Storekeeper, _store.CurrentUser.CurrentRole);
         Assert.Equal(_storekeeper.Id, (await _store.Session.LoadUserAsync())?.Id);
-        Assert.Equal(Routes.Absolute(Routes.Products), Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.Absolute(Routes.Home), Assert.Single(_store.Navigation.RequestedRoutes));
         Assert.False(_viewModel.HasError);
     }
 
@@ -228,7 +228,7 @@ public class LoginViewModelTests
         await _viewModel.BiometricSignInCommand.ExecuteAsync(null);
 
         Assert.Same(_storekeeper, _store.CurrentUser.CurrentUser);
-        Assert.Equal(Routes.Absolute(Routes.Products), Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.Absolute(Routes.Home), Assert.Single(_store.Navigation.RequestedRoutes));
         Assert.Single(_biometrics.Reasons);
     }
 

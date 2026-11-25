@@ -25,4 +25,8 @@
     <x:String x:Key="IconSignOut">&#xF6DA;</x:String>
     <x:String x:Key="IconFlashlight">&#xF416;</x:String>
     <x:String x:Key="IconSubtract">&#xEBD1;</x:String>
+    <x:String x:Key="IconHome">&#xF481;</x:String>
+    <x:String x:Key="IconNavigation">&#xF561;</x:String>
+    <x:String x:Key="IconTag">&#xF77D;</x:String>
+    <x:String x:Key="IconCamera">&#xF255;</x:String>
 </ResourceDictionary>

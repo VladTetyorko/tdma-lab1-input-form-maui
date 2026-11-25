@@ -57,7 +57,7 @@ public class AppLifecycleFlowTests
         var restart = second.GetRequiredService<IAppLifecycleService>();
 
         var startRoute = await restart.RestoreAsync();
-        Assert.Equal(Routes.Products, startRoute);
+        Assert.Equal(Routes.Home, startRoute);
         Assert.Equal(Role.Storekeeper, second.GetRequiredService<ICurrentUserService>().CurrentUser!.Role);
 
         // The list appears first and then resumes the operation page with its draft
@@ -96,7 +96,7 @@ public class AppLifecycleFlowTests
 
         using (var second = TestContainer.Create(preferences, new FakeNavigationService(), secrets: secrets))
         {
-            Assert.Equal(Routes.Products, await second.GetRequiredService<IAppLifecycleService>().RestoreAsync());
+            Assert.Equal(Routes.Home, await second.GetRequiredService<IAppLifecycleService>().RestoreAsync());
             Assert.Equal(Role.Manager, second.GetRequiredService<ICurrentUserService>().CurrentRole);
 
             var status = second.GetRequiredService<SessionStatusViewModel>();
@@ -139,7 +139,7 @@ public class AppLifecycleFlowTests
         biometrics.Outcome = BiometricOutcome.Success;
         await login.BiometricSignInCommand.ExecuteAsync(null);
         Assert.Equal(Role.Driver, second.GetRequiredService<ICurrentUserService>().CurrentRole);
-        Assert.Equal(Routes.Absolute(Routes.Products), navigation.RequestedRoutes.Last());
+        Assert.Equal(Routes.Absolute(Routes.Home), navigation.RequestedRoutes.Last());
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public class AppLifecycleFlowTests
         await list.EnsureLoadedCommand.ExecuteAsync(null);
 
         // The sign-in itself went to the list; the deep link is the page after it
-        Assert.Equal(new[] { Routes.Absolute(Routes.Products), Routes.ProductDetail }, navigation.RequestedRoutes);
+        Assert.Equal(new[] { Routes.Absolute(Routes.Home), Routes.ProductDetail }, navigation.RequestedRoutes);
         Assert.Equal(_drillBarcode,
             Assert.IsType<ProductSummary>(LastParameters(navigation)[NavigationKeys.SelectedProduct]).Barcode);
     }

@@ -31,8 +31,10 @@ public class RoutesTests
 
     [Theory]
     [InlineData(Routes.Products, "//products")]
-    [InlineData(Routes.Receive, "//receive")]
-    [InlineData(Routes.Issue, "//issue")]
+    [InlineData(Routes.Home, "//home")]
+    [InlineData(Routes.Receive, "//home/receive")]
+    [InlineData(Routes.Issue, "//home/issue")]
+    [InlineData("//home/receive", "//home/receive")]
     [InlineData(Routes.Settings, "//settings")]
     [InlineData(Routes.ProductForm, "productform")]
     [InlineData("//products", "//products")]

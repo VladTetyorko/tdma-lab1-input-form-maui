@@ -4,6 +4,7 @@ namespace Mobile_apps_L1_Model_view.Services;
 public static class Routes
 {
     public const string Login = "login";
+    public const string Home = "home";
     public const string Products = "products";
     public const string ProductForm = "productform";
     public const string ProductDetail = "productdetail";
@@ -21,9 +22,14 @@ public static class Routes
     public static string Leaf(string? location) =>
         location is null ? string.Empty : location[(location.LastIndexOf('/') + 1)..];
 
-    // The main entries are Shell content (side panel / tabs): Shell only reaches them by an absolute route
-    public static string ForShell(string route) =>
-        route is Products or Receive or Issue or Settings ? Absolute(route) : route;
+    // Home, Products and Settings are Shell content: Shell only reaches them by an absolute route. Receive and Issue
+    // are pushed on Home, so that Back returns Home instead of leaving the app
+    public static string ForShell(string route) => route switch
+    {
+        Home or Products or Settings => Absolute(route),
+        Receive or Issue => $"{Absolute(Home)}/{route}",
+        _ => route
+    };
 
     // Absolute navigation (replaces the page stack)
     public static string Absolute(string route) => "//" + route;

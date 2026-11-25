@@ -129,6 +129,19 @@ public class StartupNavigatorTests
         Assert.Empty(_store.Navigation.RequestedRoutes);
     }
 
+    [Theory]
+    [InlineData(Routes.Receive)]
+    [InlineData(Routes.Issue)]
+    public async Task ReceiveOrIssueWasOpen_ReopensIt(string route)
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        Resume(route);
+
+        await _store.Startup.RunAsync();
+
+        Assert.Equal(route, Assert.Single(_store.Navigation.RequestedRoutes));
+    }
+
     [Fact]
     public async Task ResumeRouteIsUsedOnlyOnce()
     {

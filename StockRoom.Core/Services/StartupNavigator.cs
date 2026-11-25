@@ -17,6 +17,10 @@ public sealed class StartupNavigator(
 
         switch (resumeRoute)
         {
+            // The draft itself is kept by IStockDocumentDraftStore; the page reads it when it opens
+            case Routes.Receive or Routes.Issue:
+                await navigation.GoToAsync(resumeRoute);
+                break;
             case Routes.ProductForm when appState.GetDraft<ProductFormDraft>() is not null:
                 await navigation.GoToAsync(Routes.ProductForm);
                 break;
