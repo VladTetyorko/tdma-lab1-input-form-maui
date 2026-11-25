@@ -13,6 +13,8 @@ public static class Routes
     public const string Settings = "settings";
     public const string Logs = "logs";
     public const string Map = "map";
+    public const string Receive = "receive";
+    public const string Issue = "issue";
     public const string Back = "..";
 
     // "//products/productform" -> "productform": the page that is open, without the route path to it
