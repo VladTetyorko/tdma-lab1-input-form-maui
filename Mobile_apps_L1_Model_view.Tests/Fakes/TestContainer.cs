@@ -26,6 +26,12 @@ public static class TestContainer
         services.AddSingleton<IAlertService>(alerts);
         services.AddSingleton(applier);
         services.AddSingleton<IThemeApplier>(applier);
+        var feedback = new FakeScanFeedback();
+        var toasts = new FakeToastService();
+        services.AddSingleton(feedback);
+        services.AddSingleton<IScanFeedback>(feedback);
+        services.AddSingleton(toasts);
+        services.AddSingleton<IToastService>(toasts);
         services.AddSingleton(scanner ?? new FakeBarcodeScanner());
         services.AddSingleton<IBarcodeScanner>(provider => provider.GetRequiredService<FakeBarcodeScanner>());
 

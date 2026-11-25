@@ -17,12 +17,14 @@ public partial class ProductListViewModel(
     IPermissionGuard guard,
     INavigationService navigation,
     IShakeGesture shake,
-    ILogger<ProductListViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
+    ILogger<ProductListViewModel> logger,
+    StockChanges? stockChanges = null) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;
     private bool _sortOptionsStale;
     private bool _productsStale;
+    private int _stockVersion;
 
     // What the list shows: _all, filtered by SearchText, then sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
@@ -124,7 +126,8 @@ public partial class ProductListViewModel(
     [RelayCommand]
     private async Task EnsureLoadedAsync()
     {
-        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id && !_productsStale)
+        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id && !_productsStale
+            && _stockVersion == (stockChanges?.Version ?? 0))
         {
             if (_sortOptionsStale)
             {
@@ -150,6 +153,7 @@ public partial class ProductListViewModel(
         CanManageProducts = CanAddProduct;
         StatusMessage = string.Empty;
 
+        _stockVersion = stockChanges?.Version ?? 0;
         _all = [.. await catalog.GetSummariesAsync()];
         await SyncSortOptionsAsync();
         _loadedForUserId = user?.Id;
