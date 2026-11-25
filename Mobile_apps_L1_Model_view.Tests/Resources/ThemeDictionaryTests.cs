@@ -8,7 +8,7 @@ public class ThemeDictionaryTests
     private static readonly string[] SemanticKeys =
     [
         "Background", "Surface", "SurfaceAlt", "Border", "BorderStrong", "TextPrimary", "TextSecondary", "TextDisabled",
-        "Primary", "PrimaryHover", "PrimaryPressed", "PrimarySoft", "OnPrimary", "PrimaryText", "ChipSuccessText",
+        "Primary", "PrimaryHover", "PrimaryPressed", "PrimarySoft", "OnPrimary", "PrimaryText", "ChipSuccessForeground",
         "Danger", "DangerSoft", "OnDanger", "Warning", "WarningSoft", "Info", "Success", "FocusRing", "Overlay"
     ];
 

@@ -20,7 +20,7 @@
     <Color x:Key="PrimarySoft">#2B2342</Color>  <!-- Violet900 -->
     <Color x:Key="OnPrimary">#FFFFFF</Color>  <!-- white -->
     <Color x:Key="PrimaryText">#B49CFF</Color>  <!-- Violet300 -->
-    <Color x:Key="ChipSuccessText">#B49CFF</Color>  <!-- Violet300 -->
+    <Color x:Key="ChipSuccessForeground">#B49CFF</Color>  <!-- Violet300 -->
     <Color x:Key="Danger">#FF8A85</Color>  <!-- danger -->
     <Color x:Key="DangerSoft">#3A1C22</Color>  <!-- danger soft -->
     <Color x:Key="OnDanger">#121018</Color>  <!-- background -->

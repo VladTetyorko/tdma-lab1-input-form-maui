@@ -20,7 +20,7 @@
     <Color x:Key="PrimarySoft">#E7F4EA</Color>  <!-- Green50 -->
     <Color x:Key="OnPrimary">#FFFFFF</Color>  <!-- white -->
     <Color x:Key="PrimaryText">#1F7A3A</Color>  <!-- Green600 -->
-    <Color x:Key="ChipSuccessText">#14592A</Color>  <!-- Green800 -->
+    <Color x:Key="ChipSuccessForeground">#14592A</Color>  <!-- Green800 -->
     <Color x:Key="Danger">#C62828</Color>  <!-- danger -->
     <Color x:Key="DangerSoft">#FDECEC</Color>  <!-- danger soft -->
     <Color x:Key="OnDanger">#FFFFFF</Color>  <!-- white -->

@@ -37,6 +37,8 @@ public static class TestPlatform
         services.AddSingleton<IShakeDetector>(provider => provider.GetRequiredService<FakeShakeDetector>());
         services.AddSingleton<FakeMapLauncher>();
         services.AddSingleton<IMapLauncher>(provider => provider.GetRequiredService<FakeMapLauncher>());
+        services.AddSingleton<FakeAppDataPath>();
+        services.AddSingleton<IAppDataPathProvider>(provider => provider.GetRequiredService<FakeAppDataPath>());
         services.AddSingleton<FakeMainThread>();
         services.AddSingleton<IMainThread>(provider => provider.GetRequiredService<FakeMainThread>());
         services.AddSingleton<FakeHttpMessageHandler>();
