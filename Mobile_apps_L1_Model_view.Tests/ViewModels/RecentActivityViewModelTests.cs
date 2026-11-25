@@ -44,7 +44,7 @@ public class RecentActivityViewModelTests
     }
 
     [Fact]
-    public async Task Refresh_ForADriver_ShowsOnlyTheirOwn()
+    public async Task Refresh_ForADriver_ShowsEveryonesOperations()
     {
         var driver = await _store.SignInAsync(Role.Driver, "Petro");
         var drill = await _store.AddProductAsync("Drill", "4006381333931");
@@ -53,7 +53,7 @@ public class RecentActivityViewModelTests
 
         await _viewModel.RefreshCommand.ExecuteAsync(null);
 
-        Assert.Equal("+3 Drill", Assert.Single(_viewModel.Items).Summary);
+        Assert.Equal(["+3 Drill", "+5 Drill"], _viewModel.Items.Select(item => item.Summary));
     }
 
     [Fact]

@@ -218,7 +218,7 @@ out). The **only** way quantity changes.
 | `CreatedAt` | inherited | When it happened |
 
 - **Who can do what:** Storekeeper and Manager record `In` and `Out`; the
-  Driver records `In` only. Everyone sees the history (the Driver only their own).
+  Driver records `In` only. Everyone sees the history.
 - **Immutable:** never edited or deleted. A mistake is fixed by a new
   operation in the opposite direction, so `UpdatedAt` always equals `CreatedAt`.
 - **Scaling:** a `Location` entity (several warehouses or shelves, not the same

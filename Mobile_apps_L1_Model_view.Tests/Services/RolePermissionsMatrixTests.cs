@@ -14,7 +14,6 @@ public class RolePermissionsMatrixTests
         ("CanManagePhotos", false, false, true),
         ("CanViewLogs", false, false, true),
         ("CanUseDiagnostics", false, false, true),
-        ("SeesEveryOperation", true, false, true),
         ("RecordIn", true, true, true),
         ("RecordOut", true, false, true));
 
@@ -49,7 +48,6 @@ public class RolePermissionsMatrixTests
         "CanManagePhotos" => RolePermissions.CanManagePhotos(role),
         "CanViewLogs" => RolePermissions.CanViewLogs(role),
         "CanUseDiagnostics" => RolePermissions.CanUseDiagnostics(role),
-        "SeesEveryOperation" => RolePermissions.SeesEveryOperation(role),
         "RecordIn" => RolePermissions.CanRecord(role, OperationDirection.In),
         "RecordOut" => RolePermissions.CanRecord(role, OperationDirection.Out),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Not in the matrix")

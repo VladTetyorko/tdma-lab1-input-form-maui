@@ -8,7 +8,7 @@ using Mobile_apps_L1_Model_view.Services;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
-// The last few operations, read only. A plain list, not a dashboard. A Driver sees only their own
+// The last few operations, read only. A plain list, not a dashboard. Every role sees all of them, like the product history
 public sealed partial class RecentActivityViewModel(
     IOperationRepository operations,
     IProductRepository products,
@@ -18,9 +18,6 @@ public sealed partial class RecentActivityViewModel(
     ILogger<RecentActivityViewModel> logger) : ObservableObject
 {
     public const int Count = 5;
-
-    // How far back a Driver's own operations are looked for
-    private const int DriverWindow = 200;
 
     public ObservableCollection<RecentActivityItem> Items { get; } = [];
 
@@ -50,16 +47,12 @@ public sealed partial class RecentActivityViewModel(
 
     private async Task<List<RecentActivityItem>> ReadAsync()
     {
-        if (currentUser.CurrentUser is not { } user)
+        if (currentUser.CurrentUser is null)
         {
             return [];
         }
 
-        var everything = RolePermissions.SeesEveryOperation(user.Role);
-        var recent = (await operations.GetRecentAsync(everything ? Count : DriverWindow))
-            .Where(o => everything || o.CreatedByUserId == user.Id)
-            .Take(Count)
-            .ToList();
+        var recent = await operations.GetRecentAsync(Count);
 
         var names = (await users.GetAllAsync()).ToDictionary(u => u.Id, u => u.FullName);
         var items = new List<RecentActivityItem>(recent.Count);
