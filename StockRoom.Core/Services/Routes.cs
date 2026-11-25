@@ -21,6 +21,10 @@ public static class Routes
     public static string Leaf(string? location) =>
         location is null ? string.Empty : location[(location.LastIndexOf('/') + 1)..];
 
+    // The main entries are Shell content (side panel / tabs): Shell only reaches them by an absolute route
+    public static string ForShell(string route) =>
+        route is Products or Receive or Issue or Settings ? Absolute(route) : route;
+
     // Absolute navigation (replaces the page stack)
     public static string Absolute(string route) => "//" + route;
 }

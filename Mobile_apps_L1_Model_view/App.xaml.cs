@@ -9,9 +9,12 @@ public partial class App : Application
 {
     private readonly IAppLifecycleService _lifecycle;
 
-    public App(IAppLifecycleService lifecycle)
+    private readonly IServiceProvider _services;
+
+    public App(IAppLifecycleService lifecycle, IServiceProvider services)
     {
         _lifecycle = lifecycle;
+        _services = services;
         InitializeComponent();
     }
 
@@ -36,7 +39,7 @@ public partial class App : Application
         try
         {
             var startRoute = await _lifecycle.RestoreAsync();
-            window.Page = new AppShell(startRoute);
+            window.Page = new AppShell(_services, startRoute);
         }
         catch (Exception ex)
         {

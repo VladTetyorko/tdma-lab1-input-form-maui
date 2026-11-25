@@ -12,9 +12,8 @@ public class ShakeLifecycleTests
     private readonly FakeBarcodeScanner _scanner = new();
 
     private ProductListViewModel CreateList() => new(
-        _store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Session,
-        _store.AppState, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation,
-        _store.ShakeGesture, _store.Banner, _store.Logger<ProductListViewModel>());
+        _store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation,
+        _store.ShakeGesture, _store.Logger<ProductListViewModel>());
 
     private ScannerViewModel CreateScanner() => new(
         _scanner, _store.Catalog, _store.CurrentUser, _store.Guard, _store.Navigation, new FakeProductLookup(),

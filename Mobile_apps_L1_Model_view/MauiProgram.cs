@@ -72,6 +72,8 @@ public static class MauiProgram
         builder.Services.AddTransient<ScannerPage>();
         builder.Services.AddTransient<LogsPage>();
         builder.Services.AddTransient<MapPage>();
+        builder.Services.AddTransient<ReceivePage>();
+        builder.Services.AddTransient<IssuePage>();
 
         ConfigureLogging(builder);
         var settingsFile = ReadSettingsFile();

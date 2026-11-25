@@ -13,8 +13,8 @@ public class ProductListSearchTests
 
     public ProductListSearchTests()
     {
-        _viewModel = new ProductListViewModel(_store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Session, _store.AppState, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation,
-            _store.ShakeGesture, _store.Banner, _store.Logger<ProductListViewModel>());
+        _viewModel = new ProductListViewModel(_store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation,
+            _store.ShakeGesture, _store.Logger<ProductListViewModel>());
     }
 
     [Fact]

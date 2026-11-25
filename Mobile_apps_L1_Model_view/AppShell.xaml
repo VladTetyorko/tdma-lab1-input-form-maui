@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- The sign-in page is declared here; the main entries are added in code, because their shape depends on the device
+     (side panel on desktop, bottom tabs on a phone) -->
 <Shell
     x:Class="Mobile_apps_L1_Model_view.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
     Title="StockRoom"
+    FlyoutWidth="240"
     FlyoutBehavior="Disabled">
 
     <ShellContent
         Title="Sign in"
         ContentTemplate="{DataTemplate views:LoginPage}"
+        Shell.FlyoutItemIsVisible="False"
         Route="login" />
-
-    <ShellContent
-        Title="Products"
-        ContentTemplate="{DataTemplate views:ProductsPage}"
-        Route="products" />
 
 </Shell>

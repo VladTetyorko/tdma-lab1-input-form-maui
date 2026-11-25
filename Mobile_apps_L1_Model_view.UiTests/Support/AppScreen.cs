@@ -69,6 +69,12 @@ public sealed class AppScreen(AppSession session)
     {
         if (!IsShown("LoginEntry", TimeSpan.FromSeconds(8)))
         {
+            // Sign out lives in the side panel (desktop) or on the Settings tab (phone)
+            if (!IsShown("SignOutButton", TimeSpan.FromSeconds(2)))
+            {
+                Driver.FindElement(By.XPath("//*[@Name='Settings' or @text='Settings' or @content-desc='Settings']")).Click();
+            }
+
             Tap("SignOutButton");
         }
 

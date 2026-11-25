@@ -5,6 +5,7 @@
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.SettingsPage"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              x:DataType="viewModels:SettingsViewModel"
              Title="Settings">
 
@@ -14,6 +15,9 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="30,20" Spacing="8">
+            <components:StatusHeader />
+            <components:AccountSection />
+
             <Label Text="Theme" Style="{StaticResource SectionLabel}" />
             <Label Text="System follows the device setting." Style="{StaticResource CaptionLabel}" />
             <Picker ItemsSource="{Binding ThemeOptions}"

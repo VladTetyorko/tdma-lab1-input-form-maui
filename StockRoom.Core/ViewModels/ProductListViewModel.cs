@@ -12,23 +12,17 @@ public partial class ProductListViewModel(
     ICharacteristicService characteristics,
     IProductService productService,
     ICurrentUserService currentUser,
-    ISessionStore session,
-    IAppStateService appState,
     IStartupNavigator startup,
     IAlertService alerts,
     IPermissionGuard guard,
     INavigationService navigation,
     IShakeGesture shake,
-    ConnectivityBannerViewModel connectivity,
     ILogger<ProductListViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
     private Guid? _loadedForUserId;
     private bool _sortOptionsStale;
     private bool _productsStale;
-
-    // Offline / syncing / waiting changes, shown above the list
-    public ConnectivityBannerViewModel Connectivity { get; } = connectivity;
 
     // What the list shows: _all, filtered by SearchText, then sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
@@ -77,18 +71,16 @@ public partial class ProductListViewModel(
 
     partial void OnSearchTextChanged(string value) => ApplySort();
 
-    // The shake sensor and the banner listen only while the page is visible. Shake opens the scanner ("quick scan")
+    // The shake sensor listens only while the page is visible. Shake opens the scanner ("quick scan")
     public void OnAppearing()
     {
         EnsureLoadedCommand.Execute(null);
         shake.Start(() => navigation.GoToAsync(Routes.Scanner));
-        Connectivity.Attach();
     }
 
     public void OnDisappearing()
     {
         shake.Stop();
-        Connectivity.Detach();
     }
 
     // Called by the page every time it appears: loads once per signed-in user.
@@ -237,25 +229,6 @@ public partial class ProductListViewModel(
 
     [RelayCommand]
     private Task OpenMapAsync() => navigation.GoToAsync(Routes.Map);
-
-    [RelayCommand]
-    private async Task SignOutAsync()
-    {
-        logger.LogInformation("User {UserId} signed out", currentUser.CurrentUser?.Id);
-        currentUser.SignOut();
-        try
-        {
-            await session.ClearAsync();
-        }
-        catch (Exception ex)
-        {
-            // Signing out must work even when secure storage does not: the user is signed out in memory anyway
-            logger.LogWarning(ex, "The saved session could not be removed");
-        }
-
-        appState.Clear();
-        await navigation.GoToAsync(Routes.Absolute(Routes.Login));
-    }
 
     // The role check (the alert and the warning log are the guard's); the reason also goes to the status line
     private async Task<bool> RefusedAsync(string action)

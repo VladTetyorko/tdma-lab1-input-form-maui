@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<components:SessionView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                        xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+                        xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+                        xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
+                        x:Class="Mobile_apps_L1_Model_view.Views.Components.SidePanelHeader"
+                        x:DataType="viewModels:SessionStatusViewModel">
+    <VerticalStackLayout Padding="16" Spacing="2">
+        <Label Text="StockRoom" Style="{StaticResource TextHeading}" />
+        <Label Text="{Binding UserName}" Style="{StaticResource TextBodyStrong}" />
+        <Label Text="{Binding RoleText}" Style="{StaticResource TextCaption}" />
+    </VerticalStackLayout>
+</components:SessionView>

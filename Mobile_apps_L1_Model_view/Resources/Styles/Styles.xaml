@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <!-- Every colour is a semantic key from the active theme dictionary (Themes/LightGreen.xaml or Dark.xaml) read through
      DynamicResource, so a theme swap recolours the whole app live. No raw colours here, no shadows (design-system.md). -->
@@ -306,6 +306,7 @@
         <Setter Property="Shell.DisabledColor" Value="{DynamicResource TextDisabled}" />
         <Setter Property="Shell.UnselectedColor" Value="{DynamicResource TextSecondary}" />
         <Setter Property="Shell.NavBarHasShadow" Value="False" />
+        <Setter Property="Shell.FlyoutBackgroundColor" Value="{DynamicResource Surface}" />
         <Setter Property="Shell.TabBarBackgroundColor" Value="{DynamicResource Background}" />
         <Setter Property="Shell.TabBarForegroundColor" Value="{DynamicResource PrimaryText}" />
         <Setter Property="Shell.TabBarTitleColor" Value="{DynamicResource PrimaryText}" />

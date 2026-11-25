@@ -5,8 +5,8 @@ public sealed class ShellNavigationService : INavigationService
 {
     public string CurrentRoute => Routes.Leaf(Shell.Current?.CurrentState?.Location?.OriginalString);
 
-    public Task GoToAsync(string route) => Shell.Current.GoToAsync(route);
+    public Task GoToAsync(string route) => Shell.Current.GoToAsync(Routes.ForShell(route));
 
     public Task GoToAsync(string route, IDictionary<string, object> parameters) =>
-        Shell.Current.GoToAsync(route, parameters);
+        Shell.Current.GoToAsync(Routes.ForShell(route), parameters);
 }

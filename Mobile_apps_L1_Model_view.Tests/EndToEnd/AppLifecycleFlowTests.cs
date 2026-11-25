@@ -99,8 +99,8 @@ public class AppLifecycleFlowTests
             Assert.Equal(Routes.Products, await second.GetRequiredService<IAppLifecycleService>().RestoreAsync());
             Assert.Equal(Role.Manager, second.GetRequiredService<ICurrentUserService>().CurrentRole);
 
-            var list = second.GetRequiredService<ProductListViewModel>();
-            await list.SignOutCommand.ExecuteAsync(null);
+            var status = second.GetRequiredService<SessionStatusViewModel>();
+            await status.SignOutCommand.ExecuteAsync(null);
             Assert.False(secrets.Values.ContainsKey(SessionStore.TokenKey));
         }
 

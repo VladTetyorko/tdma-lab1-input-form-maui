@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              xmlns:converters="clr-namespace:Mobile_apps_L1_Model_view.Converters"
              xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
@@ -19,14 +20,7 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" Padding="20,10" RowSpacing="10">
-        <VerticalStackLayout Grid.Row="0" Spacing="2">
-            <Label Text="{Binding CurrentUserName}" Style="{StaticResource CaptionLabel}" />
-            <!-- Offline in the error color, every other state in the caption style -->
-            <Label Text="{Binding Connectivity.Text}" Style="{StaticResource ErrorLabel}"
-                   IsVisible="{Binding Connectivity.IsOffline}" AutomationId="ConnectivityBannerOffline" />
-            <Label Text="{Binding Connectivity.Text}" Style="{StaticResource CaptionLabel}"
-                   IsVisible="{Binding Connectivity.IsNotOffline}" AutomationId="ConnectivityBanner" />
-        </VerticalStackLayout>
+        <components:StatusHeader Grid.Row="0" />
 
         <!-- Filters by name, barcode and characteristic values; combined with the sort below -->
         <SearchBar Grid.Row="1" Placeholder="Search by name, barcode or value"
@@ -89,8 +83,6 @@
                     IsVisible="{Binding CanManageCharacteristics}" Margin="0,0,10,6" />
             <Button StyleClass="Outlined" Text="Scan" Command="{Binding ScanCommand}" Margin="0,0,10,6" AutomationId="ScanButton" />
             <Button StyleClass="Outlined" Text="Map" Command="{Binding OpenMapCommand}" Margin="0,0,10,6" AutomationId="MapButton" />
-            <Button StyleClass="Outlined" Text="Settings" Command="{Binding OpenSettingsCommand}" Margin="0,0,10,6" AutomationId="SettingsButton" />
-            <Button StyleClass="Outlined" Text="Sign out" Command="{Binding SignOutCommand}" Margin="0,0,10,6" AutomationId="SignOutButton" />
         </FlexLayout>
     </Grid>
 </ContentPage>

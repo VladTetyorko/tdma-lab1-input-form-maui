@@ -25,9 +25,7 @@ public class RoleRefusalTests
     }
 
     private ProductListViewModel CreateList() => new(
-        _store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Session,
-        _store.AppState, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation, _store.ShakeGesture, _store.Banner,
-        NullLogger<ProductListViewModel>.Instance);
+        _store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation, _store.ShakeGesture, NullLogger<ProductListViewModel>.Instance);
 
     [Theory]
     [InlineData(Role.Storekeeper)]
