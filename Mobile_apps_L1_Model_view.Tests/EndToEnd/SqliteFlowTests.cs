@@ -55,6 +55,7 @@ public class SqliteFlowTests : IDisposable
         services.AddSingleton<IMainThread>(new FakeMainThread());
         services.AddSingleton<IKeyboard>(new FakeKeyboard());
         services.AddSingleton<IConfirmSheet>(new FakeConfirmSheet());
+        services.AddSingleton<ISheetService>(new FakeSheetService());
         _app = services.BuildServiceProvider();
         return _app;
     }
@@ -228,6 +229,6 @@ public class SqliteFlowTests : IDisposable
         detail.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = summary });
         await detail.LoadCommand.ExecuteAsync(null);
 
-        Assert.Contains(detail.History, h => h.Item.Counterparty == "Acme Ltd");
+        Assert.Contains(detail.History.SelectMany(d => d.Rows), h => h.Entry.Counterparty == "Acme Ltd");
     }
 }

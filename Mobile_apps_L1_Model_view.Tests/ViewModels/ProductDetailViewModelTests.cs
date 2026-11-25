@@ -2,6 +2,7 @@ using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
 using Mobile_apps_L1_Model_view.ViewModels;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.Tests.ViewModels;
 
@@ -19,7 +20,7 @@ public class ProductDetailViewModelTests
 
     private ProductDetailViewModel NewViewModel() => new(
         _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
-        _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback, _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()), _store.Clock);
+        _store.ProductService, _store.PhotoEditor, _store.Feed, _store.Viewer, _store.Sheets, _store.Confirm, _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()), _store.Clock);
 
     [Fact]
     public async Task ApplyQueryAttributes_ShowsTheSelectedProductBeforeLoad()
@@ -67,7 +68,73 @@ public class ProductDetailViewModelTests
 
         await ApplyAsync(drill.Id);
 
-        Assert.Equal(new[] { 2, 5 }, _viewModel.History.Select(h => h.Item.Quantity));
+        Assert.Equal(new[] { 2, 5 }, _viewModel.History.SelectMany(day => day.Rows).Select(row => row.Entry.Quantity));
+    }
+
+    [Theory]
+    [InlineData(Role.Storekeeper)]
+    [InlineData(Role.Driver)]
+    public async Task Menu_OfAnotherRole_HasOnlyRecordWithReason(Role role)
+    {
+        await _store.SignInAsync(role);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        await ApplyAsync(drill.Id);
+        _store.Sheets.OnShow = FakeSheetService.DismissAsync;
+
+        await _viewModel.OpenMenuCommand.ExecuteAsync(null);
+        await _viewModel.OpenPhotoMenuCommand.ExecuteAsync(null);
+        await _viewModel.DeleteCommand.ExecuteAsync(null);
+
+        var menu = Assert.IsType<ActionSheetViewModel>(Assert.Single(_store.Sheets.Shown));
+        Assert.Equal(["RecordOperationButton"], menu.Actions.Select(a => a.Id));
+        Assert.NotNull(await _store.Products.GetByIdAsync(drill.Id));
+        Assert.Equal($"Your role ({role}) cannot delete products.", _viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task Menu_OfTheManager_EditsAndDeletes()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        await ApplyAsync(drill.Id);
+        var choose = "EditDetailButton";
+        _store.Sheets.OnShow = sheet =>
+        {
+            var menu = (ActionSheetViewModel)sheet;
+            menu.ChooseCommand.Execute(menu.Actions.Single(a => a.Id == choose));
+            return Task.CompletedTask;
+        };
+
+        await _viewModel.OpenMenuCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.IsEditing);
+        _viewModel.ToggleEditCommand.Execute(null);
+
+        choose = "DeleteProductButton";
+        await _viewModel.OpenMenuCommand.ExecuteAsync(null);
+
+        Assert.Null(await _store.Products.GetByIdAsync(drill.Id));
+        Assert.Equal(Routes.Back, _store.Navigation.RequestedRoutes.Last());
+    }
+
+    [Fact]
+    public async Task History_ShowsAtMostFive_AndItsHeaderOpensActivityForTheProduct()
+    {
+        var manager = await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        for (var i = 1; i <= 7; i++)
+        {
+            await _store.Operations.AddAsync(new Operation
+            {
+                ProductId = drill.Id, Direction = OperationDirection.In, Quantity = i, CreatedByUserId = manager.Id,
+                CreatedAt = new DateTime(2026, 1, i, 9, 0, 0, DateTimeKind.Utc)
+            });
+        }
+
+        await ApplyAsync(drill.Id);
+        await _viewModel.OpenHistoryCommand.ExecuteAsync(null);
+
+        Assert.Equal(5, _viewModel.History.Single().Rows.Count);
+        Assert.Equal(Routes.Activity, _store.Navigation.RequestedRoutes.Last());
     }
 
     [Fact]

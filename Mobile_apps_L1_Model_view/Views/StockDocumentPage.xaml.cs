@@ -5,7 +5,7 @@ using Mobile_apps_L1_Model_view.ViewModels;
 namespace Mobile_apps_L1_Model_view.Views;
 
 // One page for both batch directions, created as ReceivePage or IssuePage. The code here is about focus only
-public partial class StockDocumentPage : ContentPage
+public partial class StockDocumentPage : ContentPage, IQueryAttributable
 {
     private readonly StockDocumentViewModel _viewModel;
     private readonly bool _phone = DeviceInfo.Current.Idiom == DeviceIdiom.Phone;
@@ -32,6 +32,8 @@ public partial class StockDocumentPage : ContentPage
             }
         };
     }
+
+    public void ApplyQueryAttributes(IDictionary<string, object> query) => _viewModel.ApplyQueryAttributes(query);
 
     // The system Back button does the same as the arrow of the app bar
     protected override bool OnBackButtonPressed()

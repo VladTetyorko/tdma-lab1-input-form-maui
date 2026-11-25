@@ -66,11 +66,16 @@ public class DeviceFlowTests : IDisposable
         var detail = Get<ProductDetailViewModel>();
         detail.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = product });
         await detail.LoadCommand.ExecuteAsync(null);
-        var line = Assert.Single(detail.History, h => h.HasLocation);
-        Assert.Equal(DropOff, line.Item.Location);
+        var line = Assert.Single(detail.History.SelectMany(d => d.Rows), h => h.Entry.Location is not null);
+        Assert.Equal(DropOff, line.Entry.Location);
 
         // "Open in maps" from the history goes to the maps launcher
-        await detail.OpenLocationCommand.ExecuteAsync(line);
+        Get<FakeSheetService>().OnShow = sheet =>
+        {
+            ((Mobile_apps_L1_Model_view.ViewModels.Sheets.OperationSheetViewModel)sheet).ShowOnMapCommand.Execute(null);
+            return Task.CompletedTask;
+        };
+        await detail.OpenHistoryRowCommand.ExecuteAsync(line);
         Assert.Equal(DropOff, Assert.Single(Get<FakeMapLauncher>().Opened).Location);
 
         // and on the map page

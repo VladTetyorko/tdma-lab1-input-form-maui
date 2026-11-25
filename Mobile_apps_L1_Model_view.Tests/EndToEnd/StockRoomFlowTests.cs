@@ -202,8 +202,8 @@ public class StockRoomFlowTests : IDisposable
         // The detail page reloads its data when it appears again
         await detail.LoadCommand.ExecuteAsync(null);
         Assert.Equal(34, detail.Quantity);
-        Assert.Equal(OperationDirection.Out, detail.History[0].Item.Direction);
-        Assert.Equal(2, detail.History[0].Item.Quantity);
+        Assert.Equal(OperationDirection.Out, detail.History[0].Rows[0].Entry.Direction);
+        Assert.Equal(2, detail.History[0].Rows[0].Entry.Quantity);
     }
 
     [Fact]

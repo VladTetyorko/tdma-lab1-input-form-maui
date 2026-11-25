@@ -10,7 +10,7 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 
 // Receive goods (In) or issue goods (Out): scan, pick or type products, adjust quantities, commit the whole batch.
 // The line rules live in StockDocumentDraft and the recording in IStockDocumentService; this class only orchestrates
-public sealed partial class StockDocumentViewModel : ObservableObject, IPageLifecycleAware
+public sealed partial class StockDocumentViewModel : ObservableObject, IPageLifecycleAware, INavigationParameterReceiver
 {
     private const string WholeNumberMessage = "Enter a whole number of units.";
 
@@ -166,6 +166,15 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         currentUser.CurrentUser is { } user && RolePermissions.CanManageProducts(user.Role);
 
     private bool CanCommit => !IsBusy && Lines.Count > 0 && Lines.All(line => !line.IsInvalid);
+
+    // A page that starts a document for one product (the product page) names it, so its quantity gets the cursor
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue(NavigationKeys.Barcode, out var value) && value is string barcode)
+        {
+            _focusBarcode = barcode;
+        }
+    }
 
     public void OnAppearing() => AppearCommand.Execute(null);
 
