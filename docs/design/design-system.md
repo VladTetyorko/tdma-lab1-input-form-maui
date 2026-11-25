@@ -187,8 +187,9 @@ if not, use a fixed `WidthRequest` cell with end alignment (good enough) — Q10
 8. One empty-state message per page.
 9. Confirmations are themed (a bottom sheet on phones).
 
-Keyboard (Android): the window resizes (`adjustResize`), page grids use `SafeAreaEdges="Container"`, so the bottom
-bar stays above the keyboard and above the system navigation bar.
+Keyboard (Android): page grids use `SafeAreaEdges="Container, Container, Container, All"`, so the bottom bar stays
+above the keyboard and above the system navigation bar (the window is edge to edge; `adjustResize` alone is not enough,
+seen on the emulator).
 
 ## 7. States
 

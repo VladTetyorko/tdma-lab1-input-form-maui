@@ -33,14 +33,8 @@
                                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="12,6" ColumnSpacing="8">
                                         <components:HighlightedLabel Value="{Binding Suggestion.Title}"
                                                                      Ranges="{Binding Suggestion.NameRanges}"
-                                                                     Style="{StaticResource TextBodyStrong}">
-                                            <components:HighlightedLabel.Triggers>
-                                                <DataTrigger TargetType="components:HighlightedLabel" Binding="{Binding IsUnavailable}"
-                                                             Value="True">
-                                                    <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
-                                                </DataTrigger>
-                                            </components:HighlightedLabel.Triggers>
-                                        </components:HighlightedLabel>
+                                                                     Style="{StaticResource TextBodyStrong}"
+                                                                     IsDimmed="{Binding IsUnavailable}" />
                                         <Label Grid.Column="1" Text="{Binding Suggestion.StockText}" Style="{StaticResource TextCaption}"
                                                IsVisible="{Binding IsAvailable}" />
                                         <Border Grid.Column="1" StyleClass="ChipDanger" HorizontalOptions="End"

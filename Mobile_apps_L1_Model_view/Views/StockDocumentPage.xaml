@@ -16,7 +16,7 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
         <components:AppBar Title="{Binding Title}" ActionGlyph="{StaticResource IconDelete}"
                            ActionDescription="Discard draft" ActionCommand="{Binding DiscardCommand}"
                            ActionId="DiscardDraftButton" IsActionShown="{Binding HasLines}" />
@@ -73,27 +73,31 @@
                                                 IsVisible="{Binding IsUnknown}" CommandParameter="{Binding .}"
                                                 Command="{Binding BindingContext.CreateProductCommand, Source={x:Reference ThisPage}}" />
                                     </VerticalStackLayout>
-                                    <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                    <Border Grid.Column="1" StrokeShape="RoundRectangle 24" HeightRequest="{StaticResource StepperHeight}"
+                                            Stroke="{DynamicResource BorderStrongBrush}" VerticalOptions="Center">
+                                    <HorizontalStackLayout>
                                         <Button Text="{StaticResource IconSubtract}" StyleClass="Icon"
                                                 SemanticProperties.Description="{Binding Name, StringFormat='One less {0}'}"
                                                 Command="{Binding BindingContext.DecrementCommand, Source={x:Reference ThisPage}}"
                                                 CommandParameter="{Binding .}" AutomationId="DecrementLineButton" />
-                                        <Entry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric" WidthRequest="64"
-                                               HorizontalTextAlignment="End"
+                                        <components:BorderlessEntry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric"
+                                               WidthRequest="56" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
                                                SemanticProperties.Description="{Binding Name, StringFormat='Quantity of {0}'}"
                                                ReturnCommand="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}"
                                                ReturnCommandParameter="{Binding .}"
                                                AutomationId="{Binding Barcode, StringFormat='LineQuantity_{0}'}">
-                                            <Entry.Behaviors>
+                                            <components:BorderlessEntry.Behaviors>
                                                 <views:UnfocusCommandBehavior Command="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}" />
-                                            </Entry.Behaviors>
-                                        </Entry>
+                                            </components:BorderlessEntry.Behaviors>
+                                        </components:BorderlessEntry>
                                         <Button Text="{StaticResource IconAdd}" StyleClass="Icon"
                                                 SemanticProperties.Description="{Binding Name, StringFormat='One more {0}'}"
                                                 Command="{Binding BindingContext.IncrementCommand, Source={x:Reference ThisPage}}"
                                                 CommandParameter="{Binding .}" AutomationId="IncrementLineButton" />
                                     </HorizontalStackLayout>
-                                    <Button Grid.Column="2" Text="{StaticResource IconDismiss}" StyleClass="IconDanger" VerticalOptions="Center"
+                                    </Border>
+                                    <Button Grid.Column="2" Text="{StaticResource IconDismiss}" Style="{StaticResource AppBarButton}"
+                                            Margin="8,0,0,0" TextColor="{DynamicResource TextSecondary}" FontSize="20"
                                             SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}"
                                             Command="{Binding BindingContext.RemoveLineCommand, Source={x:Reference ThisPage}}"
                                             CommandParameter="{Binding .}" AutomationId="RemoveLineButton" />
@@ -104,8 +108,7 @@
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
 
-                <Button Text="{Binding CounterpartyLabel, StringFormat='{0} and note'}" StyleClass="Ghost"
-                        HorizontalOptions="Start" Command="{Binding ToggleDetailsCommand}" AutomationId="DetailsButton" />
+                <Button Text="{Binding CounterpartyLabel, StringFormat='{0} and note  ▾'}" StyleClass="Outlined" Command="{Binding ToggleDetailsCommand}" AutomationId="DetailsButton" />
                 <VerticalStackLayout Spacing="8" IsVisible="{Binding IsDetailsOpen}" MaximumWidthRequest="720">
                     <components:OutlinedField Label="{Binding CounterpartyLabel}" EntryId="CounterpartyEntry"
                                               Text="{Binding Counterparty, Mode=TwoWay}" />

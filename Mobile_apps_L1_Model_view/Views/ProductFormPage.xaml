@@ -16,7 +16,7 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
         <components:AppBar Title="{Binding PageTitle}" BackCommand="{Binding CancelCommand}" />
         <ScrollView Grid.Row="1">
             <!-- One column on a phone, photo beside the fields on a wide window (code-behind) -->

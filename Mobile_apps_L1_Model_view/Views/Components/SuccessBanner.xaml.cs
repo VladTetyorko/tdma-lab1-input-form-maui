@@ -2,7 +2,7 @@ namespace Mobile_apps_L1_Model_view.Views.Components;
 
 public partial class SuccessBanner : ContentView
 {
-    private static readonly TimeSpan Visible = TimeSpan.FromSeconds(4);
+    private static readonly TimeSpan Visible = TimeSpan.FromSeconds(6);
 
     public static readonly BindableProperty MessageProperty = BindableProperty.Create(nameof(Message), typeof(string),
         typeof(SuccessBanner), propertyChanged: (banner, _, value) => ((SuccessBanner)banner).Show((string?)value));

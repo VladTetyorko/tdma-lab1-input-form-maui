@@ -16,7 +16,7 @@
     </ContentPage.Behaviors>
 
     <!-- Map and Characteristics are in the drawer; the Manager adds a product with the button at the bottom -->
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
         <components:AppBar Title="Products" Route="products"
                            ActionGlyph="{StaticResource IconScan}" ActionDescription="Scan a barcode"
                            ActionCommand="{Binding ScanCommand}" ActionId="ScanButton" />
@@ -38,9 +38,10 @@
                         Background="{DynamicResource BackgroundBrush}">
                     <Grid>
                         <Label Text="{Binding SelectedExtraColumn, StringFormat='Column: {0} ▾'}"
-                               Style="{StaticResource ChipNeutralText}" Padding="4,6" />
+                               Style="{StaticResource ChipNeutralText}" Padding="4,6" VerticalOptions="Center" />
                         <!-- Invisible, on top: a tap on the chip opens the choice -->
                         <Picker ItemsSource="{Binding ExtraColumnOptions}" Opacity="0" Title="Extra column"
+                                HeightRequest="32" MinimumHeightRequest="32"
                                 SelectedItem="{Binding SelectedExtraColumn, Mode=TwoWay}" AutomationId="ExtraColumnPicker"
                                 SemanticProperties.Description="Extra column" />
                     </Grid>

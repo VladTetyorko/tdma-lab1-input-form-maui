@@ -16,7 +16,7 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
         <components:AppBar Title="Product" BackCommand="{Binding GoBackCommand}"
                            ActionGlyph="{StaticResource IconEdit}" ActionDescription="Edit product, or cancel editing"
                            ActionCommand="{Binding ToggleEditCommand}" ActionId="EditDetailButton"
@@ -75,7 +75,13 @@
                     </Grid>
                 </VerticalStackLayout>
 
-                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="DetailStatus" />
+                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="DetailStatus">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding StatusMessage}" Value="">
+                            <Setter Property="IsVisible" Value="False" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
 
                 <Border StyleClass="SectionCard">
                     <VerticalStackLayout Spacing="8">

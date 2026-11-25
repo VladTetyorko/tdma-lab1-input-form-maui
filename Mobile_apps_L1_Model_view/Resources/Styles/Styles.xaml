@@ -9,6 +9,7 @@
     <!-- Sizes (design-system.md section 6) -->
     <x:Double x:Key="DrawerWidth">320</x:Double>
     <x:Double x:Key="AppBarHeight">56</x:Double>
+    <x:Double x:Key="StepperHeight">50</x:Double>
 
     <!-- Transparent button laid over a composed row, which makes the row one focusable button -->
     <Style TargetType="Button" Class="RowOverlay">
