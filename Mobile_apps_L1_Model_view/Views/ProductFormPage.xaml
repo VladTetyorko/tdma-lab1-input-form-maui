@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Order: barcode (camera first, typing below), name with a warning for products that exist, photo, and one big
-     action at the bottom -->
+<!-- Editing a product: barcode, name with a warning for products that exist, photo, and one big action at the
+     bottom. Adding one is ProductWizardPage -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
@@ -33,9 +33,6 @@
                                               Keyboard="Numeric" MaxLength="13" EntryId="BarcodeEntry"
                                               ErrorId="BarcodeErrorLabel" ErrorText="{Binding BarcodeError}"
                                               Text="{Binding Barcode, Mode=TwoWay}" />
-                    <Button Text="Scan barcode" StyleClass="Outlined" HorizontalOptions="Start"
-                            Command="{Binding StartScanCommand}" IsVisible="{Binding CanStartScan}"
-                            AutomationId="ScanBarcodeButton" />
                     <Label Text="{Binding LookupText}" Style="{StaticResource TextCaption}" AutomationId="LookupLabel" />
 
                     <components:QuickSearchBox x:Name="NameField" BindingContext="{Binding QuickSearch}" Label="Name"
@@ -49,14 +46,8 @@
                     <Label Text="Photo (optional)" Style="{StaticResource TextCaption}" />
                     <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
                            Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding CanManagePhotos}">
-                        <Button StyleClass="Outlined" Text="Take photo" Command="{Binding TakePhotoCommand}"
-                                AutomationId="TakePhotoButton" IsVisible="{Binding Photo.IsCaptureSupported}" />
-                        <Button Grid.Column="1" StyleClass="Outlined" Text="Pick photo" Command="{Binding PickPhotoCommand}"
-                                AutomationId="PickPhotoButton" />
-                    </Grid>
-                    <Button StyleClass="Danger" Text="Remove photo" Command="{Binding RemovePhotoCommand}"
-                            AutomationId="RemovePhotoButton" IsVisible="{Binding Photo.HasPhoto}" />
+                    <Button StyleClass="Outlined" Text="Change photo" Command="{Binding ChangePhotoMenuCommand}"
+                            HorizontalOptions="Start" IsVisible="{Binding CanManagePhotos}" AutomationId="AddPhotoButton" />
 
                     <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
                     <Label Text="{Binding DataSource}" Style="{StaticResource CaptionLabel}" />
@@ -65,8 +56,6 @@
         </ScrollView>
 
         <components:BottomActionBar Grid.Row="2" ButtonId="SaveProductButton" Text="{Binding SaveText}"
-                                    Command="{Binding SaveCommand}" Caption="{Binding SaveHint}"
-                                    SecondaryText="Cancel" SecondaryId="CancelProductButton"
-                                    SecondaryCommand="{Binding CancelCommand}" />
+                                    Command="{Binding SaveCommand}" Caption="{Binding SaveHint}" />
     </Grid>
 </ContentPage>

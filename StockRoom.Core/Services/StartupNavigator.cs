@@ -21,8 +21,8 @@ public sealed class StartupNavigator(
             case Routes.Receive or Routes.Issue:
                 await navigation.GoToAsync(resumeRoute);
                 break;
-            case Routes.ProductForm when appState.GetDraft<ProductFormDraft>() is not null:
-                await navigation.GoToAsync(Routes.ProductForm);
+            case Routes.NewProduct when appState.GetDraft<ProductFormDraft>() is not null:
+                await navigation.GoToAsync(Routes.NewProduct);
                 break;
             case Routes.Operation when appState.GetDraft<OperationDraft>() is { } operation:
                 await OpenForProductAsync(Routes.Operation, operation.Barcode);

@@ -173,7 +173,7 @@ public class QuickSearchViewModelTests
         await viewModel.CreateCommand.ExecuteAsync(null);
 
         Assert.Equal(1, requested);
-        Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.NewProduct, Assert.Single(_store.Navigation.RequestedRoutes));
         Assert.Equal("hammer", _store.Navigation.RequestedParameters[0]![NavigationKeys.ProductName]);
     }
 

@@ -64,7 +64,7 @@ public class SearchViewModelTests
         Assert.True(viewModel.CanCreateUnknown);
         Assert.Contains("Nutella", viewModel.LookupText);
         await viewModel.CreateCommand.ExecuteAsync(null);
-        Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.NewProduct, Assert.Single(_store.Navigation.RequestedRoutes));
         Assert.Equal("Nutella", _store.Navigation.RequestedParameters[0]![NavigationKeys.ProductName]);
     }
 

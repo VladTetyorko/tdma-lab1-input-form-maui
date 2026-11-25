@@ -7,6 +7,7 @@ public static class Routes
     public const string Home = "home";
     public const string Products = "products";
     public const string ProductForm = "productform";
+    public const string NewProduct = "newproduct";
     public const string ProductDetail = "productdetail";
     public const string Characteristics = "characteristics";
     public const string Operation = "operation";

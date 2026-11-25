@@ -16,6 +16,7 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
         Routing.RegisterRoute(Routes.ProductForm, typeof(ProductFormPage));
+        Routing.RegisterRoute(Routes.NewProduct, typeof(ProductWizardPage));
         Routing.RegisterRoute(Routes.ProductDetail, typeof(ProductDetailPage));
         Routing.RegisterRoute(Routes.Characteristics, typeof(CharacteristicsPage));
         Routing.RegisterRoute(Routes.Operation, typeof(OperationPage));

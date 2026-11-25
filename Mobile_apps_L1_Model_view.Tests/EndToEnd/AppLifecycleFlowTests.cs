@@ -209,7 +209,7 @@ public class AppLifecycleFlowTests
 
         // The form opens with the barcode filled in
         await search.CreateCommand.ExecuteAsync(null);
-        Assert.Equal(Routes.ProductForm, navigation.RequestedRoutes.Last());
+        Assert.Equal(Routes.NewProduct, navigation.RequestedRoutes.Last());
         var form = provider.GetRequiredService<ProductFormViewModel>();
         form.ApplyQueryAttributes(LastParameters(navigation));
         form.OnAppearing();

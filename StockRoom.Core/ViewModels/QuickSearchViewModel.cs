@@ -27,7 +27,7 @@ public sealed partial class QuickSearchViewModel(
     // Enter on a barcode that no highlighted row stands for (also an unknown barcode)
     public event EventHandler<string>? SubmittedText;
 
-    // The product form is about to open for something that was not found
+    // The new-product wizard is about to open for something that was not found
     public event EventHandler? CreateRequested;
 
     // At most so many rows: 5 on a phone, 8 on a desktop (set by the view)
@@ -175,7 +175,7 @@ public sealed partial class QuickSearchViewModel(
         logger.LogInformation("Opening the product form from the quick search");
         Query = string.Empty;
         CreateRequested?.Invoke(this, EventArgs.Empty);
-        await navigation.GoToAsync(Routes.ProductForm, new Dictionary<string, object> { [key] = text });
+        await navigation.GoToAsync(Routes.NewProduct, new Dictionary<string, object> { [key] = text });
     }
 
     // Arrows wrap around the ends

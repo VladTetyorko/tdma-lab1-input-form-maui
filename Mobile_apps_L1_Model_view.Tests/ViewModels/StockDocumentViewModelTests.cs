@@ -138,7 +138,7 @@ public class StockDocumentViewModelTests
         Assert.False(viewModel.CommitCommand.CanExecute(null));
         await viewModel.CreateProductCommand.ExecuteAsync(line);
 
-        Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.NewProduct, Assert.Single(_store.Navigation.RequestedRoutes));
     }
 
     [Fact]

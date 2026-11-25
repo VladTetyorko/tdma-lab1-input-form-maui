@@ -54,7 +54,7 @@ public class StockRoomFlowTests : IDisposable
         await list.LoadCommand.ExecuteAsync(null);
         Assert.True(list.CanAddProduct);
         await list.AddProductCommand.ExecuteAsync(null);
-        Assert.Equal(Routes.ProductForm, _navigation.RequestedRoutes.Last());
+        Assert.Equal(Routes.NewProduct, _navigation.RequestedRoutes.Last());
 
         var form = _provider.GetRequiredService<ProductFormViewModel>();
         form.Name = "Cordless Saw";

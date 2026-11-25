@@ -362,7 +362,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         await drafts.SaveAsync(_draft);
     }
 
-    // Manager only: opens the product form with the unknown barcode
+    // Manager only: opens the new-product wizard with the unknown barcode
     [RelayCommand]
     private async Task CreateProductAsync(StockDocumentLineItem? line)
     {
@@ -379,7 +379,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
         _createdProduct = true;
         _creating = line.Barcode;
-        await navigation.GoToAsync(Routes.ProductForm,
+        await navigation.GoToAsync(Routes.NewProduct,
             new Dictionary<string, object> { [NavigationKeys.Barcode] = line.Barcode });
     }
 

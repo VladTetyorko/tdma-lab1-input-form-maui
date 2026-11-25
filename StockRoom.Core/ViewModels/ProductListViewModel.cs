@@ -252,7 +252,7 @@ public partial class ProductListViewModel(
             return;
         }
 
-        await navigation.GoToAsync(Routes.ProductForm);
+        await navigation.GoToAsync(Routes.NewProduct);
     }
 
     [RelayCommand(CanExecute = nameof(CanManageProducts))]

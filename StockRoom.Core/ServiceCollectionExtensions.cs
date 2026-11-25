@@ -97,6 +97,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DrawerViewModel>();
         services.AddSingleton<BottomNavViewModel>();
         services.AddTransient<ProductFormViewModel>();
+        services.AddTransient<ProductWizardViewModel>();
         services.AddTransient<ProductDetailViewModel>();
         services.AddTransient<CharacteristicsViewModel>();
         services.AddTransient<OperationViewModel>();

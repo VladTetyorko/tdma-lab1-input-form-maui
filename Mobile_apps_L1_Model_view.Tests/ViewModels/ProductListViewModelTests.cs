@@ -91,7 +91,7 @@ public class ProductListViewModelTests
 
         await _viewModel.AddProductCommand.ExecuteAsync(null);
 
-        Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.NewProduct, Assert.Single(_store.Navigation.RequestedRoutes));
     }
 
     [Fact]

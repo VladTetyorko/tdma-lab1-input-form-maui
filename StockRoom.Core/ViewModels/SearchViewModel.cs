@@ -159,7 +159,7 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
             parameters[NavigationKeys.DataSource] = _lookup.Attribution;
         }
 
-        await _navigation.GoToAsync(Routes.ProductForm, parameters);
+        await _navigation.GoToAsync(Routes.NewProduct, parameters);
     }
 
     private async Task FindAsync(string? text)

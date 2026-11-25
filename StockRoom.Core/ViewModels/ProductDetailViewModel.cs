@@ -237,29 +237,17 @@ public partial class ProductDetailViewModel(
             return;
         }
 
-        List<SheetAction> actions = [];
-        if (Photo.IsCaptureSupported)
-        {
-            actions.Add(new SheetAction("TakePhotoButton", "Take photo"));
-        }
-
-        actions.Add(new SheetAction("PickPhotoButton", "Pick photo"));
-        if (Photo.HasPhoto)
-        {
-            actions.Add(new SheetAction("RemovePhotoButton", "Remove photo", true));
-        }
-
-        var menu = new ActionSheetViewModel("Photo", [.. actions]);
+        var menu = PhotoMenu.For(Photo);
         await sheets.ShowAsync(menu);
         switch (menu.Chosen)
         {
-            case "TakePhotoButton":
+            case PhotoMenu.Take:
                 await TakePhotoAsync();
                 break;
-            case "PickPhotoButton":
+            case PhotoMenu.Pick:
                 await PickPhotoAsync();
                 break;
-            case "RemovePhotoButton":
+            case PhotoMenu.Remove:
                 await RemovePhotoAsync();
                 break;
         }

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
@@ -21,6 +22,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
     private readonly IProductLookup lookup;
     private readonly ILogger<ProductFormViewModel> logger;
     private readonly IConfirmSheet confirm;
+    private readonly ISheetService? sheets;
     private bool _opened;
     private bool _prefilled;
     private string _lookedUp = string.Empty;
@@ -43,8 +45,10 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         IProductLookup lookup,
         QuickSearchViewModel quickSearch,
         IConfirmSheet confirm,
-        ILogger<ProductFormViewModel> logger)
+        ILogger<ProductFormViewModel> logger,
+        ISheetService? sheets = null)
     {
+        this.sheets = sheets;
         this.confirm = confirm;
         this.validator = validator;
         this.productService = productService;
@@ -80,6 +84,12 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
 
     // Why it is disabled, or empty
     public string SaveHint => CanSave() ? string.Empty : "Enter a name and a valid barcode first";
+
+    // What Open Food Facts last said about the barcode, when it knew it
+    public LookupResult? Found { get; private set; }
+
+    // Runs after a new product was added, before the page goes back; may add to what is sent back (the wizard's values)
+    public Func<ProductSummary, Task<ProductSummary>>? Saved { get; set; }
 
     // The name field with its suggestions of products that already exist
     public QuickSearchViewModel QuickSearch { get; }
@@ -291,6 +301,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
             return;
         }
 
+        Found = result;
         if (Name.Length == 0)
         {
             Name = result.Name;
@@ -385,9 +396,34 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         var summary = _editing is null
             ? new ProductSummary(product.Id, product.Name, product.Barcode, 0) { PhotoPath = product.PhotoPath }
             : _editing with { Name = product.Name, Barcode = product.Barcode, PhotoPath = product.PhotoPath };
+        if (_editing is null && Saved is not null)
+        {
+            summary = await Saved(summary);
+        }
+
         await navigation.GoToAsync(Routes.Back, new Dictionary<string, object>
         {
             [NavigationKeys.UpdatedProduct] = summary
+        });
+    }
+
+    // "Change photo" of the edit form: Take / Pick / Remove in a menu
+    [RelayCommand]
+    private async Task ChangePhotoMenuAsync()
+    {
+        if (sheets is null)
+        {
+            return;
+        }
+
+        var menu = PhotoMenu.For(Photo);
+        await sheets.ShowAsync(menu);
+        await (menu.Chosen switch
+        {
+            PhotoMenu.Take => TakePhotoAsync(),
+            PhotoMenu.Pick => PickPhotoAsync(),
+            PhotoMenu.Remove => RemovePhotoAsync(),
+            _ => Task.CompletedTask
         });
     }
 
