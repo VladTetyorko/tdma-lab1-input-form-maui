@@ -34,6 +34,13 @@ public partial class StockDocumentPage : ContentPage
         };
     }
 
+    // The system Back button does the same as the arrow of the app bar
+    protected override bool OnBackButtonPressed()
+    {
+        _viewModel.GoBackCommand.Execute(null);
+        return true;
+    }
+
     private void FocusSearch() => Dispatcher.Dispatch(Search.FocusInput);
 
     // On a phone the keyboard has been closed by the search; with a working camera the box also gives up the focus,

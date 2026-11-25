@@ -82,6 +82,8 @@ public static class MauiProgram
         builder.Services.AddTransient<OperationPage>();
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<ScannerPage>();
+        builder.Services.AddTransient<SearchPage>();
+        builder.Services.AddTransient<ActivityPage>();
         builder.Services.AddTransient<LogsPage>();
         builder.Services.AddTransient<MapPage>();
 

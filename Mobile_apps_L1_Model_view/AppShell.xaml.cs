@@ -5,10 +5,11 @@ using Mobile_apps_L1_Model_view.Views.Components;
 
 namespace Mobile_apps_L1_Model_view;
 
-// Routes, the three root pages and the drawer. What the drawer offers to a role is DrawerViewModel's job
+// Routes, the four root pages and the drawer. What a role is offered is DrawerViewModel's and BottomNavViewModel's job
 public partial class AppShell : Shell
 {
     private readonly DrawerViewModel _drawer;
+    private readonly BottomNavViewModel _bottom;
 
     // startRoute: the root page to show first (Routes.Login or Routes.Home)
     public AppShell(IServiceProvider services, string startRoute = Routes.Login)
@@ -23,10 +24,14 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Map, typeof(MapPage));
         Routing.RegisterRoute(Routes.Receive, typeof(ReceivePage));
         Routing.RegisterRoute(Routes.Issue, typeof(IssuePage));
+        Routing.RegisterRoute(Routes.Settings, typeof(SettingsPage));
 
         AddRootPage("Home", Routes.Home, services.GetRequiredService<HomePage>);
         AddRootPage("Products", Routes.Products, services.GetRequiredService<ProductsPage>);
-        AddRootPage("Settings", Routes.Settings, services.GetRequiredService<SettingsPage>);
+        AddRootPage("Search", Routes.Search, services.GetRequiredService<SearchPage>);
+        AddRootPage("Activity", Routes.Activity, services.GetRequiredService<ActivityPage>);
+
+        _bottom = services.GetRequiredService<BottomNavViewModel>();
 
         _drawer = services.GetRequiredService<DrawerViewModel>();
         FlyoutContent = new DrawerContent(_drawer);
@@ -39,8 +44,23 @@ public partial class AppShell : Shell
     protected override void OnNavigated(ShellNavigatedEventArgs args)
     {
         base.OnNavigated(args);
-        _drawer.Select(Routes.Leaf(CurrentState?.Location?.OriginalString));
+        var route = Routes.Leaf(CurrentState?.Location?.OriginalString);
+        _drawer.Select(route);
+        _bottom.Select(route);
         MauiThemeApplier.ShowStatusBar();
+    }
+
+    // Back on Products, Search or Activity goes to Home; only Home leaves the app
+    protected override bool OnBackButtonPressed()
+    {
+        var route = Routes.Leaf(CurrentState?.Location?.OriginalString);
+        if (!FlyoutIsPresented && Routes.IsRoot(route) && route != Routes.Home)
+        {
+            _ = GoToAsync(Routes.Absolute(Routes.Home));
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
     }
 
     private static bool Contains(ShellItem item, string route) =>

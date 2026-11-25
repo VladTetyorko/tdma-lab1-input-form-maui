@@ -304,14 +304,6 @@ public class ProductListViewModelTests
     }
 
     [Fact]
-    public async Task Scan_NavigatesToTheScanner()
-    {
-        await _viewModel.ScanCommand.ExecuteAsync(null);
-
-        Assert.Equal(Routes.Scanner, Assert.Single(_store.Navigation.RequestedRoutes));
-    }
-
-    [Fact]
     public async Task OpenSettings_NavigatesToSettings()
     {
         await _viewModel.OpenSettingsCommand.ExecuteAsync(null);

@@ -32,6 +32,12 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     private bool _loading;
     private bool _createdProduct;
 
+    // The page was left (Back), so a pending return must not close a second page
+    private bool _left;
+
+    // How long the success message is read before the page returns to where it was opened from
+    public TimeSpan ReturnDelay { get; set; } = TimeSpan.FromSeconds(1.5);
+
     public StockDocumentViewModel(
         IStockDocumentDraftStore drafts,
         IStockDocumentService documents,
@@ -165,6 +171,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
     public void OnDisappearing()
     {
+        _left = true;
         scanner.Failed -= OnCameraFailed;
         CameraState = CameraState.Off;
         IsTyping = false;
@@ -445,10 +452,33 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             StatusMessage = string.Empty;
             SuccessText = $"{(IsIssue ? "Issued" : "Received")} {Plural.Units(units)} · {result.Value!.Number}";
             feedback.Success();
+            await ReturnToOriginAsync();
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    // The draft is saved with every change, so leaving never asks; it only says the lines are kept
+    [RelayCommand]
+    private async Task GoBackAsync()
+    {
+        if (!_draft.IsEmpty && _draft.Lines.Count > 0)
+        {
+            await toast.ShowAsync($"Draft kept · {Plural.Lines(_draft.Lines.Count)}");
+        }
+
+        await navigation.GoToAsync(Routes.Back);
+    }
+
+    private async Task ReturnToOriginAsync()
+    {
+        _left = false;
+        await Task.Delay(ReturnDelay);
+        if (!_left)
+        {
+            await navigation.GoToAsync(Routes.Back);
         }
     }
 

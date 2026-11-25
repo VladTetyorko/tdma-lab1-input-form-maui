@@ -786,4 +786,44 @@
         <Setter Property="TextColor" Value="{DynamicResource Info}" />
     </Style>
 
+    <!-- Bottom bar (design revision 4): the halves of the pill, their draft badge and the overlay of a place -->
+    <Style x:Key="PillHalf" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{DynamicResource OnPrimary}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinimumHeightRequest" Value="56" />
+    </Style>
+
+    <Style x:Key="PillBadge" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 9" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="MinimumWidthRequest" Value="18" />
+        <Setter Property="HeightRequest" Value="18" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="Margin" Value="0,3,6,0" />
+        <Setter Property="HorizontalOptions" Value="End" />
+        <Setter Property="VerticalOptions" Value="Start" />
+        <Setter Property="InputTransparent" Value="True" />
+    </Style>
+
+    <Style x:Key="PillBadgeText" TargetType="Label">
+        <Setter Property="TextColor" Value="{DynamicResource PrimaryText}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="NavOverlay" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+    </Style>
+
 </ResourceDictionary>

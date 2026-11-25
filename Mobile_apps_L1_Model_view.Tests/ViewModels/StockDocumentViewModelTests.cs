@@ -47,7 +47,8 @@ public class StockDocumentViewModelTests
             _feedback, _toasts, _store.Confirm, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
             _store.Logger<StockDocumentViewModel>())
         {
-            Direction = direction
+            Direction = direction,
+            ReturnDelay = TimeSpan.Zero
         };
         await viewModel.AppearCommand.ExecuteAsync(null);
         return viewModel;
@@ -74,6 +75,30 @@ public class StockDocumentViewModelTests
         Assert.Equal(string.Empty, viewModel.QuickSearch.Query);
         Assert.Equal(2, _feedback.Successes);
         Assert.True(viewModel.CommitCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task Commit_ReturnsToWhereTheTaskWasStarted()
+    {
+        var viewModel = await OpenAsync();
+        await TypeAsync(viewModel, Drill);
+
+        await viewModel.CommitCommand.ExecuteAsync(null);
+
+        Assert.Equal(Routes.Back, Assert.Single(_store.Navigation.RequestedRoutes));
+    }
+
+    [Fact]
+    public async Task Back_KeepsTheDraftAndSaysSo()
+    {
+        var viewModel = await OpenAsync();
+        await TypeAsync(viewModel, Drill);
+
+        await viewModel.GoBackCommand.ExecuteAsync(null);
+
+        Assert.Equal(Routes.Back, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Contains(_toasts.Messages, message => message.Contains("Draft kept · 1 line"));
+        Assert.Equal(1, _drafts.LineCount(OperationDirection.In));
     }
 
     [Fact]

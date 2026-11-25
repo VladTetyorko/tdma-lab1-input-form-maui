@@ -15,11 +15,13 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <!-- Map and Characteristics are in the drawer; the Manager adds a product with the button at the bottom -->
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
+    <!-- Map and Characteristics are in the drawer; the Manager adds a product with + in the app bar. The keyboard
+         covers the bottom bar instead of pushing it up (SafeAreaEdges) -->
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
         <components:AppBar Title="Products" Route="products"
-                           ActionGlyph="{StaticResource IconScan}" ActionDescription="Scan a barcode"
-                           ActionCommand="{Binding ScanCommand}" ActionId="ScanButton" />
+                           ActionGlyph="{StaticResource IconAdd}" ActionDescription="Add product"
+                           ActionCommand="{Binding AddProductCommand}" ActionId="AddProductButton"
+                           IsActionShown="{Binding CanAddProduct}" />
         <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}"
               RowSpacing="8">
             <components:SyncChip Grid.Row="0" OnlyWhenNeeded="True" HorizontalOptions="End" />
@@ -174,7 +176,6 @@
             </VerticalStackLayout>
         </Grid>
 
-        <components:BottomActionBar Grid.Row="2" ButtonId="AddProductButton" Text="Add product"
-                                    Command="{Binding AddProductCommand}" IsVisible="{Binding CanAddProduct}" />
+        <components:BottomNav Grid.Row="2" />
     </Grid>
 </ContentPage>

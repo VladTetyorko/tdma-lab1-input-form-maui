@@ -17,7 +17,7 @@
     </ContentPage.Behaviors>
 
     <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
-        <components:AppBar Title="{Binding Title}" ActionGlyph="{StaticResource IconDelete}"
+        <components:AppBar Title="{Binding Title}" BackCommand="{Binding GoBackCommand}" ActionGlyph="{StaticResource IconDelete}"
                            ActionDescription="Discard draft" ActionCommand="{Binding DiscardCommand}"
                            ActionId="DiscardDraftButton" IsActionShown="{Binding HasLines}" />
         <ScrollView Grid.Row="1">

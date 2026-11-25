@@ -197,8 +197,6 @@ public class AppLifecycleFlowTests
 
         var list = provider.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        await list.ScanCommand.ExecuteAsync(null);
-        Assert.Equal(Routes.Scanner, navigation.RequestedRoutes.Last());
 
         // Windows: no camera, the barcode is typed; it matches no product
         var scan = provider.GetRequiredService<ScannerViewModel>();

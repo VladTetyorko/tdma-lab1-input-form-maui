@@ -13,10 +13,8 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*">
-        <components:AppBar Title="StockRoom" Route="home"
-                           ActionGlyph="{StaticResource IconScan}" ActionDescription="Scan a barcode"
-                           ActionCommand="{Binding ScanCommand}" ActionId="HomeScanButton" />
+    <Grid RowDefinitions="Auto,*,Auto">
+        <components:AppBar Title="StockRoom" Route="home" />
         <ScrollView x:Name="Scroller" Grid.Row="1" SizeChanged="OnScrollerSizeChanged">
         <!-- The actions sit in the middle of the free height, within reach of a thumb (the code-behind gives the
              grid the height of the view) -->
@@ -60,5 +58,6 @@
             <components:RecentActivityPanel x:Name="Recent" Grid.Row="4" />
         </Grid>
     </ScrollView>
+        <components:BottomNav Grid.Row="2" />
     </Grid>
 </ContentPage>

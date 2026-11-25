@@ -33,4 +33,9 @@
     <x:String x:Key="IconCheckmarkCircle">&#xF299;</x:String>
     <x:String x:Key="IconEye">&#xE5F3;</x:String>
     <x:String x:Key="IconEyeOff">&#xE5F6;</x:String>
+    <x:String x:Key="IconHistory">&#xF47F;</x:String>
+    <x:String x:Key="IconMore">&#xF557;</x:String>
+    <x:String x:Key="IconChevronRight">&#xF2B1;</x:String>
+    <x:String x:Key="IconChevronDown">&#xF2A4;</x:String>
+    <x:String x:Key="IconClipboard">&#xE35E;</x:String>
 </ResourceDictionary>

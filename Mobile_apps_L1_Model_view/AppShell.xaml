@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- A modal drawer on every device (no side panel, no tabs). The sign-in page is declared here and switches the drawer
-     off; Home, Products and Settings are added in code. The drawer content is Views/Components/DrawerContent -->
+     off; The root pages are added in code. The drawer content is Views/Components/DrawerContent -->
 <Shell
     x:Class="Mobile_apps_L1_Model_view.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"

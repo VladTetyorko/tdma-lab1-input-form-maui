@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The bar of the four root pages (design revision 4, section 3.2): Home, Products, the split + Receive | - Issue pill,
+     Search, Activity. The pill is the only filled control of a root page; a role that may not issue gets one wide
+     Receive button -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.BottomNav"
+             x:DataType="viewModels:BottomNavViewModel">
+    <Grid RowDefinitions="1,Auto" BackgroundColor="{DynamicResource Surface}">
+        <BoxView />
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,Auto,*,*" HeightRequest="68" MaximumWidthRequest="720" Padding="2,0">
+            <components:BottomNavItem Glyph="{StaticResource IconHome}" Text="Home" ItemId="NavHome"
+                                      IsSelected="{Binding IsHome}" Command="{Binding OpenCommand}"
+                                      CommandParameter="{x:Static services:Routes.Home}" />
+            <components:BottomNavItem Grid.Column="1" Glyph="{StaticResource IconBox}" Text="Products" ItemId="NavProducts"
+                                      IsSelected="{Binding IsProducts}" Command="{Binding OpenCommand}"
+                                      CommandParameter="{x:Static services:Routes.Products}" />
+
+            <Border Grid.Column="2" StrokeThickness="0" StrokeShape="RoundRectangle 28" HeightRequest="56"
+                    WidthRequest="172" Margin="4,0" VerticalOptions="Center" Background="{DynamicResource PrimaryBrush}">
+                <Grid ColumnDefinitions="*,1,*">
+                    <Grid>
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding CanIssue}" Value="False">
+                                <Setter Property="Grid.ColumnSpan" Value="3" />
+                            </DataTrigger>
+                        </Grid.Triggers>
+                        <Button Text="+ Receive" Style="{StaticResource PillHalf}" Command="{Binding OpenCommand}"
+                                CommandParameter="{x:Static services:Routes.Receive}" AutomationId="NavReceive" />
+                        <Border Style="{StaticResource PillBadge}" IsVisible="{Binding HasReceiveBadge}">
+                            <Label Text="{Binding ReceiveBadge}" Style="{StaticResource PillBadgeText}" />
+                        </Border>
+                    </Grid>
+                    <BoxView Grid.Column="1" Color="{DynamicResource OnPrimary}" Opacity="0.4" Margin="0,10"
+                             IsVisible="{Binding CanIssue}" />
+                    <Grid Grid.Column="2" IsVisible="{Binding CanIssue}">
+                        <Button Text="− Issue" Style="{StaticResource PillHalf}" Command="{Binding OpenCommand}"
+                                CommandParameter="{x:Static services:Routes.Issue}" AutomationId="NavIssue" />
+                        <Border Style="{StaticResource PillBadge}" IsVisible="{Binding HasIssueBadge}">
+                            <Label Text="{Binding IssueBadge}" Style="{StaticResource PillBadgeText}" />
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <components:BottomNavItem Grid.Column="3" Glyph="{StaticResource IconSearch}" Text="Search" ItemId="NavSearch"
+                                      IsSelected="{Binding IsSearch}" Command="{Binding OpenCommand}"
+                                      CommandParameter="{x:Static services:Routes.Search}" />
+            <components:BottomNavItem Grid.Column="4" Glyph="{StaticResource IconHistory}" Text="Activity" ItemId="NavActivity"
+                                      IsSelected="{Binding IsActivity}" Command="{Binding OpenCommand}"
+                                      CommandParameter="{x:Static services:Routes.Activity}" />
+        </Grid>
+    </Grid>
+</ContentView>

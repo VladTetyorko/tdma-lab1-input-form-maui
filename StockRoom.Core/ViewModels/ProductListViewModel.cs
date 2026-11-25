@@ -305,9 +305,6 @@ public partial class ProductListViewModel(
     private Task OpenSettingsAsync() => navigation.GoToAsync(Routes.Settings);
 
     [RelayCommand]
-    private Task ScanAsync() => navigation.GoToAsync(Routes.Scanner);
-
-    [RelayCommand]
     private Task OpenMapAsync() => navigation.GoToAsync(Routes.Map);
 
     // The role check (the alert and the warning log are the guard's); the reason also goes to the status line
