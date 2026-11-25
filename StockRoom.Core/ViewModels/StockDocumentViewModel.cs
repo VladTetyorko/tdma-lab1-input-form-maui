@@ -7,29 +7,75 @@ using Mobile_apps_L1_Model_view.Services;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
-// Receive goods (In) or issue goods (Out): scan or type barcodes, adjust quantities, commit the whole batch.
+// Receive goods (In) or issue goods (Out): scan, pick or type products, adjust quantities, commit the whole batch.
 // The line rules live in StockDocumentDraft and the recording in IStockDocumentService; this class only orchestrates
-public sealed partial class StockDocumentViewModel(
-    IStockDocumentDraftStore drafts,
-    IStockDocumentService documents,
-    IProductCatalog catalog,
-    ICurrentUserService currentUser,
-    IBarcodeScanner scanner,
-    IScanFeedback feedback,
-    IToastService toast,
-    IAlertService alerts,
-    IPermissionGuard guard,
-    INavigationService navigation,
-    StockChanges changes,
-    IClock clock,
-    ILogger<StockDocumentViewModel> logger) : ObservableObject, IPageLifecycleAware
+public sealed partial class StockDocumentViewModel : ObservableObject, IPageLifecycleAware
 {
-    private readonly ScanDebouncer _debouncer = new(clock);
+    private const string WholeNumberMessage = "Enter a whole number of units.";
+
+    private readonly IStockDocumentDraftStore drafts;
+    private readonly IStockDocumentService documents;
+    private readonly IProductCatalog catalog;
+    private readonly ICurrentUserService currentUser;
+    private readonly IBarcodeScanner scanner;
+    private readonly IScanFeedback feedback;
+    private readonly IToastService toast;
+    private readonly IAlertService alerts;
+    private readonly IPermissionGuard guard;
+    private readonly INavigationService navigation;
+    private readonly StockChanges changes;
+    private readonly ILogger<StockDocumentViewModel> logger;
+    private readonly ScanDebouncer _debouncer;
     private readonly Dictionary<string, ProductSummary?> _products = [];
     private StockDocumentDraft _draft = new(OperationDirection.In);
     private (DraftLine Line, int Index)? _removed;
     private bool _loading;
     private bool _createdProduct;
+
+    public StockDocumentViewModel(
+        IStockDocumentDraftStore drafts,
+        IStockDocumentService documents,
+        IProductCatalog catalog,
+        ICurrentUserService currentUser,
+        IBarcodeScanner scanner,
+        IScanFeedback feedback,
+        IToastService toast,
+        IAlertService alerts,
+        IPermissionGuard guard,
+        INavigationService navigation,
+        StockChanges changes,
+        IClock clock,
+        QuickSearchViewModel quickSearch,
+        ILogger<StockDocumentViewModel> logger)
+    {
+        this.drafts = drafts;
+        this.documents = documents;
+        this.catalog = catalog;
+        this.currentUser = currentUser;
+        this.scanner = scanner;
+        this.feedback = feedback;
+        this.toast = toast;
+        this.alerts = alerts;
+        this.guard = guard;
+        this.navigation = navigation;
+        this.changes = changes;
+        this.logger = logger;
+        _debouncer = new ScanDebouncer(clock);
+        QuickSearch = quickSearch;
+        quickSearch.Picked += async (_, product) => await AddPickedAsync(product);
+        quickSearch.SubmittedText += async (_, _) => await AddTypedAsync();
+        quickSearch.CreateRequested += (_, _) => _createdProduct = true;
+        quickSearch.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(QuickSearchViewModel.IsOpen))
+            {
+                OnPropertyChanged(nameof(IsCameraActive));
+            }
+        };
+    }
+
+    // The typing field and its drop-down
+    public QuickSearchViewModel QuickSearch { get; }
 
     // Set once by the page, before it appears
     public OperationDirection Direction { get; set; }
@@ -40,12 +86,37 @@ public sealed partial class StockDocumentViewModel(
 
     public string CounterpartyLabel => IsIssue ? "Recipient (optional)" : "Supplier (optional)";
 
-    public bool IsCameraSupported => scanner.IsCameraSupported;
-
     public ObservableCollection<StockDocumentLineItem> Lines { get; } = [];
 
+    // Units a typed or picked product adds; camera reads always add one
     [ObservableProperty]
-    public partial string ScanText { get; set; } = string.Empty;
+    public partial string EntryQuantity { get; set; } = "1";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CameraMessage))]
+    [NotifyPropertyChangedFor(nameof(CameraActionText))]
+    [NotifyPropertyChangedFor(nameof(IsCameraActive))]
+    public partial CameraState CameraState { get; set; }
+
+    // Set by a phone page while a typing field has the focus: the camera makes room for it
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCameraActive))]
+    public partial bool IsTyping { get; set; }
+
+    public string CameraMessage => CameraMessages.For(CameraState);
+
+    public string CameraActionText => CameraMessages.ActionFor(CameraState);
+
+    // The preview is shown and reads only while nothing is being typed
+    public bool IsCameraActive => CameraState == CameraState.Active && !IsTyping && !QuickSearch.IsOpen;
+
+    // Supplier / recipient and note are behind an expander
+    [ObservableProperty]
+    public partial bool IsDetailsOpen { get; set; }
+
+    // Why the main button is disabled, or empty
+    [ObservableProperty]
+    public partial string CommitHint { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string Counterparty { get; set; } = string.Empty;
@@ -73,9 +144,6 @@ public sealed partial class StockDocumentViewModel(
     public bool IsEmpty => Lines.Count == 0;
 
     [ObservableProperty]
-    public partial bool IsCameraActive { get; set; }
-
-    [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CommitCommand))]
     public partial bool IsBusy { get; set; }
 
@@ -86,22 +154,52 @@ public sealed partial class StockDocumentViewModel(
 
     public void OnAppearing() => AppearCommand.Execute(null);
 
-    public void OnDisappearing() => IsCameraActive = false;
+    public void OnDisappearing()
+    {
+        CameraState = CameraState.Off;
+        IsTyping = false;
+        QuickSearch.CloseCommand.Execute(null);
+    }
 
     // Products may have been added or their stock changed elsewhere, and another user may have signed in:
     // the draft is read again every time
     [RelayCommand]
     private async Task AppearAsync()
     {
-        await LoadAsync();
-        if (scanner.IsCameraSupported)
+        // The menu hides Issue from a Driver, but a restored or typed route can still arrive here
+        if (await guard.CheckAsync(role => RolePermissions.CanRecord(role, Direction),
+                IsIssue ? "issue goods" : "receive goods") is not null)
         {
-            IsCameraActive = await scanner.RequestCameraAccessAsync();
-            if (!IsCameraActive)
-            {
-                StatusMessage = "Camera access was denied. Type the barcode instead.";
-                logger.LogWarning("Camera access was denied, barcodes must be typed");
-            }
+            await navigation.GoToAsync(Routes.Home);
+            return;
+        }
+
+        await LoadAsync();
+        await StartCameraAsync();
+    }
+
+    [RelayCommand]
+    private Task RetryCameraAsync() => StartCameraAsync();
+
+    [RelayCommand]
+    private void ToggleDetails() => IsDetailsOpen = !IsDetailsOpen;
+
+    private async Task StartCameraAsync()
+    {
+        if (!scanner.IsCameraSupported)
+        {
+            CameraState = CameraState.Unsupported;
+            return;
+        }
+
+        if (await scanner.RequestCameraAccessAsync())
+        {
+            CameraState = CameraState.Active;
+        }
+        else
+        {
+            CameraState = CameraState.Denied;
+            logger.LogWarning("Camera access was denied, barcodes must be typed");
         }
     }
 
@@ -119,6 +217,9 @@ public sealed partial class StockDocumentViewModel(
         Counterparty = _draft.Counterparty;
         Note = _draft.Note;
         _loading = false;
+        IsDetailsOpen = Counterparty.Length > 0 || Note.Length > 0;
+        EntryQuantity = "1";
+        await QuickSearch.LoadCommand.ExecuteAsync(null);
 
         StatusMessage = string.Empty;
         UndoText = string.Empty;
@@ -137,10 +238,50 @@ public sealed partial class StockDocumentViewModel(
     [RelayCommand]
     private async Task AddTypedAsync()
     {
-        if (await AddAsync(ScanText, debounce: false))
+        if (ReadEntryQuantity() is not { } quantity)
         {
-            ScanText = string.Empty;
+            return;
         }
+
+        var text = QuickSearch.Query;
+
+        // Cleared before the line is added, so the next read of a keyboard scanner starts in an empty box
+        if (ScanPayloadParser.Parse(text).IsSuccess)
+        {
+            QuickSearch.Query = string.Empty;
+        }
+
+        if (await AddAsync(text, debounce: false, quantity))
+        {
+            EntryQuantity = "1";
+        }
+    }
+
+    // A product chosen in the drop-down
+    private async Task AddPickedAsync(ProductSummary product)
+    {
+        if (ReadEntryQuantity() is not { } quantity)
+        {
+            return;
+        }
+
+        _products[product.Barcode] = product;
+        if (await AddAsync(product.Barcode, debounce: false, quantity))
+        {
+            EntryQuantity = "1";
+        }
+    }
+
+    private int? ReadEntryQuantity()
+    {
+        if (int.TryParse(EntryQuantity, out var quantity) && quantity >= 1)
+        {
+            return quantity;
+        }
+
+        StatusMessage = WholeNumberMessage;
+        feedback.Error();
+        return null;
     }
 
     [RelayCommand]
@@ -163,7 +304,7 @@ public sealed partial class StockDocumentViewModel(
 
         if (!int.TryParse(line.QuantityText, out var quantity) || quantity < 0)
         {
-            StatusMessage = "Enter a whole number of units.";
+            StatusMessage = WholeNumberMessage;
             Refresh();
             return;
         }
@@ -270,6 +411,7 @@ public sealed partial class StockDocumentViewModel(
 
             // Cleared only after success, so a kill during the commit never loses the lines
             ClearDraft();
+            await QuickSearch.LoadCommand.ExecuteAsync(null);
             StatusMessage = $"Saved {result.Value!.Number}";
             feedback.Success();
             await toast.ShowAsync(StatusMessage);
@@ -293,7 +435,7 @@ public sealed partial class StockDocumentViewModel(
         }
     }
 
-    private async Task<bool> AddAsync(string? text, bool debounce)
+    private async Task<bool> AddAsync(string? text, bool debounce, int quantity = 1)
     {
         var parsed = ScanPayloadParser.Parse(text);
         if (!parsed.IsSuccess)
@@ -313,11 +455,11 @@ public sealed partial class StockDocumentViewModel(
         UndoText = string.Empty;
         _removed = null;
         await ResolveAsync([barcode]);
-        _draft.Add(barcode);
+        _draft.Add(barcode, quantity);
         Refresh();
         if (_products[barcode] is { } product)
         {
-            StatusMessage = $"{product.Name} +1";
+            StatusMessage = $"{product.Name} +{quantity}";
             feedback.Success();
         }
         else
@@ -374,9 +516,12 @@ public sealed partial class StockDocumentViewModel(
 
         var units = _draft.TotalUnits;
         SummaryText = Lines.Count == 0
-            ? "Draft is empty. Scan a barcode or type it above."
+            ? "Draft is empty. Scan a barcode or type a name."
             : $"Draft · {Lines.Count} {(Lines.Count == 1 ? "line" : "lines")} · {units} units";
         CommitText = $"{(IsIssue ? "Issue" : "Receive")} {units} units";
+        CommitHint = Lines.Count == 0 ? "Add a product first"
+            : Lines.Any(line => line.IsInvalid) ? "Fix the red lines first"
+            : string.Empty;
         OnPropertyChanged(nameof(IsEmpty));
         CommitCommand.NotifyCanExecuteChanged();
     }

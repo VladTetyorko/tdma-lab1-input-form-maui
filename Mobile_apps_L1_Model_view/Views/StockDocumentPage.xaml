@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- Order: identify the product (camera, or typing), lines and quantities, optional details, one big action at the
+     bottom. Discard is destructive, so it sits in the toolbar, away from the main action -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
@@ -14,93 +16,103 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="8">
-        <components:SyncChip Grid.Row="0" OnlyWhenNeeded="True" HorizontalOptions="End" />
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Discard draft" Order="Secondary" Command="{Binding DiscardCommand}"
+                     AutomationId="DiscardDraftButton" />
+    </ContentPage.ToolbarItems>
 
-        <VerticalStackLayout Grid.Row="1">
-            <Label Text="{Binding Title}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
-            <Label Text="{Binding SummaryText}" Style="{StaticResource TextCaption}" AutomationId="DocumentSummary" />
-        </VerticalStackLayout>
+    <Grid RowDefinitions="*,Auto" SafeAreaEdges="Container, Container, Container, SoftInput">
+        <ScrollView>
+            <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="1200">
+                <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
+                <Label Text="{Binding SummaryText}" Style="{StaticResource TextCaption}" AutomationId="DocumentSummary" />
 
-        <!-- Continuous scanning: the camera stays on, repeated reads of one code are ignored by the ViewModel -->
-        <Border Grid.Row="2" HeightRequest="200" IsVisible="{Binding IsCameraSupported}" StrokeShape="RoundRectangle 10">
-            <views:CameraScannerView IsActive="{Binding IsCameraActive}" DetectedCommand="{Binding ScanDetectedCommand}" />
-        </Border>
+                <!-- Continuous scanning: repeated reads of one code are ignored by the ViewModel -->
+                <Border HeightRequest="220" IsVisible="{Binding IsCameraActive}" StrokeShape="RoundRectangle 10"
+                        MaximumWidthRequest="720">
+                    <views:CameraScannerView IsActive="{Binding IsCameraActive}" DetectedCommand="{Binding ScanDetectedCommand}" />
+                </Border>
+                <components:CameraStatusBanner Message="{Binding CameraMessage}" ActionText="{Binding CameraActionText}"
+                                               ActionCommand="{Binding RetryCameraCommand}" />
 
-        <VerticalStackLayout Grid.Row="3" Spacing="4">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <Entry x:Name="ScanEntry" Text="{Binding ScanText, Mode=TwoWay}" Placeholder="Scan or type a barcode"
-                       ReturnCommand="{Binding AddTypedCommand}" Completed="OnScanCompleted" AutomationId="ScanBox" />
-                <Button Grid.Column="1" Text="Add" StyleClass="Outlined" Command="{Binding AddTypedCommand}"
-                        AutomationId="AddBarcodeButton" />
-            </Grid>
-            <Entry Text="{Binding Counterparty, Mode=TwoWay}" Placeholder="{Binding CounterpartyLabel}"
-                   SemanticProperties.Description="{Binding CounterpartyLabel}" AutomationId="CounterpartyEntry" />
-            <Entry Text="{Binding Note, Mode=TwoWay}" Placeholder="Note (waybill or order number, optional)"
-                   AutomationId="NoteEntry" />
-        </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,88" ColumnSpacing="8">
+                    <components:QuickSearchBox x:Name="Search" BindingContext="{Binding QuickSearch}"
+                                               Label="Product" Placeholder="Type a name or barcode" />
+                    <components:OutlinedField x:Name="Quantity" Grid.Column="1" Label="Qty" Keyboard="Numeric" MaxLength="5"
+                                              ShowClear="False" EntryId="EntryQuantity" VerticalOptions="Start"
+                                              Text="{Binding EntryQuantity, Mode=TwoWay}" />
+                </Grid>
 
-        <FlexLayout Grid.Row="4" Wrap="Wrap" AlignItems="Center">
-            <Label Text="{Binding StatusMessage}" Style="{StaticResource TextCaption}" FlexLayout.Grow="1"
-                   AutomationId="DocumentStatus" />
-            <Button Text="{Binding UndoText}" StyleClass="Ghost" Command="{Binding UndoCommand}"
-                    IsVisible="{Binding CanUndo}" AutomationId="UndoRemoveButton" />
-        </FlexLayout>
+                <FlexLayout Wrap="Wrap" AlignItems="Center">
+                    <Label Text="{Binding StatusMessage}" Style="{StaticResource TextBodyStrong}" FlexLayout.Grow="1"
+                           AutomationId="DocumentStatus" />
+                    <Button Text="{Binding UndoText}" StyleClass="Ghost" Command="{Binding UndoCommand}"
+                            IsVisible="{Binding CanUndo}" AutomationId="UndoRemoveButton" />
+                </FlexLayout>
 
-        <CollectionView Grid.Row="5" ItemsSource="{Binding Lines}" AutomationId="DocumentLines">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="viewModels:StockDocumentLineItem">
-                    <Grid RowDefinitions="Auto,1" RowSpacing="8">
-                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-                            <VerticalStackLayout VerticalOptions="Center">
-                                <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" />
-                                <Label Text="{Binding StockText}" Style="{StaticResource TextCaption}" />
-                                <HorizontalStackLayout Spacing="4" IsVisible="{Binding IsInvalid}">
-                                    <Label Text="{StaticResource IconWarning}" Style="{StaticResource IconGlyph}"
-                                           TextColor="{DynamicResource Danger}" />
-                                    <Label Text="{Binding Problem}" Style="{StaticResource ErrorLabel}" VerticalOptions="Center" />
-                                </HorizontalStackLayout>
-                                <Button Text="Create product" StyleClass="Compact,Outlined" HorizontalOptions="Start"
-                                        IsVisible="{Binding IsUnknown}" CommandParameter="{Binding .}"
-                                        Command="{Binding BindingContext.CreateProductCommand, Source={x:Reference ThisPage}}" />
-                            </VerticalStackLayout>
-                            <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
-                                <Button Text="{StaticResource IconSubtract}" StyleClass="Icon"
-                                        SemanticProperties.Description="{Binding Name, StringFormat='One less {0}'}"
-                                        Command="{Binding BindingContext.DecrementCommand, Source={x:Reference ThisPage}}"
-                                        CommandParameter="{Binding .}" AutomationId="DecrementLineButton" />
-                                <Entry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric" WidthRequest="64"
-                                       HorizontalTextAlignment="End"
-                                       SemanticProperties.Description="{Binding Name, StringFormat='Quantity of {0}'}"
-                                       ReturnCommand="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}"
-                                       ReturnCommandParameter="{Binding .}"
-                                       AutomationId="{Binding Barcode, StringFormat='LineQuantity_{0}'}">
-                                    <Entry.Behaviors>
-                                        <views:UnfocusCommandBehavior Command="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}" />
-                                    </Entry.Behaviors>
-                                </Entry>
-                                <Button Text="{StaticResource IconAdd}" StyleClass="Icon"
-                                        SemanticProperties.Description="{Binding Name, StringFormat='One more {0}'}"
-                                        Command="{Binding BindingContext.IncrementCommand, Source={x:Reference ThisPage}}"
-                                        CommandParameter="{Binding .}" AutomationId="IncrementLineButton" />
-                            </HorizontalStackLayout>
-                            <Button Grid.Column="2" Text="{StaticResource IconDismiss}" StyleClass="IconDanger" VerticalOptions="Center"
-                                    SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}"
-                                    Command="{Binding BindingContext.RemoveLineCommand, Source={x:Reference ThisPage}}"
-                                    CommandParameter="{Binding .}" AutomationId="RemoveLineButton" />
-                        </Grid>
-                        <BoxView Grid.Row="1" />
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                <components:EmptyState Glyph="{StaticResource IconBox}" Title="Draft is empty"
+                                       Message="Scan a barcode or type a name." IsVisible="{Binding IsEmpty}" />
 
-        <!-- One filled button; discarding is destructive, so it is red -->
-        <FlexLayout Grid.Row="6" Wrap="Wrap" JustifyContent="End">
-            <Button Text="Discard draft" StyleClass="Danger" Command="{Binding DiscardCommand}" Margin="0,0,8,0"
-                    AutomationId="DiscardDraftButton" />
-            <Button Text="{Binding CommitText}" StyleClass="Primary" Command="{Binding CommitCommand}"
-                    AutomationId="CommitDocumentButton" />
-        </FlexLayout>
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}" AutomationId="DocumentLines">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:StockDocumentLineItem">
+                            <Grid RowDefinitions="Auto,1" RowSpacing="8" Padding="0,8,0,0">
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                    <VerticalStackLayout VerticalOptions="Center">
+                                        <Label Text="{Binding Name}" Style="{StaticResource TextBodyStrong}" />
+                                        <Label Text="{Binding StockText}" Style="{StaticResource TextCaption}" />
+                                        <HorizontalStackLayout Spacing="4" IsVisible="{Binding IsInvalid}">
+                                            <Label Text="{StaticResource IconWarning}" Style="{StaticResource IconGlyph}"
+                                                   TextColor="{DynamicResource Danger}" />
+                                            <Label Text="{Binding Problem}" Style="{StaticResource ErrorLabel}" VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+                                        <Button Text="Create product" StyleClass="Compact,Outlined" HorizontalOptions="Start"
+                                                IsVisible="{Binding IsUnknown}" CommandParameter="{Binding .}"
+                                                Command="{Binding BindingContext.CreateProductCommand, Source={x:Reference ThisPage}}" />
+                                    </VerticalStackLayout>
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                        <Button Text="{StaticResource IconSubtract}" StyleClass="Icon"
+                                                SemanticProperties.Description="{Binding Name, StringFormat='One less {0}'}"
+                                                Command="{Binding BindingContext.DecrementCommand, Source={x:Reference ThisPage}}"
+                                                CommandParameter="{Binding .}" AutomationId="DecrementLineButton" />
+                                        <Entry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric" WidthRequest="64"
+                                               HorizontalTextAlignment="End"
+                                               SemanticProperties.Description="{Binding Name, StringFormat='Quantity of {0}'}"
+                                               ReturnCommand="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}"
+                                               ReturnCommandParameter="{Binding .}"
+                                               AutomationId="{Binding Barcode, StringFormat='LineQuantity_{0}'}">
+                                            <Entry.Behaviors>
+                                                <views:UnfocusCommandBehavior Command="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}" />
+                                            </Entry.Behaviors>
+                                        </Entry>
+                                        <Button Text="{StaticResource IconAdd}" StyleClass="Icon"
+                                                SemanticProperties.Description="{Binding Name, StringFormat='One more {0}'}"
+                                                Command="{Binding BindingContext.IncrementCommand, Source={x:Reference ThisPage}}"
+                                                CommandParameter="{Binding .}" AutomationId="IncrementLineButton" />
+                                    </HorizontalStackLayout>
+                                    <Button Grid.Column="2" Text="{StaticResource IconDismiss}" StyleClass="IconDanger" VerticalOptions="Center"
+                                            SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}"
+                                            Command="{Binding BindingContext.RemoveLineCommand, Source={x:Reference ThisPage}}"
+                                            CommandParameter="{Binding .}" AutomationId="RemoveLineButton" />
+                                </Grid>
+                                <BoxView Grid.Row="1" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Button Text="{Binding CounterpartyLabel, StringFormat='{0} and note'}" StyleClass="Ghost"
+                        HorizontalOptions="Start" Command="{Binding ToggleDetailsCommand}" AutomationId="DetailsButton" />
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding IsDetailsOpen}" MaximumWidthRequest="720">
+                    <components:OutlinedField Label="{Binding CounterpartyLabel}" EntryId="CounterpartyEntry"
+                                              Text="{Binding Counterparty, Mode=TwoWay}" />
+                    <components:OutlinedField Label="Note (waybill or order number, optional)" EntryId="NoteEntry"
+                                              Text="{Binding Note, Mode=TwoWay}" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <components:BottomActionBar Grid.Row="1" ButtonId="CommitDocumentButton" Text="{Binding CommitText}"
+                                    Command="{Binding CommitCommand}" Caption="{Binding CommitHint}" />
     </Grid>
 </ContentPage>

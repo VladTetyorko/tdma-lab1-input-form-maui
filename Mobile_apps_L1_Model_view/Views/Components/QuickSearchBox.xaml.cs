@@ -14,9 +14,13 @@ public partial class QuickSearchBox : ContentView
         InitializeComponent();
         Field.Entry.Behaviors.Add(new QuickSearchKeysBehavior(() => BindingContext as QuickSearchViewModel));
         Field.InputFocusChanged += (_, _) => InputFocusChanged?.Invoke(this, EventArgs.Empty);
+        Field.Completed += (_, _) => InputCompleted?.Invoke(this, EventArgs.Empty);
     }
 
     public event EventHandler? InputFocusChanged;
+
+    // Enter was pressed in the box
+    public event EventHandler? InputCompleted;
 
     public string? Label
     {
@@ -33,6 +37,8 @@ public partial class QuickSearchBox : ContentView
     public bool IsInputFocused => Field.IsInputFocused;
 
     public void FocusInput() => Field.FocusInput();
+
+    public void UnfocusInput() => Field.Entry.Unfocus();
 
     protected override void OnBindingContextChanged()
     {

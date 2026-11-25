@@ -27,7 +27,7 @@ public class StockDocumentFlowTests
 
     private static async Task TypeAsync(StockDocumentViewModel viewModel, string barcode)
     {
-        viewModel.ScanText = barcode;
+        viewModel.QuickSearch.Query = barcode;
         await viewModel.AddTypedCommand.ExecuteAsync(null);
     }
 
@@ -70,6 +70,47 @@ public class StockDocumentFlowTests
         Assert.False(result.IsSuccess);
         Assert.Equal(before, (await services.GetRequiredService<IOperationRepository>().GetAllAsync()).Count);
         Assert.Empty(await services.GetRequiredService<IStockDocumentRepository>().GetRecentAsync(5));
+    }
+
+    // Home -> Receive -> type "nut" -> pick -> quantity 12 -> commit -> the product list shows the new quantity
+    [Fact]
+    public async Task StorekeeperReceivesFromHomeByPickingASuggestion()
+    {
+        var navigation = new FakeNavigationService();
+        using var services = TestContainer.Create(new FakePreferencesStore(), navigation);
+        await SignInAsync(services, Role.Storekeeper);
+        var home = services.GetRequiredService<HomeViewModel>();
+        await home.OpenReceiveCommand.ExecuteAsync(null);
+        Assert.Equal(Routes.Receive, navigation.RequestedRoutes.Last());
+
+        var receive = await OpenAsync(services, OperationDirection.In);
+        receive.EntryQuantity = "12";
+        receive.QuickSearch.Query = "nut";
+        var row = receive.QuickSearch.Suggestions[0];
+        var before = row.Suggestion.Product.Quantity;
+        receive.QuickSearch.PickCommand.Execute(row);
+        await Eventually.WaitAsync(() => receive.Lines.Count == 1);
+        await receive.CommitCommand.ExecuteAsync(null);
+
+        var list = services.GetRequiredService<ProductListViewModel>();
+        await list.EnsureLoadedCommand.ExecuteAsync(null);
+        Assert.Equal(before + 12, list.Products.Single(p => p.Id == row.Suggestion.Product.Id).Quantity);
+    }
+
+    [Fact]
+    public async Task DriverOpeningIssue_IsRefusedAndNothingIsWritten()
+    {
+        var navigation = new FakeNavigationService();
+        using var services = TestContainer.Create(new FakePreferencesStore(), navigation);
+        await SignInAsync(services, Role.Driver);
+        var before = (await services.GetRequiredService<IOperationRepository>().GetAllAsync()).Count;
+        var issue = services.GetRequiredService<StockDocumentViewModel>();
+        issue.Direction = OperationDirection.Out;
+
+        await issue.AppearCommand.ExecuteAsync(null);
+
+        Assert.Equal(Routes.Home, navigation.RequestedRoutes.Last());
+        Assert.Equal(before, (await services.GetRequiredService<IOperationRepository>().GetAllAsync()).Count);
     }
 
     [Fact]

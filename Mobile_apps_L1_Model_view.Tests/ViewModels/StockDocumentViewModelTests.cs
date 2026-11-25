@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
@@ -40,9 +41,11 @@ public class StockDocumentViewModelTests
             new CapturingLogger<StockService>());
         var service = new StockDocumentService(_documents, _store.Products, stock, _store.CurrentUser, _store.Clock,
             _changes, new CapturingLogger<StockDocumentService>());
+        var search = new QuickSearchViewModel(_store.Catalog, _store.CharacteristicService, _store.CurrentUser,
+            _store.Guard, _store.Navigation, _store.Logger<QuickSearchViewModel>());
         var viewModel = new StockDocumentViewModel(_drafts, service, _store.Catalog, _store.CurrentUser, _scanner,
-            _feedback, _toasts, _store.Alerts, _store.Guard, _store.Navigation, _changes, _store.Clock,
-            new CapturingLogger<StockDocumentViewModel>())
+            _feedback, _toasts, _store.Alerts, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
+            _store.Logger<StockDocumentViewModel>())
         {
             Direction = direction
         };
@@ -52,7 +55,7 @@ public class StockDocumentViewModelTests
 
     private static async Task TypeAsync(StockDocumentViewModel viewModel, string barcode)
     {
-        viewModel.ScanText = barcode;
+        viewModel.QuickSearch.Query = barcode;
         await viewModel.AddTypedCommand.ExecuteAsync(null);
     }
 
@@ -68,7 +71,7 @@ public class StockDocumentViewModelTests
         Assert.Equal(("Drill", 2, "on hand 0 → 2"), (line.Name, line.Quantity, line.StockText));
         Assert.Equal("Receive 2 units", viewModel.CommitText);
         Assert.Equal("Draft · 1 line · 2 units", viewModel.SummaryText);
-        Assert.Equal(string.Empty, viewModel.ScanText);
+        Assert.Equal(string.Empty, viewModel.QuickSearch.Query);
         Assert.Equal(2, _feedback.Successes);
         Assert.True(viewModel.CommitCommand.CanExecute(null));
     }
@@ -259,7 +262,127 @@ public class StockDocumentViewModelTests
         var viewModel = await OpenAsync();
 
         Assert.False(viewModel.IsCameraActive);
-        Assert.Contains("denied", viewModel.StatusMessage);
+        Assert.Equal(CameraState.Denied, viewModel.CameraState);
+        Assert.Equal((CameraMessages.Denied, CameraMessages.AllowAction),
+            (viewModel.CameraMessage, viewModel.CameraActionText));
+
+        _scanner.CameraAccessGranted = true;
+        await viewModel.RetryCameraCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.IsCameraActive);
+        Assert.Equal(string.Empty, viewModel.CameraMessage);
+        Assert.Equal(2, _scanner.AccessRequests);
+    }
+
+    [Fact]
+    public async Task NoCamera_SaysSoAndAsksNothing()
+    {
+        var viewModel = await OpenAsync();
+
+        Assert.Equal(CameraState.Unsupported, viewModel.CameraState);
+        Assert.Equal(CameraMessages.Unsupported, viewModel.CameraMessage);
+        Assert.Equal(0, _scanner.AccessRequests);
+    }
+
+    [Fact]
+    public async Task Camera_MakesRoomWhileTypingAndIsReleasedWhenLeaving()
+    {
+        _scanner.IsCameraSupported = true;
+        var viewModel = await OpenAsync();
+        Assert.True(viewModel.IsCameraActive);
+
+        viewModel.QuickSearch.Query = "dri";
+        Assert.False(viewModel.IsCameraActive);
+        viewModel.QuickSearch.CloseCommand.Execute(null);
+        viewModel.IsTyping = true;
+        Assert.False(viewModel.IsCameraActive);
+        viewModel.IsTyping = false;
+        Assert.True(viewModel.IsCameraActive);
+
         viewModel.OnDisappearing();
+        Assert.False(viewModel.IsCameraActive);
+    }
+
+    [Fact]
+    public async Task PickingFromTheSearch_AddsTheTypedQuantityAndResetsIt()
+    {
+        var viewModel = await OpenAsync();
+        viewModel.EntryQuantity = "12";
+        viewModel.QuickSearch.Query = "dri";
+
+        viewModel.QuickSearch.PickCommand.Execute(viewModel.QuickSearch.Suggestions.Single());
+        await Eventually.WaitAsync(() => viewModel.Lines.Count == 1);
+
+        Assert.Equal(("Drill", 12), (viewModel.Lines[0].Name, viewModel.Lines[0].Quantity));
+        Assert.Equal("Drill +12", viewModel.StatusMessage);
+        Assert.Equal("1", viewModel.EntryQuantity);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("two")]
+    [InlineData("")]
+    public async Task WrongQuantity_AddsNothingAndKeepsTheText(string quantity)
+    {
+        var viewModel = await OpenAsync();
+        viewModel.EntryQuantity = quantity;
+
+        await TypeAsync(viewModel, Drill);
+
+        Assert.Empty(viewModel.Lines);
+        Assert.Equal("Enter a whole number of units.", viewModel.StatusMessage);
+        Assert.Equal(Drill, viewModel.QuickSearch.Query);
+    }
+
+    [Fact]
+    public async Task EnterInTheSearchBox_AddsAKeyboardScannedBarcode()
+    {
+        var viewModel = await OpenAsync();
+        viewModel.QuickSearch.Query = Saw;
+
+        viewModel.QuickSearch.SubmitCommand.Execute(null);
+        await Eventually.WaitAsync(() => viewModel.Lines.Count == 1);
+
+        Assert.Equal("Saw", viewModel.Lines[0].Name);
+        Assert.Equal(string.Empty, viewModel.QuickSearch.Query);
+    }
+
+    [Fact]
+    public async Task CommitHint_SaysWhyTheButtonIsDisabled()
+    {
+        var viewModel = await OpenAsync(Role.Storekeeper, OperationDirection.Out);
+        Assert.Equal("Add a product first", viewModel.CommitHint);
+
+        await TypeAsync(viewModel, Drill);
+        Assert.Equal("Fix the red lines first", viewModel.CommitHint);
+
+        var receive = await OpenAsync(direction: OperationDirection.In);
+        await TypeAsync(receive, Drill);
+        Assert.Equal(string.Empty, receive.CommitHint);
+    }
+
+    [Fact]
+    public async Task Driver_OnIssue_IsRefusedAndSentHome()
+    {
+        var viewModel = await OpenAsync(Role.Driver, OperationDirection.Out);
+
+        Assert.Equal(Routes.Home, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(PermissionGuard.AlertTitle, Assert.Single(_store.Alerts.Shown).Title);
+        Assert.Contains(_store.Logs, log => log.Level == LogLevel.Warning);
+        Assert.Empty(viewModel.Lines);
+    }
+
+    [Fact]
+    public async Task SavedSupplier_OpensTheDetails()
+    {
+        var viewModel = await OpenAsync();
+        Assert.False(viewModel.IsDetailsOpen);
+        viewModel.ToggleDetailsCommand.Execute(null);
+        viewModel.Note = "Waybill 7";
+        await Eventually.WaitAsync(() => _store.AppState.GetDraft<StockDocumentDraftStore.StoredDocuments>() is not null);
+
+        var reopened = await OpenAsync();
+
+        Assert.True(reopened.IsDetailsOpen);
     }
 }

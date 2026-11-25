@@ -88,6 +88,9 @@ public partial class OutlinedField : ContentView
         set => Input.MaxLength = value;
     }
 
+    // A narrow box (a quantity) has no room for the clear button
+    public bool ShowClear { get; set; } = true;
+
     // A glyph in front of the text (search)
     public string? Icon
     {
@@ -165,6 +168,6 @@ public partial class OutlinedField : ContentView
         Outline.SetDynamicResource(Border.StrokeProperty, brush);
         Outline.StrokeThickness = thickness;
         Outline.SetDynamicResource(BackgroundProperty, IsEnabled ? "BackgroundBrush" : "SurfaceBrush");
-        ClearButton.IsVisible = IsEnabled && !string.IsNullOrEmpty(Input.Text);
+        ClearButton.IsVisible = ShowClear && IsEnabled && !string.IsNullOrEmpty(Input.Text);
     }
 }
