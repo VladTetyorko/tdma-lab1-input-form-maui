@@ -1,5 +1,8 @@
 # Implementation slices — StockRoom redesign
 
+> Navigation (slices 5, 6), the Receive / Issue page (14) and the Products actions are superseded by
+> [`revision-2.md`](revision-2.md); this list is kept as the record of step 10.
+
 Each slice is **one commit** `[Design] <what>` on a branch stacked on `design` (proposal: `redesign`), with tests,
 green `dotnet test Mobile_apps_L1_Model_view.Tests`, and (for app slices) a Windows build
 (`-f net10.0-windows10.0.19041.0`) — Android build at least every third slice and before the PR.

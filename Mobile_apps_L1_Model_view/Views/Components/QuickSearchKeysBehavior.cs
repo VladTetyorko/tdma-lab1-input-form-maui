@@ -66,6 +66,6 @@ public sealed class QuickSearchKeysBehavior(Func<QuickSearchViewModel?> viewMode
     }
 #else
     // Kept so the constructor argument is used on every platform
-    protected Func<QuickSearchViewModel?> ViewModel => viewModel;
+    private Func<QuickSearchViewModel?> ViewModel => viewModel;
 #endif
 }

@@ -51,6 +51,7 @@ roles Storekeeper, Driver and Manager, camera and accelerometer (plus scanner, l
 | Area | What the app does | Where to read |
 |------|-------------------|---------------|
 | Products | list with quantity on hand and colour state; **search** by name, barcode or characteristic value; sort by name, quantity or any characteristic; add, edit, delete (Manager) | steps 01, 02, 09 |
+| Counter | Home with *Receive goods* / *Issue goods*, a drawer menu, camera first with a quick-search field, one big action at the bottom (not yet checked on a screen) | step 11 |
 | Operations | scan or type a barcode, choose **In** or **Out**, enter the number of units, optionally attach the location; Out never exceeds the stock; operations are never edited | steps 01, 02, 07 |
 | Roles | Storekeeper (In and Out), Driver (In only), Manager (everything, photos, logs, diagnostics); checked in the UI, in every command and in the service | step 06, [access matrix](docs/steps/09-final.md) |
 | Offline first | SQLite file, every change queued in `SyncQueue` and pushed to a stub server; last write wins | step 04 |
@@ -125,6 +126,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 08 | 8 | [Core library, Moq tests, integration tests, GitHub Actions CI with coverage gate, AutomationId, Appium UI tests](docs/steps/08-testing-ci.md) | done (1227 tests + 2 UI tests not run; ViewModels 97.4 % coverage) |
 | 09 | 9 | [Final module: search, ER and screen map, role matrix, DI table, offline scenario, demo script, APK, v1.0](docs/steps/09-final.md) | done (1226 tests + 42 AppTests + 2 UI tests not run; ViewModels 97.4 % coverage; APK artifact in CI; tag by the owner) |
 | 10 | — | [UI redesign: themes, tabs / side panel, product table, batch Receive and Issue](docs/steps/10-design.md) | implemented, not checked on screen (1309 tests + 42 AppTests) |
+| 11 | — | [Design revision 2: Home tiles, drawer, camera first, quick search, bottom action bar, APK script](docs/steps/11-design-revision.md) | implemented, not checked on screen or on a device (1387 tests + 42 AppTests) |
 
 ## Decision log
 
@@ -225,6 +227,15 @@ Every architectural decision, newest last. Details are in the step documents.
 | 91 | — | Product table sorted by tapping headers; the table is a pure model (`ProductTable`) | Testable without a page; `ProductSorter` unchanged |
 | 92 | — | `StockDocument` + `Operation.DocumentId` (migration 0005); document, operations and sync entries in one transaction; supplier / recipient on the document only, encrypted | A delivery is all or nothing; 3NF |
 | 93 | — | Issuing more than on hand is blocked; stock is read again at commit | The existing domain rule |
+| 94 | — | A modal drawer on every device replaces the side panel and the bottom tabs (supersedes 90); its content is our own view with `DrawerViewModel` (`Shell.FlyoutContent`) | Owner request; the daily actions are on Home; role filtering and AutomationIds are testable |
+| 95 | — | Home with two filled action tiles is the start page; the Driver sees one tile and a sentence | The two daily jobs are one tap away; a disabled tile invites a useless tap |
+| 96 | — | Receive / Issue are pushed on Home (`//home/receive`), not root pages | Back returns Home instead of leaving the app |
+| 97 | — | One big filled action in a bottom bar above the keyboard (`SafeAreaEdges ... SoftInput`); Discard moves to the toolbar | Owner request; the risky action away from the frequent one |
+| 98 | — | Quick search: pure `ProductSuggestions` (name and code, ranked, at most 5 / 8), no debounce, list in the page flow | About ten products filter instantly; a popup would hide behind the Android keyboard |
+| 99 | — | Enter in the search box: highlighted row, else a valid barcode, else the single suggestion | Keyboard scanners keep the exact-barcode path |
+| 100 | — | Outlined inputs are `OutlinedField` with a `BorderlessEntry` handler mapping filtered by subclass | A MAUI `Entry` has no outline or focus ring; a global mapping would change every entry |
+| 101 | — | `StartupGuardTests` read the app sources to check registrations, resource keys and XAML type assemblies | The app has no screen test; these mistakes compile and crash at run time |
+| 102 | — | `scripts/build-apk.ps1` builds the debug-signed Release APK into the ignored `artifacts/apk/`, and never uninstalls | One command for the owner; uninstalling would delete the phone data |
 
 ## Architecture
 

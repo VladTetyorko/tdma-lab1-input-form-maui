@@ -8,12 +8,13 @@
     <Grid RowDefinitions="1,Auto" BackgroundColor="{DynamicResource Surface}">
         <BoxView />
         <VerticalStackLayout Grid.Row="1" Padding="16,12" Spacing="4">
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" HorizontalOptions="{OnIdiom Fill, Desktop=End}">
+            <!-- No column spacing: while Cancel is hidden the main action spans the whole width -->
+            <Grid ColumnDefinitions="Auto,*" HorizontalOptions="{OnIdiom Fill, Desktop=End}">
                 <!-- Desktop only: Cancel next to the main action -->
-                <Button x:Name="SecondaryButton" StyleClass="Outlined" IsVisible="False"
+                <Button x:Name="SecondaryButton" StyleClass="Outlined" IsVisible="False" Margin="0,0,12,0"
                         HeightRequest="{OnIdiom 56, Desktop=48}" />
                 <Button x:Name="ActionButton" Grid.Column="1" StyleClass="Primary" FontSize="17"
-                        HeightRequest="{OnIdiom 56, Desktop=48}" MinimumWidthRequest="320" />
+                        HeightRequest="{OnIdiom 56, Desktop=48}" MinimumWidthRequest="{OnIdiom 0, Desktop=320}" />
             </Grid>
             <Label x:Name="CaptionText" Style="{StaticResource TextCaption}" IsVisible="False"
                    HorizontalTextAlignment="{OnIdiom Center, Desktop=End}" />

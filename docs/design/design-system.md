@@ -1,6 +1,7 @@
 # Design system — StockRoom
 
-Status: **implemented in part** (green and dark only, see [`../steps/10-design.md`](../steps/10-design.md)). Tokens are the contract between this document, the future Figma file and
+Status: **implemented in part** (green and dark only, see [`../steps/10-design.md`](../steps/10-design.md) and
+[`../steps/11-design-revision.md`](../steps/11-design-revision.md)). Tokens are the contract between this document, the future Figma file and
 `Resources/Styles`. Names below are the XAML resource keys to use. Screens and flows: [`ux-plan.md`](ux-plan.md).
 Revision 2 ([`revision-2.md`](revision-2.md)) changed sizes, the drawer, tiles, the bottom action bar and disabled buttons.
 

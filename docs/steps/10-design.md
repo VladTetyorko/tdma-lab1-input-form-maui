@@ -85,6 +85,8 @@ adapted (sign out now lives in the panel or on Settings) but not run. iOS and Ma
 
 ## Owner actions
 
+Navigation, Receive / Issue and Products changed again in [step 11](11-design-revision.md); use its owner actions.
+
 1. Start the app on Windows and on an Android device and check: sign-in, side panel / bottom tabs for each of the three
    users (the Driver has no Issue), theme System / Light / Dark switching live, header sorting, row edit / delete (swipe on
    the phone), Receive and Issue with a keyboard or USB scanner, continuous camera scanning and vibration on the phone.
