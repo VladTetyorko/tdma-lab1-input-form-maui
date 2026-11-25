@@ -293,7 +293,13 @@ public partial class ProductDetailViewModel(
     {
         if (row is not null)
         {
-            StatusMessage = await viewer.OpenAsync(row.Entry);
+            var result = await viewer.OpenAsync(row.Entry);
+            if (result.Changed)
+            {
+                await LoadAsync();
+            }
+
+            StatusMessage = result.Message;
         }
     }
 

@@ -1,22 +1,31 @@
 using Microsoft.Extensions.Logging;
+using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.Services;
 
-// A tap on a row of the operation table, the same on every page: the sheet of the operation and what was chosen in it.
-// Returns the message for the page's status line (empty = nothing to say)
+// Message: for the page's status line (empty = nothing to say). Changed: stock moved, the page reads its lists again
+public sealed record OperationViewResult(string Message, bool Changed = false);
+
+// A tap on a row of the operation table, the same on every page: the sheet of the operation and what was chosen in it
 public sealed class OperationViewer(
     ISheetService sheets,
     INavigationService navigation,
     IProductCatalog catalog,
     IMapLauncher maps,
     IDeviceFeedback feedback,
+    OperationCorrector corrector,
+    ICurrentUserService currentUser,
+    IToastService toast,
     IClock clock,
     ILogger<OperationViewer> logger)
 {
-    public async Task<string> OpenAsync(OperationEntry entry)
+    public async Task<OperationViewResult> OpenAsync(OperationEntry entry)
     {
-        var sheet = new OperationSheetViewModel(entry, clock.UtcNow);
+        var canCorrect = currentUser.CurrentUser is { } user
+                         && (RolePermissions.CanCorrect(user.Role, OperationDirection.In)
+                             || RolePermissions.CanCorrect(user.Role, OperationDirection.Out));
+        var sheet = new OperationSheetViewModel(entry, clock.UtcNow, corrector, canCorrect);
         await sheets.ShowAsync(sheet);
         switch (sheet.Choice)
         {
@@ -31,9 +40,12 @@ public sealed class OperationViewer(
                     logger.LogInformation("Maps opened for operation {OperationId}", entry.Id);
                 }
 
-                return feedback.Report(DeviceFeature.Maps, status);
+                return new OperationViewResult(feedback.Report(DeviceFeature.Maps, status));
+            case OperationChoice.Corrected:
+                await toast.ShowAsync(sheet.Result);
+                return new OperationViewResult(string.Empty, Changed: true);
         }
 
-        return string.Empty;
+        return new OperationViewResult(string.Empty);
     }
 }

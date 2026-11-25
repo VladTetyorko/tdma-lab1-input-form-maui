@@ -69,6 +69,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IStockService, StockService>();
         services.AddSingleton<IProductCatalog, ProductCatalog>();
         services.AddSingleton<IOperationFeed, OperationFeed>();
+        services.AddSingleton<OperationCorrector>();
         services.AddSingleton<OperationViewer>();
         services.AddSingleton<StockChanges>();
         // Every question and message is one sheet; the host shows it (ISheetService)

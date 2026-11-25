@@ -104,8 +104,15 @@ public sealed class TestStore
 
     public FakeSheetService Sheets { get; } = new();
 
-    public OperationViewer Viewer =>
-        new(Sheets, Navigation, Catalog, Maps, Feedback, Clock, Logger<OperationViewer>());
+    public OperationCorrector Corrector => new(Operations, Documents,
+        new StockDocumentService(Documents, Products, Stock, CurrentUser, Clock, new StockChanges(),
+            Logger<StockDocumentService>()),
+        Stock, CurrentUser, Logger<OperationCorrector>());
+
+    public FakeToastService Toasts { get; } = new();
+
+    public OperationViewer Viewer => new(Sheets, Navigation, Catalog, Maps, Feedback, Corrector, CurrentUser, Toasts, Clock,
+        Logger<OperationViewer>());
 
     // Adds the user to the user repository (for history names) and signs them in
     public async Task<User> SignInAsync(Role role, string fullName = "Test User")

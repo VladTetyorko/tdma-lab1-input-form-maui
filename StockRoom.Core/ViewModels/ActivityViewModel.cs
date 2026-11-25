@@ -133,7 +133,13 @@ public sealed partial class ActivityViewModel(
     {
         if (row is not null)
         {
-            StatusMessage = await viewer.OpenAsync(row.Entry);
+            var result = await viewer.OpenAsync(row.Entry);
+            if (result.Changed)
+            {
+                await LoadAsync();
+            }
+
+            StatusMessage = result.Message;
         }
     }
 }
