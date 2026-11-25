@@ -78,6 +78,16 @@ public sealed class TestStore
 
     public IPermissionGuard Guard => new PermissionGuard(CurrentUser, Alerts, Logger<PermissionGuard>());
 
+    public FakeBarcodeScanner Scanner { get; } = new();
+
+    public FakeProductLookup Lookup { get; } = new();
+
+    public QuickSearchViewModel QuickSearch =>
+        new(Catalog, CharacteristicService, CurrentUser, Guard, Navigation, Logger<QuickSearchViewModel>());
+
+    public ProductFormViewModel ProductForm => new(new ProductValidator(Products), ProductService, CurrentUser, Guard,
+        AppState, Navigation, PhotoEditor, Scanner, Lookup, QuickSearch, Logger<ProductFormViewModel>());
+
     public IDiagnosticsService Diagnostics => new DiagnosticsService(CurrentUser, CrashReporter, Logger<DiagnosticsService>());
 
     public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock);

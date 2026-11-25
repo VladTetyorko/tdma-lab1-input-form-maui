@@ -29,8 +29,13 @@ public class ProductFormViewModelMoqTests
         var photo = new ProductPhotoEditor(Mock.Of<IPhotoService>(), Mock.Of<IDeviceFeedback>(), guard,
             NullLogger<ProductPhotoEditor>.Instance);
 
+        var search = new QuickSearchViewModel(Mock.Of<IProductCatalog>(), Mock.Of<ICharacteristicService>(),
+            _currentUser.Object, guard, _navigation.Object, NullLogger<QuickSearchViewModel>.Instance);
+
         _viewModel = new ProductFormViewModel(validator, _productService.Object, _currentUser.Object, guard,
-            Mock.Of<IAppStateService>(), _navigation.Object, photo, NullLogger<ProductFormViewModel>.Instance);
+            Mock.Of<IAppStateService>(), _navigation.Object, photo, Mock.Of<IBarcodeScanner>(),
+            Mock.Of<IProductLookup>(lookup => lookup.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())
+                == Task.FromResult(LookupResult.NotFound())), search, NullLogger<ProductFormViewModel>.Instance);
     }
 
     [Theory]

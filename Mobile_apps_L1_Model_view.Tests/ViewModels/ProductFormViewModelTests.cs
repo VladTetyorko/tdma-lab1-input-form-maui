@@ -17,6 +17,8 @@ public class ProductFormViewModelTests
     private readonly FakeAlertService _alerts = new();
     private readonly AppStateService _appState = new(new FakePreferencesStore());
     private readonly FakePhotoService _photos = new();
+    private readonly FakeBarcodeScanner _scanner = new();
+    private readonly FakeProductLookup _lookup = new();
     private readonly ProductFormViewModel _viewModel;
 
     public ProductFormViewModelTests()
@@ -32,8 +34,139 @@ public class ProductFormViewModelTests
         var guard = new PermissionGuard(_currentUser, _alerts, NullLogger<PermissionGuard>.Instance);
         var photo = new ProductPhotoEditor(_photos, new DeviceFeedback(NullLogger<DeviceFeedback>.Instance), guard,
             NullLogger<ProductPhotoEditor>.Instance);
+        var values = new InMemoryProductCharacteristicRepository();
+        var operations = new InMemoryOperationRepository();
+        var characteristics = new InMemoryCharacteristicRepository();
+        var catalog = new ProductCatalog(_products, characteristics, values, operations, new InMemoryUserRepository(),
+            new StockService(operations, _products, _currentUser, new FakeClock(), NullLogger<StockService>.Instance));
+        var characteristicService = new CharacteristicService(characteristics, values, _products,
+            new CharacteristicValidator(characteristics), _currentUser, new FakeClock(),
+            NullLogger<CharacteristicService>.Instance);
+        var search = new QuickSearchViewModel(catalog, characteristicService, _currentUser, guard, _navigation,
+            NullLogger<QuickSearchViewModel>.Instance);
         return new ProductFormViewModel(validator, service, _currentUser, guard, appState, _navigation, photo,
-            NullLogger<ProductFormViewModel>.Instance);
+            _scanner, _lookup, search, NullLogger<ProductFormViewModel>.Instance);
+    }
+
+    private async Task SignInAsManagerWithADrillAsync()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena", Role = Role.Manager });
+        await _products.AddAsync(new Product { Name = "Drill", Barcode = ValidBarcode });
+        await _viewModel.AppearCommand.ExecuteAsync(null);
+    }
+
+    [Fact]
+    public async Task Scan_FillsTheBarcodeAndStopsTheCamera()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena", Role = Role.Manager });
+        await _viewModel.AppearCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.IsCameraActive);
+
+        _viewModel.ScanDetectedCommand.Execute("hello");
+        Assert.True(_viewModel.IsCameraActive);
+        _viewModel.ScanDetectedCommand.Execute(ValidBarcode);
+        _viewModel.ScanDetectedCommand.Execute("3017620422003");
+
+        Assert.Equal(ValidBarcode, _viewModel.Barcode);
+        Assert.False(_viewModel.IsCameraActive);
+        Assert.True(_viewModel.CanStartScan);
+    }
+
+    [Fact]
+    public async Task NoCamera_ShowsTheBanner()
+    {
+        _scanner.IsCameraSupported = false;
+
+        await _viewModel.AppearCommand.ExecuteAsync(null);
+
+        Assert.Equal(CameraMessages.Unsupported, _viewModel.CameraMessage);
+        Assert.False(_viewModel.CanStartScan);
+    }
+
+    [Fact]
+    public async Task Lookup_FillsTheNameOnlyWhenItIsEmpty()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena", Role = Role.Manager });
+        _lookup.Result = LookupResult.Found("Nutella", "Ferrero", "400 g", "Spreads");
+        await _viewModel.AppearCommand.ExecuteAsync(null);
+
+        _viewModel.Barcode = "3017620422003";
+        Assert.Equal(("Nutella", _lookup.Attribution), (_viewModel.Name, _viewModel.DataSource));
+        Assert.False(_viewModel.QuickSearch.IsOpen);
+
+        _viewModel.Name = "My own name";
+        _viewModel.Barcode = ValidBarcode;
+
+        Assert.Equal("My own name", _viewModel.Name);
+        Assert.Single(_lookup.Asked);
+    }
+
+    [Fact]
+    public async Task Lookup_Offline_SaysSoAndLeavesTheNameEmpty()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena", Role = Role.Manager });
+        _lookup.Result = LookupResult.Offline();
+        await _viewModel.AppearCommand.ExecuteAsync(null);
+
+        _viewModel.Barcode = "3017620422003";
+
+        Assert.Equal(string.Empty, _viewModel.Name);
+        Assert.Contains("Cannot reach Open Food Facts", _viewModel.LookupText);
+    }
+
+    [Fact]
+    public async Task Duplicate_ByBarcodeOrName_IsShownAndCanBeOpened()
+    {
+        await SignInAsManagerWithADrillAsync();
+
+        _viewModel.Barcode = ValidBarcode;
+        Assert.Equal($"Already in the catalog: Drill ({ValidBarcode})", _viewModel.DuplicateText);
+        Assert.Empty(_lookup.Asked);
+
+        _viewModel.Barcode = string.Empty;
+        Assert.False(_viewModel.HasDuplicate);
+        _viewModel.Name = " drill ";
+        Assert.True(_viewModel.HasDuplicate);
+
+        await _viewModel.OpenDuplicateCommand.ExecuteAsync(null);
+        Assert.Equal(Routes.ProductDetail, Assert.Single(_navigation.RequestedRoutes));
+    }
+
+    [Fact]
+    public async Task TypingTheName_SuggestsAndPickingWarnsWithoutChangingTheText()
+    {
+        await SignInAsManagerWithADrillAsync();
+
+        _viewModel.QuickSearch.Query = "dri";
+        Assert.Equal("dri", _viewModel.Name);
+        Assert.True(_viewModel.QuickSearch.IsOpen);
+
+        _viewModel.QuickSearch.PickCommand.Execute(_viewModel.QuickSearch.Suggestions.Single());
+
+        Assert.Equal("dri", _viewModel.Name);
+        Assert.False(_viewModel.QuickSearch.IsOpen);
+        Assert.StartsWith("Already in the catalog: Drill", _viewModel.DuplicateText);
+
+        _viewModel.QuickSearch.Query = "hammer";
+        Assert.False(_viewModel.QuickSearch.IsOpen);
+        Assert.False(_viewModel.HasDuplicate);
+    }
+
+    [Fact]
+    public void SaveText_AndHint_FollowTheState()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena", Role = Role.Manager });
+        Assert.Equal("Add product", _viewModel.SaveText);
+        Assert.NotEqual(string.Empty, _viewModel.SaveHint);
+
+        FillValidForm();
+        Assert.Equal(string.Empty, _viewModel.SaveHint);
+
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.SelectedProduct] = new ProductSummary(Guid.NewGuid(), "Saw", ValidBarcode, 0)
+        });
+        Assert.Equal("Save changes", _viewModel.SaveText);
     }
 
     [Fact]

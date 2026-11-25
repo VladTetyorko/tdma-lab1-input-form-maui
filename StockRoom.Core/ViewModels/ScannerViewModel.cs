@@ -138,7 +138,7 @@ public partial class ScannerViewModel(
         var result = await lookup.FindAsync(barcode);
         if (!result.IsFound)
         {
-            StatusMessage = LookupFailureMessage(result.Status, barcode);
+            StatusMessage = LookupMessages.Failure(result.Status, barcode);
             logger.LogWarning("Lookup of barcode {Barcode} gave {Status}", barcode, result.Status);
             return;
         }
@@ -154,12 +154,6 @@ public partial class ScannerViewModel(
         });
     }
 
-    private static string LookupFailureMessage(LookupStatus status, string barcode) => status switch
-    {
-        LookupStatus.NotFound => $"Open Food Facts does not know barcode {barcode}. You can add the product by hand.",
-        LookupStatus.Offline => "Cannot reach Open Food Facts (offline or too slow). Try again later or add the product by hand.",
-        _ => "Open Food Facts gave no usable answer. Try again later or add the product by hand."
-    };
 
     // Tells the list to reload only when something may have changed
     [RelayCommand]

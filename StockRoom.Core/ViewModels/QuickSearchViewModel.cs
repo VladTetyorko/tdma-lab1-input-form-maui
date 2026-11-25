@@ -32,6 +32,15 @@ public sealed partial class QuickSearchViewModel(
     // At most so many rows: 5 on a phone, 8 on a desktop (set by the view)
     public int MaxSuggestions { get; set; } = 5;
 
+    // The text is the field's own value (the product form's name): picking keeps it, and "no match" is good news
+    public bool IsSelectMode { get; set; }
+
+    // The product being edited is not suggested to itself
+    public Guid? ExcludedProductId { get; set; }
+
+    // What was loaded last
+    public IReadOnlyList<ProductSummary> Products => _products;
+
     [ObservableProperty]
     public partial string Query { get; set; } = string.Empty;
 
@@ -65,8 +74,17 @@ public sealed partial class QuickSearchViewModel(
     [RelayCommand]
     private async Task LoadAsync()
     {
-        _products = await catalog.GetSummariesAsync();
-        _characteristics = await characteristics.GetAllAsync();
+        try
+        {
+            _products = await catalog.GetSummariesAsync();
+            _characteristics = await characteristics.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            // Suggestions are a help: the page keeps working without them
+            logger.LogWarning(ex, "The products for the quick search could not be read");
+        }
+
         if (IsOpen)
         {
             Search();
@@ -92,7 +110,15 @@ public sealed partial class QuickSearchViewModel(
         }
 
         var product = row.Suggestion.Product;
-        Query = string.Empty;
+        if (IsSelectMode)
+        {
+            Close();
+        }
+        else
+        {
+            Query = string.Empty;
+        }
+
         Picked?.Invoke(this, product);
     }
 
@@ -161,13 +187,14 @@ public sealed partial class QuickSearchViewModel(
     {
         HighlightedIndex = -1;
         Suggestions.Clear();
-        foreach (var suggestion in ProductSuggestions.Find(_products, _characteristics, Query, MaxSuggestions))
+        var searched = _products.Where(product => product.Id != ExcludedProductId);
+        foreach (var suggestion in ProductSuggestions.Find(searched, _characteristics, Query, MaxSuggestions))
         {
             Suggestions.Add(new QuickSearchRow(suggestion));
         }
 
-        IsOpen = ProductSuggestions.IsSearchable(Query);
         HasSuggestions = Suggestions.Count > 0;
+        IsOpen = ProductSuggestions.IsSearchable(Query) && (HasSuggestions || !IsSelectMode);
         var nothing = IsOpen && !HasSuggestions;
         var mayCreate = currentUser.CurrentUser is { } user && RolePermissions.CanManageProducts(user.Role);
         var text = Query.Trim();

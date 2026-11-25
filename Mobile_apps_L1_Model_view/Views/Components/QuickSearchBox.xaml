@@ -10,7 +10,7 @@
              x:DataType="viewModels:QuickSearchViewModel"
              x:Name="ThisBox">
     <VerticalStackLayout Spacing="4">
-        <components:OutlinedField x:Name="Field" Icon="{StaticResource IconSearch}" EntryId="QuickSearchEntry"
+        <components:OutlinedField x:Name="Field" Icon="{StaticResource IconSearch}"
                                   ClearId="QuickSearchClearButton" Text="{Binding Query, Mode=TwoWay}"
                                   ReturnCommand="{Binding SubmitCommand}" />
 

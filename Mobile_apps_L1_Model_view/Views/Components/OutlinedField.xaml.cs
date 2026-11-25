@@ -109,6 +109,12 @@ public partial class OutlinedField : ContentView
         set => Input.AutomationId = value;
     }
 
+    public string? ErrorId
+    {
+        get => ErrorLabelView.AutomationId;
+        set => ErrorLabelView.AutomationId = value;
+    }
+
     public string? ClearId
     {
         get => ClearButton.AutomationId;

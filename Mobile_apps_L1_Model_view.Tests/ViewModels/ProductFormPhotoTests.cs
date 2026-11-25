@@ -14,9 +14,7 @@ public class ProductFormPhotoTests
 
     private readonly TestStore _store = new();
 
-    private ProductFormViewModel CreateForm() => new(
-        new ProductValidator(_store.Products), _store.ProductService, _store.CurrentUser, _store.Guard, _store.AppState,
-        _store.Navigation, _store.PhotoEditor, _store.Logger<ProductFormViewModel>());
+    private ProductFormViewModel CreateForm() => _store.ProductForm;
 
     private async Task<ProductFormViewModel> NewProductFormAsync(Role role = Role.Manager)
     {

@@ -84,13 +84,9 @@ public class RoleRefusalTests
     public async Task ProductForm_Save_AsNonManager_IsRefused_AndNothingIsAdded(Role role)
     {
         await _store.SignInAsync(role);
-        var form = new ProductFormViewModel(new ProductValidator(_store.Products), _store.ProductService, _store.CurrentUser,
-            _store.Guard, _store.AppState, _store.Navigation, _store.PhotoEditor, NullLogger<ProductFormViewModel>.Instance)
-        {
-            Name = "Drill",
-            Barcode = Barcode
-        };
-
+        var form = _store.ProductForm;
+        form.Name = "Drill";
+        form.Barcode = Barcode;
         await form.SaveCommand.ExecuteAsync(null);
 
         AssertRefused($"Your role ({role}) cannot add products.");

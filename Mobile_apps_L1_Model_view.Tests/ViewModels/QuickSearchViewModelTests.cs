@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Moq;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
@@ -27,6 +28,21 @@ public class QuickSearchViewModelTests
         viewModel.SubmittedText += (_, text) => _submitted.Add(text);
         await viewModel.LoadCommand.ExecuteAsync(null);
         return viewModel;
+    }
+
+    [Fact]
+    public async Task UnreadableCatalog_IsLoggedAndNothingBreaks()
+    {
+        var catalog = new Mock<IProductCatalog>();
+        catalog.Setup(c => c.GetSummariesAsync()).ThrowsAsync(new IOException("no database"));
+        var viewModel = new QuickSearchViewModel(catalog.Object, _store.CharacteristicService, _store.CurrentUser,
+            _store.Guard, _store.Navigation, _store.Logger<QuickSearchViewModel>());
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+        viewModel.Query = "dri";
+
+        Assert.Empty(viewModel.Suggestions);
+        Assert.Contains(_store.Logs, log => log.Level == LogLevel.Warning);
     }
 
     [Fact]
