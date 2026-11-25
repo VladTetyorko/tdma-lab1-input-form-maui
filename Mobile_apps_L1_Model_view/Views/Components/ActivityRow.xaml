@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The signed amount (colour is only an addition to the sign), the title and one caption line. Used by Recent
+     activity and the product history -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.ActivityRow"
+             x:DataType="viewModels:RecentActivityItem">
+    <Grid ColumnDefinitions="48,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" Padding="0,4">
+        <Label Text="{Binding Amount}" Style="{StaticResource TextNumeric}" TextColor="{DynamicResource Success}">
+            <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding IsOut}" Value="True">
+                    <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
+        <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource TextBodyStrong}" MaxLines="1"
+               LineBreakMode="TailTruncation" />
+        <Label Grid.Row="1" Grid.Column="1" Text="{Binding Caption}" Style="{StaticResource TextCaption}" />
+    </Grid>
+</ContentView>

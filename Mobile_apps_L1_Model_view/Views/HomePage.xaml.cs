@@ -16,6 +16,9 @@ public partial class HomePage : ContentPage
         Recent.Show(viewModel.Recent);
     }
 
+    // The content is at least as tall as the view, so the star rows can centre the actions
+    private void OnScrollerSizeChanged(object? sender, EventArgs e) => Body.MinimumHeightRequest = Scroller.Height;
+
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);

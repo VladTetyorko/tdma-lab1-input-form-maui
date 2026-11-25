@@ -24,7 +24,7 @@ public class HomeViewModelTests
     {
         await _store.SignInAsync(role, "Petro Bondarenko");
         var recent = new RecentActivityViewModel(_store.Operations, _store.Products, _store.Users,
-            new InMemoryStockDocumentRepository(_store.Operations), _store.CurrentUser,
+            new InMemoryStockDocumentRepository(_store.Operations), _store.CurrentUser, _store.Clock,
             _store.Logger<RecentActivityViewModel>());
         var viewModel = new HomeViewModel(_store.CurrentUser, _drafts, _store.Startup, _store.ShakeGesture,
             _store.Navigation, _store.Clock, _changes, recent, _store.Logger<HomeViewModel>());

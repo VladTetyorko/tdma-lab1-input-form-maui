@@ -673,6 +673,15 @@
         <Setter Property="TextColor" Value="{DynamicResource TextSecondary}" />
     </Style>
 
+    <Style TargetType="Label" x:Key="TableHeader">
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="{OnIdiom 14, Desktop=13}" />
+        <Setter Property="TextColor" Value="{DynamicResource PrimaryText}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="MaxLines" Value="1" />
+        <Setter Property="LineBreakMode" Value="TailTruncation" />
+    </Style>
+
     <Style TargetType="Label" x:Key="TextNumeric">
         <Setter Property="FontFamily" Value="OpenSansSemibold" />
         <Setter Property="FontSize" Value="{OnIdiom 16, Desktop=14}" />

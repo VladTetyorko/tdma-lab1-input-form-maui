@@ -17,17 +17,21 @@
         <components:AppBar Title="StockRoom" Route="home"
                            ActionGlyph="{StaticResource IconScan}" ActionDescription="Scan a barcode"
                            ActionCommand="{Binding ScanCommand}" ActionId="HomeScanButton" />
-        <ScrollView Grid.Row="1">
-        <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="12" MaximumWidthRequest="1200">
-            <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
-
+        <ScrollView x:Name="Scroller" Grid.Row="1" SizeChanged="OnScrollerSizeChanged">
+        <!-- The actions sit in the middle of the free height, within reach of a thumb (the code-behind gives the
+             grid the height of the view) -->
+        <Grid x:Name="Body" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowDefinitions="Auto,*,Auto,*,Auto"
+              RowSpacing="8" MaximumWidthRequest="1200">
             <VerticalStackLayout>
+                <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
                 <Label Text="{Binding Greeting}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
                 <Label Text="{Binding RoleText}" Style="{StaticResource TextCaption}" />
             </VerticalStackLayout>
 
+            <VerticalStackLayout Grid.Row="2" Spacing="8">
+
             <!-- One column on a phone, two side by side on a wide window (code-behind) -->
-            <Grid x:Name="Tiles" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+            <Grid x:Name="Tiles" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
                 <components:ActionTile x:Name="ReceiveTile" ButtonId="HomeReceiveTile" Title="Receive goods"
                                        Glyph="{StaticResource IconReceive}" Caption="{Binding ReceiveCaption}"
                                        Command="{Binding OpenReceiveCommand}" IsVisible="{Binding CanReceive}" />
@@ -38,16 +42,23 @@
             <Label Text="{Binding IssueNote}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasIssueNote}"
                    AutomationId="HomeIssueNotAllowedLabel" />
 
-            <FlexLayout Wrap="Wrap">
-                <Button Text="Find a product" StyleClass="Outlined" Margin="0,0,12,8"
-                        Command="{Binding FindProductCommand}" AutomationId="HomeFindProductButton" />
-                <Button Text="Add product" StyleClass="Outlined" Margin="0,0,12,8"
-                        Command="{Binding AddProductCommand}" IsVisible="{Binding CanAddProduct}"
-                        AutomationId="HomeAddProductButton" />
-            </FlexLayout>
+            <!-- Two buttons of equal width; alone, the first one takes the whole row -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Text="Find a product" StyleClass="Outlined" Command="{Binding FindProductCommand}"
+                        Grid.ColumnSpan="2" AutomationId="HomeFindProductButton">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding CanAddProduct}" Value="True">
+                            <Setter Property="Grid.ColumnSpan" Value="1" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Grid.Column="1" Text="Add product" StyleClass="Outlined" Command="{Binding AddProductCommand}"
+                        IsVisible="{Binding CanAddProduct}" AutomationId="HomeAddProductButton" />
+            </Grid>
+            </VerticalStackLayout>
 
-            <components:RecentActivityPanel x:Name="Recent" />
-        </VerticalStackLayout>
+            <components:RecentActivityPanel x:Name="Recent" Grid.Row="4" />
+        </Grid>
     </ScrollView>
     </Grid>
 </ContentPage>

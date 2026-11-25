@@ -13,8 +13,11 @@ public sealed record TableColumn(string Title, SortOption? Sort, double Width, b
 
     public string AutomationId => Sort is null ? $"Header_{Title}" : $"SortHeader_{Sort.Title}";
 
-    // The header text with the direction arrow, so the state never depends on colour alone
-    public string Header => IsSorted ? $"{Title} {(IsDescending ? "▼" : "▲")}" : Title;
+    // The header text with the direction arrow, so the state never depends on colour alone. A numeric column is
+    // aligned right, so its arrow goes first and the right edges of header and numbers line up
+    public string Header => !IsSorted ? Title : IsNumeric ? $"{Arrow} {Title}" : $"{Title} {Arrow}";
+
+    private string Arrow => IsDescending ? "▼" : "▲";
 
     // What a screen reader announces
     public string Description => Sort is null

@@ -13,4 +13,6 @@ public sealed record ProductTableRow(ProductSummary Product, IReadOnlyList<Produ
     public string Barcode => Product.Barcode;
 
     public bool CanDelete => Product.CanDelete;
+
+    public bool IsOutOfStock => Product.Quantity <= 0;
 }

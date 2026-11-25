@@ -1,4 +1,9 @@
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
-// One line of "Recent activity": "+12 Nutella" and "Petro, 24.11 10:42, R-20261124-0001"
-public sealed record RecentActivityItem(string Summary, string Details);
+// One line of an activity list: the signed amount, what it was, and who and when ("Petro · Today 10:42 · R-…")
+public sealed record RecentActivityItem(string Amount, string Title, string Caption, bool IsIn)
+{
+    public string Summary => $"{Amount} {Title}";
+
+    public bool IsOut => !IsIn;
+}

@@ -29,30 +29,51 @@
                 <components:OutlinedField Icon="{StaticResource IconSearch}" Placeholder="Search by name, barcode or value"
                                           EntryId="SearchEntry" ClearId="SearchClearButton"
                                           Text="{Binding SearchText, Mode=TwoWay}" />
-                <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsNarrow}">
-                    <Label Text="Extra column" Style="{StaticResource TextCaption}" VerticalOptions="Center" />
-                    <Picker ItemsSource="{Binding ExtraColumnOptions}"
-                            SelectedItem="{Binding SelectedExtraColumn, Mode=TwoWay}" AutomationId="ExtraColumnPicker" />
-                </HorizontalStackLayout>
             </VerticalStackLayout>
 
-            <!-- Header: outside the list, so it stays while the rows scroll -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" BackgroundColor="{DynamicResource SurfaceAlt}">
-                <Button StyleClass="Ghost" Text="{Binding NameColumn.Header}" HorizontalOptions="Start"
-                        Command="{Binding SortByColumnCommand}" CommandParameter="{Binding NameColumn}"
-                        SemanticProperties.Description="{Binding NameColumn.Description}" AutomationId="SortHeader_Name" />
-                <HorizontalStackLayout Grid.Column="1" Spacing="8" BindableLayout.ItemsSource="{Binding Columns}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="services:TableColumn">
-                            <Button StyleClass="Ghost" Text="{Binding Header}" WidthRequest="{Binding Width}" Padding="0"
-                                    Command="{Binding BindingContext.SortByColumnCommand, Source={x:Reference ThisPage}}"
-                                    CommandParameter="{Binding .}" SemanticProperties.Description="{Binding Description}"
-                                    AutomationId="{Binding AutomationId}" />
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </HorizontalStackLayout>
-                <Grid Grid.Column="2" IsVisible="{OnIdiom Default=True, Phone=False}">
-                    <BoxView WidthRequest="96" HeightRequest="1" Opacity="0" IsVisible="{Binding CanManageProducts}" />
+            <!-- Header: outside the list, so it stays while the rows scroll. Same columns and padding as a row, and
+                 every header is aligned like its cells. On a phone the chooser of the extra column sits above it -->
+            <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Padding="12,0" BackgroundColor="{DynamicResource SurfaceAlt}">
+                <Border StyleClass="ChipNeutral" HorizontalOptions="End" Margin="0,8,0,0" IsVisible="{Binding IsNarrow}"
+                        Background="{DynamicResource BackgroundBrush}">
+                    <Grid>
+                        <Label Text="{Binding SelectedExtraColumn, StringFormat='Column: {0} ▾'}"
+                               Style="{StaticResource ChipNeutralText}" Padding="4,6" />
+                        <!-- Invisible, on top: a tap on the chip opens the choice -->
+                        <Picker ItemsSource="{Binding ExtraColumnOptions}" Opacity="0" Title="Extra column"
+                                SelectedItem="{Binding SelectedExtraColumn, Mode=TwoWay}" AutomationId="ExtraColumnPicker"
+                                SemanticProperties.Description="Extra column" />
+                    </Grid>
+                </Border>
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" MinimumHeightRequest="48">
+                    <Grid>
+                        <Label Text="{Binding NameColumn.Header}" Style="{StaticResource TableHeader}" />
+                        <Button StyleClass="RowOverlay" Command="{Binding SortByColumnCommand}"
+                                CommandParameter="{Binding NameColumn}"
+                                SemanticProperties.Description="{Binding NameColumn.Description}" AutomationId="SortHeader_Name" />
+                    </Grid>
+                    <HorizontalStackLayout Grid.Column="1" Spacing="8" BindableLayout.ItemsSource="{Binding Columns}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="services:TableColumn">
+                                <Grid WidthRequest="{Binding Width}" MinimumHeightRequest="48">
+                                    <Label Text="{Binding Header}" Style="{StaticResource TableHeader}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsNumeric}" Value="True">
+                                                <Setter Property="HorizontalTextAlignment" Value="End" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Button StyleClass="RowOverlay"
+                                            Command="{Binding BindingContext.SortByColumnCommand, Source={x:Reference ThisPage}}"
+                                            CommandParameter="{Binding .}" SemanticProperties.Description="{Binding Description}"
+                                            AutomationId="{Binding AutomationId}" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                    <Grid Grid.Column="2" IsVisible="{OnIdiom Default=True, Phone=False}">
+                        <BoxView WidthRequest="96" HeightRequest="1" Opacity="0" IsVisible="{Binding CanManageProducts}" />
+                    </Grid>
                 </Grid>
             </Grid>
 
@@ -78,21 +99,25 @@
                                 </SwipeView.RightItems>
 
                                 <Grid RowDefinitions="Auto,1" BackgroundColor="{DynamicResource Background}" AutomationId="ProductRow">
-                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Padding="0,6"
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Padding="12,8"
                                           MinimumHeightRequest="{OnIdiom Default=40, Phone=56}">
                                         <Grid.GestureRecognizers>
                                             <TapGestureRecognizer
                                                 Command="{Binding BindingContext.OpenDetailsCommand, Source={x:Reference ThisPage}}"
                                                 CommandParameter="{Binding Product}" />
                                         </Grid.GestureRecognizers>
-                                        <VerticalStackLayout VerticalOptions="Center" Padding="14,0,0,0">
+                                        <VerticalStackLayout VerticalOptions="Center">
                                             <components:HighlightedLabel Value="{Binding Name}" Ranges="{Binding NameRanges}"
                                                                          Style="{StaticResource TextBodyStrong}"
+                                                                         MaxLines="2" LineBreakMode="TailTruncation"
                                                                          AutomationId="ProductNameLabel" />
                                             <Label Text="Similar name" Style="{StaticResource TextCaption}"
                                                    IsVisible="{Binding IsSimilar}" />
-                                            <Label Text="{Binding Barcode}" Style="{StaticResource TextCaption}"
+                                            <Label Text="{Binding Barcode}" Style="{StaticResource TextCaption}" MaxLines="1"
                                                    IsVisible="{OnIdiom Default=False, Phone=True}" />
+                                            <Border StyleClass="ChipDanger" IsVisible="{Binding IsOutOfStock}">
+                                                <Label Text="Out of stock" Style="{StaticResource ChipDangerText}" />
+                                            </Border>
                                         </VerticalStackLayout>
                                         <HorizontalStackLayout Grid.Column="1" Spacing="8" BindableLayout.ItemsSource="{Binding Cells}">
                                             <BindableLayout.ItemTemplate>
@@ -145,8 +170,6 @@
                     <components:RecentActivityPanel x:Name="Recent" />
                 </Grid>
                 <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
-                <Label Text="A product with stock history cannot be deleted: operations are permanent records."
-                       Style="{StaticResource CaptionLabel}" IsVisible="{Binding CanManageProducts}" />
             </VerticalStackLayout>
         </Grid>
 

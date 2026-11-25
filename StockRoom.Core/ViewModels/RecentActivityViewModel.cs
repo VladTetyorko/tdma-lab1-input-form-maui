@@ -15,6 +15,7 @@ public sealed partial class RecentActivityViewModel(
     IUserRepository users,
     IStockDocumentRepository documents,
     ICurrentUserService currentUser,
+    IClock clock,
     ILogger<RecentActivityViewModel> logger) : ObservableObject
 {
     public const int Count = 5;
@@ -60,11 +61,13 @@ public sealed partial class RecentActivityViewModel(
         {
             var product = await products.GetByIdAsync(operation.ProductId);
             var document = operation.DocumentId is { } id ? await documents.GetByIdAsync(id) : null;
-            var sign = operation.Direction == OperationDirection.In ? "+" : "−";
-            var details = $"{names.GetValueOrDefault(operation.CreatedByUserId, "Unknown user")}, {operation.CreatedAt.ToLocalTime():dd.MM HH:mm}";
+            var isIn = operation.Direction == OperationDirection.In;
+            var caption = $"{names.GetValueOrDefault(operation.CreatedByUserId, "Unknown user")} · {ActivityTime.Format(operation.CreatedAt, clock.UtcNow)}";
             items.Add(new RecentActivityItem(
-                $"{sign}{operation.Quantity} {product?.Name ?? "Unknown product"}",
-                document is null ? details : $"{details}, {document.Number}"));
+                $"{(isIn ? "+" : "−")}{operation.Quantity}",
+                product?.Name ?? "Unknown product",
+                document is null ? caption : $"{caption} · {document.Number}",
+                isIn));
         }
 
         return items;

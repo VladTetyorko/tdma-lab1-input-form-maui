@@ -7,11 +7,14 @@ namespace Mobile_apps_L1_Model_view.Services;
 public static class ProductTable
 {
     public const string Missing = "—";
-    public const string OutOfStock = "Out of stock";
 
     private const double BarcodeWidth = 130;
     private const double QuantityWidth = 96;
     private const double ValueWidth = 110;
+
+    // A phone: the name keeps as much room as possible
+    private const double NarrowQuantityWidth = 56;
+    private const double NarrowValueWidth = 88;
 
     public static TableColumn NameColumn(SortOption sorted, bool descending) =>
         Mark(new TableColumn("Name", SortOption.ByName, 0), sorted, descending);
@@ -27,10 +30,11 @@ public static class ProductTable
             columns.Add(new TableColumn("Barcode", null, BarcodeWidth));
         }
 
-        columns.Add(new TableColumn("Qty", SortOption.ByQuantity, QuantityWidth, IsNumeric: true));
+        columns.Add(new TableColumn("Qty", SortOption.ByQuantity, narrow ? NarrowQuantityWidth : QuantityWidth,
+            IsNumeric: true));
         var shown = narrow ? Chosen(characteristics, extra) : characteristics;
         columns.AddRange(shown.Select(option => new TableColumn(
-            option.Title, option, ValueWidth, option.ValueType == Models.CharacteristicValueType.Number)));
+            option.Title, option, narrow ? NarrowValueWidth : ValueWidth, option.ValueType == Models.CharacteristicValueType.Number)));
         return [.. columns.Select(column => Mark(column, sorted, descending))];
     }
 
@@ -41,10 +45,12 @@ public static class ProductTable
     public static ProductTableRow Row(ProductSummary product, IReadOnlyList<TableColumn> columns) =>
         new(product, [.. columns.Select(column => Cell(product, column))]);
 
+    // Quantity stays a number: "out of stock" is said by a chip under the name
     private static ProductTableCell Cell(ProductSummary product, TableColumn column) =>
-        column.Sort == SortOption.ByQuantity && product.Quantity == 0
-            ? new ProductTableCell(OutOfStock, column.Width, column.IsNumeric) { IsAlert = true }
-            : new ProductTableCell(Text(product, column), column.Width, column.IsNumeric);
+        new(Text(product, column), column.Width, column.IsNumeric)
+        {
+            IsAlert = column.Sort == SortOption.ByQuantity && product.Quantity <= 0
+        };
 
     private static IEnumerable<SortOption> Chosen(List<SortOption> characteristics, SortOption? extra) =>
         extra is not null && characteristics.Contains(extra) ? [extra] : characteristics.Take(1);

@@ -14,7 +14,8 @@ public class RecentActivityViewModelTests
     {
         _documents = new InMemoryStockDocumentRepository(_store.Operations);
         _viewModel = new RecentActivityViewModel(_store.Operations, _store.Products, _store.Users, _documents,
-            _store.CurrentUser, new CapturingLogger<RecentActivityViewModel>());
+            _store.CurrentUser, _store.Clock,
+            new CapturingLogger<RecentActivityViewModel>());
     }
 
     private Task AddAsync(Guid product, Guid user, int quantity, int minute) => _store.Operations.AddAsync(new Operation
@@ -54,6 +55,8 @@ public class RecentActivityViewModelTests
         await _viewModel.RefreshCommand.ExecuteAsync(null);
 
         Assert.Equal(["+3 Drill", "+5 Drill"], _viewModel.Items.Select(item => item.Summary));
+        Assert.All(_viewModel.Items, item => Assert.True(item.IsIn && !item.IsOut));
+        Assert.StartsWith("Petro · ", _viewModel.Items[0].Caption);
     }
 
     [Fact]

@@ -34,11 +34,19 @@ public class ProductTableTests
         var columns = ProductTable.Columns(Options, Weight, true, narrow: false, extra: null);
 
         var sorted = Assert.Single(columns, column => column.IsSorted);
-        Assert.Equal("Weight, g ▼", sorted.Header);
+        Assert.Equal("▼ Weight, g", sorted.Header);
         Assert.True(sorted.IsDescending);
         Assert.Contains("sorted descending", sorted.Description);
         Assert.False(ProductTable.NameColumn(Weight, true).IsSorted);
         Assert.Equal("Name ▲", ProductTable.NameColumn(SortOption.ByName, false).Header);
+    }
+
+    [Fact]
+    public void Columns_AreNarrowerOnAPhone_AndNumbersAreMarkedAsNumeric()
+    {
+        var columns = ProductTable.Columns(Options, SortOption.ByName, false, narrow: true, Weight);
+
+        Assert.Equal([(56d, true), (88d, true)], columns.Select(column => (column.Width, column.IsNumeric)));
     }
 
     [Fact]
@@ -65,7 +73,8 @@ public class ProductTableTests
 
         var row = ProductTable.Row(product, columns);
 
-        Assert.Equal(["3017620422003", ProductTable.OutOfStock, "Ferrero", ProductTable.Missing], row.Cells.Select(cell => cell.Text));
+        Assert.Equal(["3017620422003", "0", "Ferrero", ProductTable.Missing], row.Cells.Select(cell => cell.Text));
+        Assert.True(row.IsOutOfStock);
         Assert.True(row.Cells[1].IsAlert);
         Assert.False(row.Cells[2].IsAlert);
         Assert.Equal(["Header_Barcode", "SortHeader_Quantity"], columns.Take(2).Select(column => column.AutomationId));
