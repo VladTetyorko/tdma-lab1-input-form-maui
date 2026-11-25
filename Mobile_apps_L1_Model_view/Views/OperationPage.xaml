@@ -40,9 +40,9 @@
 
             <Label Text="Location (optional)" />
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Attach my location" Command="{Binding AttachLocationCommand}"
+                <Button StyleClass="Outlined" Text="Attach my location" Command="{Binding AttachLocationCommand}"
                         AutomationId="AttachLocationButton" />
-                <Button Text="Clear location" Command="{Binding ClearLocationCommand}"
+                <Button StyleClass="Danger" Text="Clear location" Command="{Binding ClearLocationCommand}"
                         IsVisible="{Binding HasLocation}" AutomationId="ClearLocationButton" />
                 <ActivityIndicator IsRunning="{Binding IsLocating}" IsVisible="{Binding IsLocating}" />
             </HorizontalStackLayout>
@@ -52,8 +52,8 @@
             <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabel}" AutomationId="ErrorLabel" />
 
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveOperationButton" />
-                <Button Text="Cancel" Command="{Binding GoBackCommand}" AutomationId="CancelOperationButton" />
+                <Button StyleClass="Primary" Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveOperationButton" />
+                <Button StyleClass="Ghost" Text="Cancel" Command="{Binding GoBackCommand}" AutomationId="CancelOperationButton" />
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

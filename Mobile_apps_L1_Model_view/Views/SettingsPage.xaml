@@ -50,26 +50,26 @@
                 <Label Text="Simulate offline" VerticalOptions="Center" />
                 <Switch IsToggled="{Binding SimulateOffline, Mode=TwoWay}" VerticalOptions="Center" />
             </HorizontalStackLayout>
-            <Button Text="Sync now" Command="{Binding SyncNowCommand}" HorizontalOptions="Start" />
+            <Button StyleClass="Outlined" Text="Sync now" Command="{Binding SyncNowCommand}" HorizontalOptions="Start" />
             <Label Text="{Binding SyncText}" Style="{StaticResource CaptionLabel}" />
 
             <Label Text="Database" Style="{StaticResource SectionLabel}" />
             <Label Text="Share the SQLite file (stockroom.db3) to open it on a PC. Counterparty names are encrypted in it."
                    Style="{StaticResource CaptionLabel}" />
-            <Button Text="Share database" Command="{Binding ShareDatabaseCommand}" HorizontalOptions="Start" />
+            <Button StyleClass="Outlined" Text="Share database" Command="{Binding ShareDatabaseCommand}" HorizontalOptions="Start" />
             <Label Text="{Binding ExportText}" Style="{StaticResource CaptionLabel}" />
 
             <VerticalStackLayout IsVisible="{Binding ShowDiagnostics}" Spacing="8">
                 <Label Text="Diagnostics" Style="{StaticResource SectionLabel}" />
                 <Label Text="Prove that logging and crash reporting work. Each button leaves a trace in the log."
                        Style="{StaticResource CaptionLabel}" />
-                <Button Text="Open logs" Command="{Binding OpenLogsCommand}" HorizontalOptions="Start"
+                <Button StyleClass="Outlined" Text="Open logs" Command="{Binding OpenLogsCommand}" HorizontalOptions="Start"
                         AutomationId="OpenLogsButton" />
-                <Button Text="Write test log entries" Command="{Binding WriteTestEntriesCommand}" HorizontalOptions="Start"
+                <Button StyleClass="Outlined" Text="Write test log entries" Command="{Binding WriteTestEntriesCommand}" HorizontalOptions="Start"
                         AutomationId="WriteTestEntriesButton" />
-                <Button Text="Throw in background task" Command="{Binding ThrowInBackgroundTaskCommand}" HorizontalOptions="Start"
+                <Button StyleClass="Outlined" Text="Throw in background task" Command="{Binding ThrowInBackgroundTaskCommand}" HorizontalOptions="Start"
                         AutomationId="ThrowInBackgroundButton" />
-                <Button Text="Send test crash" Command="{Binding SendTestCrashCommand}" HorizontalOptions="Start"
+                <Button StyleClass="Outlined" Text="Send test crash" Command="{Binding SendTestCrashCommand}" HorizontalOptions="Start"
                         IsEnabled="{Binding CanSendTestCrash}" AutomationId="SendTestCrashButton" />
                 <Label Text="{Binding DiagnosticsText}" Style="{StaticResource CaptionLabel}" />
             </VerticalStackLayout>
@@ -78,7 +78,7 @@
             <Label Text="Try a deep link without another app, e.g. stockroom://product/3017620422003"
                    Style="{StaticResource CaptionLabel}" />
             <Entry Text="{Binding LinkText, Mode=TwoWay}" Placeholder="stockroom://product/{barcode}" />
-            <Button Text="Open" Command="{Binding OpenLinkCommand}" HorizontalOptions="Start" />
+            <Button StyleClass="Outlined" Text="Open" Command="{Binding OpenLinkCommand}" HorizontalOptions="Start" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

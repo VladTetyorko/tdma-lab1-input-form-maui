@@ -30,11 +30,11 @@
             <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
                    Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
             <FlexLayout Wrap="Wrap" IsVisible="{Binding CanManagePhotos}">
-                <Button Text="Take photo" Command="{Binding TakePhotoCommand}" AutomationId="TakePhotoButton"
+                <Button StyleClass="Outlined" Text="Take photo" Command="{Binding TakePhotoCommand}" AutomationId="TakePhotoButton"
                         IsVisible="{Binding Photo.IsCaptureSupported}" Margin="0,0,10,6" />
-                <Button Text="Pick photo" Command="{Binding PickPhotoCommand}" AutomationId="PickPhotoButton"
+                <Button StyleClass="Outlined" Text="Pick photo" Command="{Binding PickPhotoCommand}" AutomationId="PickPhotoButton"
                         Margin="0,0,10,6" />
-                <Button Text="Remove photo" Command="{Binding RemovePhotoCommand}" AutomationId="RemovePhotoButton"
+                <Button StyleClass="Danger" Text="Remove photo" Command="{Binding RemovePhotoCommand}" AutomationId="RemovePhotoButton"
                         IsVisible="{Binding Photo.HasPhoto}" Margin="0,0,10,6" />
             </FlexLayout>
 
@@ -43,8 +43,8 @@
             <Label Text="{Binding DataSource}" Style="{StaticResource CaptionLabel}" />
 
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveProductButton" />
-                <Button Text="Cancel" Command="{Binding CancelCommand}" AutomationId="CancelProductButton" />
+                <Button StyleClass="Primary" Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveProductButton" />
+                <Button StyleClass="Ghost" Text="Cancel" Command="{Binding CancelCommand}" AutomationId="CancelProductButton" />
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

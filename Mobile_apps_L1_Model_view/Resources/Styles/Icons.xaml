@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Glyphs of Fluent UI System Icons Regular (Microsoft, MIT; licence next to the TTF in Resources/Fonts). Font alias: FluentIcons -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    <x:String x:Key="IconAdd">&#xF10A;</x:String>
+    <x:String x:Key="IconDelete">&#xF34D;</x:String>
+    <x:String x:Key="IconEdit">&#xF3DE;</x:String>
+    <x:String x:Key="IconScan">&#xF1E4;</x:String>
+    <x:String x:Key="IconArrowUp">&#xF19C;</x:String>
+    <x:String x:Key="IconArrowDown">&#xF149;</x:String>
+    <x:String x:Key="IconArrowSort">&#xF18B;</x:String>
+    <x:String x:Key="IconBox">&#xE1BC;</x:String>
+    <x:String x:Key="IconReceive">&#xF515;</x:String>
+    <x:String x:Key="IconIssue">&#xE1C0;</x:String>
+    <x:String x:Key="IconSettings">&#xF6AA;</x:String>
+    <x:String x:Key="IconSync">&#xF191;</x:String>
+    <x:String x:Key="IconCloudOff">&#xF2EA;</x:String>
+    <x:String x:Key="IconSearch">&#xF690;</x:String>
+    <x:String x:Key="IconDismiss">&#xF36A;</x:String>
+    <x:String x:Key="IconCheckmark">&#xF295;</x:String>
+    <x:String x:Key="IconWarning">&#xF86A;</x:String>
+    <x:String x:Key="IconMap">&#xF52E;</x:String>
+    <x:String x:Key="IconPerson">&#xF5BE;</x:String>
+    <x:String x:Key="IconSignOut">&#xF6DA;</x:String>
+    <x:String x:Key="IconFlashlight">&#xF416;</x:String>
+    <x:String x:Key="IconSubtract">&#xEBD1;</x:String>
+</ResourceDictionary>

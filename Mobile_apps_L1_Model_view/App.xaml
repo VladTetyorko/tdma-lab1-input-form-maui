@@ -9,6 +9,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <!-- Default theme; MauiThemeApplier swaps it (light green / dark) when the theme choice is applied -->
                 <themes:LightGreen />
+                <ResourceDictionary Source="Resources/Styles/Icons.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

@@ -38,9 +38,9 @@
                         SelectedItem="{Binding NewValueType, Mode=TwoWay}"
                         Title="Value type" />
                 <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
-                <Button Text="Add" Command="{Binding AddCommand}" />
+                <Button StyleClass="Primary" Text="Add" Command="{Binding AddCommand}" />
             </VerticalStackLayout>
-            <Button Text="Back" Command="{Binding GoBackCommand}" />
+            <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

@@ -62,10 +62,10 @@
                         <!-- Manager only. A product that has operations cannot be deleted (see the note below the list) -->
                         <HorizontalStackLayout Grid.Column="2" Spacing="6"
                                                IsVisible="{Binding CanManageProducts, Source={RelativeSource AncestorType={x:Type viewModels:ProductListViewModel}}}">
-                            <Button Text="Edit" StyleClass="Compact" AutomationId="EditProductButton"
+                            <Button Text="Edit" StyleClass="Compact,Outlined" AutomationId="EditProductButton"
                                     Command="{Binding EditProductCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductListViewModel}}}"
                                     CommandParameter="{Binding .}" />
-                            <Button Text="Delete" StyleClass="Compact" AutomationId="DeleteProductButton"
+                            <Button Text="Delete" StyleClass="Compact,Danger" AutomationId="DeleteProductButton"
                                     IsEnabled="{Binding CanDelete}"
                                     Command="{Binding DeleteProductCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductListViewModel}}}"
                                     CommandParameter="{Binding .}" />
@@ -83,14 +83,14 @@
         </VerticalStackLayout>
 
         <FlexLayout Grid.Row="5" Wrap="Wrap">
-            <Button Text="Add product" Command="{Binding AddProductCommand}"
+            <Button StyleClass="Primary" Text="Add product" Command="{Binding AddProductCommand}"
                     IsVisible="{Binding CanAddProduct}" Margin="0,0,10,6" AutomationId="AddProductButton" />
-            <Button Text="Characteristics" Command="{Binding OpenCharacteristicsCommand}"
+            <Button StyleClass="Outlined" Text="Characteristics" Command="{Binding OpenCharacteristicsCommand}"
                     IsVisible="{Binding CanManageCharacteristics}" Margin="0,0,10,6" />
-            <Button Text="Scan" Command="{Binding ScanCommand}" Margin="0,0,10,6" AutomationId="ScanButton" />
-            <Button Text="Map" Command="{Binding OpenMapCommand}" Margin="0,0,10,6" AutomationId="MapButton" />
-            <Button Text="Settings" Command="{Binding OpenSettingsCommand}" Margin="0,0,10,6" AutomationId="SettingsButton" />
-            <Button Text="Sign out" Command="{Binding SignOutCommand}" Margin="0,0,10,6" AutomationId="SignOutButton" />
+            <Button StyleClass="Outlined" Text="Scan" Command="{Binding ScanCommand}" Margin="0,0,10,6" AutomationId="ScanButton" />
+            <Button StyleClass="Outlined" Text="Map" Command="{Binding OpenMapCommand}" Margin="0,0,10,6" AutomationId="MapButton" />
+            <Button StyleClass="Outlined" Text="Settings" Command="{Binding OpenSettingsCommand}" Margin="0,0,10,6" AutomationId="SettingsButton" />
+            <Button StyleClass="Outlined" Text="Sign out" Command="{Binding SignOutCommand}" Margin="0,0,10,6" AutomationId="SignOutButton" />
         </FlexLayout>
     </Grid>
 </ContentPage>

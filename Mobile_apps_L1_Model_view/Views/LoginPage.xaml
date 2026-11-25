@@ -31,8 +31,8 @@
                Style="{StaticResource ErrorLabel}"
                AutomationId="ErrorLabel" />
 
-        <Button Text="Sign in" Command="{Binding SignInCommand}" AutomationId="LoginButton" />
-        <Button Text="Unlock with biometrics"
+        <Button StyleClass="Primary" Text="Sign in" Command="{Binding SignInCommand}" AutomationId="LoginButton" />
+        <Button StyleClass="Outlined" Text="Unlock with biometrics"
                 Command="{Binding BiometricSignInCommand}"
                 IsVisible="{Binding IsBiometricAvailable}"
                 AutomationId="BiometricButton" />

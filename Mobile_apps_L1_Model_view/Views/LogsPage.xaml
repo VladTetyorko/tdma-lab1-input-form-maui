@@ -20,7 +20,7 @@
                     SelectedItem="{Binding SelectedLevel, Mode=TwoWay}"
                     WidthRequest="160"
                     AutomationId="LogLevelPicker" />
-            <Button Text="Refresh" Command="{Binding RefreshCommand}" AutomationId="LogRefreshButton" />
+            <Button StyleClass="Outlined" Text="Refresh" Command="{Binding RefreshCommand}" AutomationId="LogRefreshButton" />
         </HorizontalStackLayout>
 
         <Label Grid.Row="1" Text="{Binding EmptyText}" Style="{StaticResource CaptionLabel}"

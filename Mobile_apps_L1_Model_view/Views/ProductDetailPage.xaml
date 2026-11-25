@@ -27,11 +27,11 @@
                    Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
             <FlexLayout Wrap="Wrap" IsVisible="{Binding CanEdit}">
                 <Button Text="Take photo" Command="{Binding TakePhotoCommand}" AutomationId="TakePhotoButton"
-                        IsVisible="{Binding Photo.IsCaptureSupported}" StyleClass="Compact" Margin="0,0,10,6" />
+                        IsVisible="{Binding Photo.IsCaptureSupported}" StyleClass="Compact,Outlined" Margin="0,0,10,6" />
                 <Button Text="Pick photo" Command="{Binding PickPhotoCommand}" AutomationId="PickPhotoButton"
-                        StyleClass="Compact" Margin="0,0,10,6" />
+                        StyleClass="Compact,Outlined" Margin="0,0,10,6" />
                 <Button Text="Remove photo" Command="{Binding RemovePhotoCommand}" AutomationId="RemovePhotoButton"
-                        IsVisible="{Binding Photo.HasPhoto}" StyleClass="Compact" Margin="0,0,10,6" />
+                        IsVisible="{Binding Photo.HasPhoto}" StyleClass="Compact,Danger" Margin="0,0,10,6" />
             </FlexLayout>
 
             <Label Text="Characteristics" Style="{StaticResource SectionLabel}" />
@@ -53,9 +53,9 @@
             <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
 
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Save" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" />
-                <Button Text="Record In/Out" Command="{Binding OpenOperationCommand}" />
-                <Button Text="Back" Command="{Binding GoBackCommand}" />
+                <Button StyleClass="Outlined" Text="Save" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" />
+                <Button StyleClass="Primary" Text="Record In/Out" Command="{Binding OpenOperationCommand}" />
+                <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" />
             </HorizontalStackLayout>
 
             <Label Text="History" Style="{StaticResource SectionLabel}" />
@@ -82,7 +82,7 @@
                             <HorizontalStackLayout Spacing="8" IsVisible="{Binding HasLocation}">
                                 <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}"
                                        VerticalOptions="Center" AutomationId="HistoryLocationLabel" />
-                                <Button Text="Open in maps" StyleClass="Compact" AutomationId="OpenInMapsButton"
+                                <Button Text="Open in maps" StyleClass="Compact,Outlined" AutomationId="OpenInMapsButton"
                                         Command="{Binding OpenLocationCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductDetailViewModel}}}"
                                         CommandParameter="{Binding .}" />
                             </HorizontalStackLayout>
