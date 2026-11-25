@@ -46,6 +46,20 @@ location and the accelerometer are optional (`required="false"`), so the app als
 
 ## Building the package locally
 
+Use the script (Windows PowerShell 5.1 or PowerShell 7, from any folder):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-apk.ps1
+```
+
+It finds the Android SDK (`-SdkPath`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`, `%LOCALAPPDATA%\Android\Sdk`), publishes,
+copies the signed package to `artifacts/apk/` (`-OutDir` changes it; `-dirty` in the name means uncommitted changes)
+and prints its size and SHA-256. `-Install` and `-Launch` use `adb` (`-Serial` when several devices are connected). An
+installed package signed with another key (the CI artifact, another computer) must be uninstalled first, which deletes
+its data, so the script never does that itself.
+
+The same by hand:
+
 ```bash
 dotnet publish Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-android -c Release \
   -p:AndroidPackageFormat=apk -p:AndroidSdkDirectory="$LOCALAPPDATA/Android/Sdk"

@@ -544,6 +544,15 @@ folder (Windows, unpackaged: `%LOCALAPPDATA%/User Name/com.companyname.mobile_ap
 sync queue, has the **Simulate offline** switch and **Share database**.
 Tests never touch it: each test container uses its own temporary file.
 
+### APK for a phone
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-apk.ps1                    # artifacts/apk/StockRoom-<version>-<commit>.apk
+powershell -ExecutionPolicy Bypass -File scripts\build-apk.ps1 -Install -Launch   # phone with USB debugging on
+```
+
+The package is a debug-signed Release build (git-ignored). Options and the manual way: [`docs/RELEASE.md`](docs/RELEASE.md).
+
 ## Data attribution
 
 Seed products and the "Create from Open Food Facts" lookup use data from [Open Food Facts](https://world.openfoodfacts.org/),
