@@ -9,6 +9,7 @@
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.ProductFormPage"
              x:DataType="viewModels:ProductFormViewModel"
+             x:Name="ThisPage"
              Title="{Binding PageTitle}">
 
     <ContentPage.Behaviors>
@@ -38,29 +39,24 @@
                     <Label Text="{Binding LookupText}" Style="{StaticResource TextCaption}" AutomationId="LookupLabel" />
 
                     <components:QuickSearchBox x:Name="NameField" BindingContext="{Binding QuickSearch}" Label="Name"
-                                               Placeholder="Product name" EntryId="ProductNameEntry" />
+                                               Placeholder="Product name" EntryId="ProductNameEntry" ShowSearchIcon="False"
+                                               NoticeText="{Binding BindingContext.DuplicateText, Source={x:Reference ThisPage}}"
+                                               NoticeCommand="{Binding BindingContext.OpenDuplicateCommand, Source={x:Reference ThisPage}}" />
                     <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" AutomationId="NameErrorLabel" />
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasDuplicate}">
-                        <Label Text="{Binding DuplicateText}" Style="{StaticResource TextBody}" VerticalOptions="Center"
-                               TextColor="{DynamicResource Warning}" AutomationId="DuplicateLabel" />
-                        <Button Grid.Column="1" Text="Open" StyleClass="Outlined" Command="{Binding OpenDuplicateCommand}"
-                                AutomationId="OpenDuplicateButton" />
-                    </Grid>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout x:Name="PhotoColumn" Grid.Row="1" Spacing="8">
                     <Label Text="Photo (optional)" Style="{StaticResource TextCaption}" />
                     <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
                            Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
-                    <FlexLayout Wrap="Wrap" IsVisible="{Binding CanManagePhotos}">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding CanManagePhotos}">
                         <Button StyleClass="Outlined" Text="Take photo" Command="{Binding TakePhotoCommand}"
-                                AutomationId="TakePhotoButton" IsVisible="{Binding Photo.IsCaptureSupported}" Margin="0,0,10,6" />
-                        <Button StyleClass="Outlined" Text="Pick photo" Command="{Binding PickPhotoCommand}"
-                                AutomationId="PickPhotoButton" Margin="0,0,10,6" />
-                        <Button StyleClass="Danger" Text="Remove photo" Command="{Binding RemovePhotoCommand}"
-                                AutomationId="RemovePhotoButton" IsVisible="{Binding Photo.HasPhoto}" Margin="0,0,10,6" />
-                    </FlexLayout>
+                                AutomationId="TakePhotoButton" IsVisible="{Binding Photo.IsCaptureSupported}" />
+                        <Button Grid.Column="1" StyleClass="Outlined" Text="Pick photo" Command="{Binding PickPhotoCommand}"
+                                AutomationId="PickPhotoButton" />
+                    </Grid>
+                    <Button StyleClass="Danger" Text="Remove photo" Command="{Binding RemovePhotoCommand}"
+                            AutomationId="RemovePhotoButton" IsVisible="{Binding Photo.HasPhoto}" />
 
                     <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
                     <Label Text="{Binding DataSource}" Style="{StaticResource CaptionLabel}" />

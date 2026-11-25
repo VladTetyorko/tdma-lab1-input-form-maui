@@ -1,106 +1,155 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- Photo, name, code and stock first; characteristics read only until Edit; history. The bottom bar holds
+     Receive / Issue, or Save while editing -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
              xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
-             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.ProductDetailPage"
              x:DataType="viewModels:ProductDetailViewModel"
+             x:Name="ThisPage"
              Title="Product">
 
     <ContentPage.Behaviors>
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*">
-        <components:AppBar Title="Product" BackCommand="{Binding GoBackCommand}" />
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
+        <components:AppBar Title="Product" BackCommand="{Binding GoBackCommand}"
+                           ActionGlyph="{StaticResource IconEdit}" ActionDescription="Edit product, or cancel editing"
+                           ActionCommand="{Binding ToggleEditCommand}" ActionId="EditDetailButton"
+                           IsActionShown="{Binding CanEdit}" />
         <ScrollView Grid.Row="1">
-        <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
-            <Label Text="{Binding Name}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
-            <Label Text="{Binding Barcode, StringFormat='Barcode {0}'}" Style="{StaticResource CaptionLabel}" />
-            <Label Text="{Binding Quantity, StringFormat='On hand: {0} pcs'}" Style="{StaticResource TextDisplay}" />
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="16" MaximumWidthRequest="720">
 
-            <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
-                   Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
-            <FlexLayout Wrap="Wrap" IsVisible="{Binding CanEdit}">
-                <Button Text="Take photo" Command="{Binding TakePhotoCommand}" AutomationId="TakePhotoButton"
-                        IsVisible="{Binding Photo.IsCaptureSupported}" StyleClass="Compact,Outlined" Margin="0,0,10,6" />
-                <Button Text="Pick photo" Command="{Binding PickPhotoCommand}" AutomationId="PickPhotoButton"
-                        StyleClass="Compact,Outlined" Margin="0,0,10,6" />
-                <Button Text="Remove photo" Command="{Binding RemovePhotoCommand}" AutomationId="RemovePhotoButton"
-                        IsVisible="{Binding Photo.HasPhoto}" StyleClass="Compact,Danger" Margin="0,0,10,6" />
-            </FlexLayout>
-
-            <Border StyleClass="SectionCard">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="Characteristics" Style="{StaticResource SectionLabel}" />
-                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Characteristics}" Spacing="4">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="viewModels:CharacteristicEditItem">
-                                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto">
-                                    <Label Grid.Column="0" Text="{Binding Name}" VerticalOptions="Center" />
-                                    <Entry Grid.Column="1"
-                                           Text="{Binding Value, Mode=TwoWay}"
-                                           Placeholder="{Binding Placeholder}"
-                                           IsReadOnly="{Binding IsReadOnly}" />
-                                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding Error}"
-                                           Style="{StaticResource ErrorLabel}" />
-                                </Grid>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-                    <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
-                </VerticalStackLayout>
-            </Border>
-
-            <FlexLayout Wrap="Wrap">
-                <Button StyleClass="Outlined" Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveCharacteristicsButton" IsVisible="{Binding CanEdit}" />
-                <Button StyleClass="Primary" Text="Record In/Out" Command="{Binding OpenOperationCommand}" AutomationId="RecordOperationButton" />
-                <Button StyleClass="Outlined" Text="Receive" Command="{Binding StartReceiveCommand}" AutomationId="DetailReceiveButton" />
-                <Button StyleClass="Outlined" Text="Issue" Command="{Binding StartIssueCommand}" IsVisible="{Binding CanIssue}"
-                        AutomationId="DetailIssueButton" />
-            </FlexLayout>
-
-            <Border StyleClass="SectionCard">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="History" Style="{StaticResource SectionLabel}" />
-                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding History}" Spacing="6">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="services:OperationHistoryItem">
-                                <VerticalStackLayout>
-                                    <Label FontAttributes="Bold">
-                                        <Label.FormattedText>
-                                            <FormattedString>
-                                                <Span Text="{Binding Direction}" />
-                                                <Span Text=" " />
-                                                <Span Text="{Binding Quantity}" />
-                                                <Span Text=" pcs" />
-                                            </FormattedString>
-                                        </Label.FormattedText>
-                                    </Label>
-                                    <Label Text="{Binding At, StringFormat='{0:yyyy-MM-dd HH:mm} UTC'}"
-                                           Style="{StaticResource CaptionLabel}" />
-                                    <Label Text="{Binding UserName, StringFormat='By {0}'}"
-                                           Style="{StaticResource CaptionLabel}" />
-                                    <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
-                                    <!-- Only for an operation recorded with a location -->
-                                    <HorizontalStackLayout Spacing="8" IsVisible="{Binding HasLocation}">
-                                        <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}"
-                                               VerticalOptions="Center" AutomationId="HistoryLocationLabel" />
-                                        <Button Text="Open in maps" StyleClass="Compact,Outlined" AutomationId="OpenInMapsButton"
-                                                Command="{Binding OpenLocationCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductDetailViewModel}}}"
-                                                CommandParameter="{Binding .}" />
-                                    </HorizontalStackLayout>
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
+                    <!-- 16:9, the height follows the width (code-behind) -->
+                    <Border x:Name="PhotoArea" HeightRequest="190" StrokeShape="RoundRectangle 10"
+                            Background="{DynamicResource SurfaceBrush}" SizeChanged="OnPhotoAreaSizeChanged">
+                        <Grid>
+                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="4">
+                                <Label Text="{StaticResource IconCamera}" Style="{StaticResource IconGlyph}" FontSize="32"
+                                       HorizontalOptions="Center" TextColor="{DynamicResource TextSecondary}" />
+                                <Label Text="No photo" Style="{StaticResource TextCaption}" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                            <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}" Aspect="AspectFill"
+                                   AutomationId="ProductPhoto" />
+                            <Button StyleClass="RowOverlay" Command="{Binding TogglePhotoMenuCommand}"
+                                    SemanticProperties.Description="Add or change the photo" AutomationId="PhotoAreaButton"
+                                    IsVisible="{Binding CanEdit}" />
+                        </Grid>
+                    </Border>
+                    <Button Text="Add photo" StyleClass="Outlined" Command="{Binding TogglePhotoMenuCommand}"
+                            IsVisible="{Binding CanEdit}" AutomationId="AddPhotoButton">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding Photo.HasPhoto}" Value="True">
+                                <Setter Property="Text" Value="Change photo" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding IsPhotoMenuOpen}">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button Text="Take photo" StyleClass="Outlined" Command="{Binding TakePhotoCommand}"
+                                    IsVisible="{Binding Photo.IsCaptureSupported}" AutomationId="TakePhotoButton" />
+                            <Button Grid.Column="1" Text="Pick photo" StyleClass="Outlined" Command="{Binding PickPhotoCommand}"
+                                    AutomationId="PickPhotoButton" />
+                        </Grid>
+                        <Button Text="Remove photo" StyleClass="Danger" Command="{Binding RemovePhotoCommand}"
+                                IsVisible="{Binding Photo.HasPhoto}" AutomationId="RemovePhotoButton" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
-            </Border>
 
-        </VerticalStackLayout>
-    </ScrollView>
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding Name}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level2" />
+                    <Label Text="{Binding Barcode, StringFormat='Barcode {0}'}" Style="{StaticResource TextCaption}" />
+                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="12" HorizontalOptions="Start">
+                        <Label Text="{Binding OnHandText}" Style="{StaticResource TextDisplay}" AutomationId="DetailQuantity" />
+                        <Border Grid.Column="1" StyleClass="ChipSuccess" IsVisible="{Binding IsInStock}">
+                            <Label Text="In stock" Style="{StaticResource ChipSuccessText}" />
+                        </Border>
+                        <Border Grid.Column="1" StyleClass="ChipDanger" IsVisible="{Binding IsOutOfStock}">
+                            <Label Text="Out of stock" Style="{StaticResource ChipDangerText}" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="DetailStatus" />
+
+                <Border StyleClass="SectionCard">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Characteristics" Style="{StaticResource TextOverline}" />
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Characteristics}" Spacing="8"
+                                             IsVisible="{Binding IsViewing}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:CharacteristicEditItem">
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                        <Label Text="{Binding Name}" Style="{StaticResource TextCaption}" />
+                                        <Label Grid.Column="1" Text="{Binding Display}" Style="{StaticResource TextBody}"
+                                               HorizontalTextAlignment="End" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Characteristics}" Spacing="8"
+                                             IsVisible="{Binding IsEditing}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:CharacteristicEditItem">
+                                    <components:OutlinedField Label="{Binding Name}" Placeholder="{Binding Placeholder}"
+                                                              Text="{Binding Value, Mode=TwoWay}"
+                                                              ErrorText="{Binding Error}" />
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border StyleClass="SectionCard">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="History" Style="{StaticResource TextOverline}" />
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding History}" Spacing="4">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:ProductHistoryRow">
+                                    <VerticalStackLayout>
+                                        <components:ActivityRow BindingContext="{Binding Activity}" />
+                                        <!-- Only for an operation recorded with a location -->
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="56,0,0,0"
+                                              IsVisible="{Binding HasLocation}">
+                                            <Label Text="{Binding LocationText}" Style="{StaticResource TextCaption}"
+                                                   VerticalOptions="Center" AutomationId="HistoryLocationLabel" />
+                                            <Button Grid.Column="1" Text="Open in maps" StyleClass="Compact,Outlined"
+                                                    AutomationId="OpenInMapsButton"
+                                                    Command="{Binding BindingContext.OpenLocationCommand, Source={x:Reference ThisPage}}"
+                                                    CommandParameter="{Binding .}" />
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Button Text="Record one operation with reason or location" StyleClass="Ghost"
+                        Command="{Binding OpenOperationCommand}" AutomationId="RecordOperationButton" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Receive / Issue are a pair of equal width; a role that may not issue gets Receive alone -->
+        <Grid Grid.Row="2" IsVisible="{Binding IsViewing}" ColumnDefinitions="*,*" ColumnSpacing="8" Padding="16,12"
+              BackgroundColor="{DynamicResource Surface}">
+            <Button Text="Receive" StyleClass="Primary" FontSize="17" HeightRequest="56" Grid.ColumnSpan="2"
+                    Command="{Binding StartReceiveCommand}" AutomationId="DetailReceiveButton">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanIssue}" Value="True">
+                        <Setter Property="Grid.ColumnSpan" Value="1" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button Grid.Column="1" Text="Issue" StyleClass="Primary" FontSize="17" HeightRequest="56"
+                    Command="{Binding StartIssueCommand}" IsVisible="{Binding CanIssue}" AutomationId="DetailIssueButton" />
+        </Grid>
+        <components:BottomActionBar Grid.Row="2" IsVisible="{Binding IsEditing}" ButtonId="SaveCharacteristicsButton"
+                                    Text="Save changes" Command="{Binding SaveCommand}" />
     </Grid>
 </ContentPage>

@@ -29,7 +29,11 @@ public partial class CharacteristicEditItem : ObservableObject
 
     public string Placeholder => ValueType == CharacteristicValueType.Number ? "number" : "text";
 
+    // The read-only row
+    public string Display => Value.Length == 0 ? ProductTable.Missing : Value;
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Display))]
     public partial string Value { get; set; } = string.Empty;
 
     // Empty string = no error (keeps XAML bindings simple)

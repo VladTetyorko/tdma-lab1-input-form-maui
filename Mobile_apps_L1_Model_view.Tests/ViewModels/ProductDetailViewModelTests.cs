@@ -19,7 +19,7 @@ public class ProductDetailViewModelTests
 
     private ProductDetailViewModel NewViewModel() => new(
         _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
-        _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback, _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()));
+        _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback, _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()), _store.Clock);
 
     [Fact]
     public async Task ApplyQueryAttributes_ShowsTheSelectedProductBeforeLoad()
@@ -67,7 +67,7 @@ public class ProductDetailViewModelTests
 
         await ApplyAsync(drill.Id);
 
-        Assert.Equal(new[] { 2, 5 }, _viewModel.History.Select(h => h.Quantity));
+        Assert.Equal(new[] { 2, 5 }, _viewModel.History.Select(h => h.Item.Quantity));
     }
 
     [Fact]
@@ -130,6 +130,7 @@ public class ProductDetailViewModelTests
         var drill = await _store.AddProductAsync("Drill", DrillBarcode);
         await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         var weight = _viewModel.Characteristics.Single();
 
         weight.Value = "heavy";
@@ -137,6 +138,40 @@ public class ProductDetailViewModelTests
 
         weight.Value = "2";
         Assert.True(_viewModel.SaveCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task Edit_IsAModeThatOffersSave_AndLeavingItDropsTheChanges()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        await _store.SetValueAsync(drill, weight, "1.5");
+        await ApplyAsync(drill.Id);
+        Assert.True(_viewModel.CanStartEditing && _viewModel.IsViewing);
+        Assert.False(_viewModel.SaveCommand.CanExecute(null));
+
+        _viewModel.ToggleEditCommand.Execute(null);
+        Item(weight.Id).Value = "2";
+        Assert.True(_viewModel.IsEditing && _viewModel.SaveCommand.CanExecute(null));
+
+        _viewModel.ToggleEditCommand.Execute(null);
+
+        Assert.False(_viewModel.IsEditing);
+        Assert.Equal("1.5", Item(weight.Id).Value);
+        Assert.Null(_store.AppState.GetDraft<ProductDetailDraft>());
+    }
+
+    [Fact]
+    public async Task ANonManager_HasNoEdit()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        await ApplyAsync(drill.Id);
+
+        Assert.False(_viewModel.ToggleEditCommand.CanExecute(null));
+        Assert.False(_viewModel.CanStartEditing);
+        Assert.Equal(("0 on hand", true), (_viewModel.OnHandText, _viewModel.IsOutOfStock));
     }
 
     [Fact]
@@ -157,6 +192,7 @@ public class ProductDetailViewModelTests
         var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
         await _store.SetValueAsync(drill, weight, "1.5");
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         _viewModel.Characteristics.Single().Value = "heavy";
 
         await _viewModel.SaveCommand.ExecuteAsync(null);
@@ -172,6 +208,7 @@ public class ProductDetailViewModelTests
         var drill = await _store.AddProductAsync("Drill", DrillBarcode);
         var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         _viewModel.Characteristics.Single().Value = "2.5";
 
         await _viewModel.SaveCommand.ExecuteAsync(null);
@@ -189,6 +226,7 @@ public class ProductDetailViewModelTests
         var drill = await _store.AddProductAsync("Drill", DrillBarcode);
         await _store.AddCharacteristicAsync("Color", CharacteristicValueType.Text);
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         _store.CurrentUser.SignOut();
 
         await _viewModel.SaveCommand.ExecuteAsync(null);

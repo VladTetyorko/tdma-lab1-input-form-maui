@@ -36,7 +36,8 @@ public class ProductFormViewModelMoqTests
         _viewModel = new ProductFormViewModel(validator, _productService.Object, _currentUser.Object, guard,
             Mock.Of<IAppStateService>(), _navigation.Object, photo, Mock.Of<IBarcodeScanner>(),
             Mock.Of<IProductLookup>(lookup => lookup.FindAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())
-                == Task.FromResult(LookupResult.NotFound())), search, NullLogger<ProductFormViewModel>.Instance);
+                == Task.FromResult(LookupResult.NotFound())), search, Mock.Of<IConfirmSheet>(sheet =>
+                sheet.AskAsync(It.IsAny<ConfirmRequest>()) == Task.FromResult(true)), NullLogger<ProductFormViewModel>.Instance);
     }
 
     [Theory]

@@ -20,6 +20,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
     private readonly IBarcodeScanner scanner;
     private readonly IProductLookup lookup;
     private readonly ILogger<ProductFormViewModel> logger;
+    private readonly IConfirmSheet confirm;
     private bool _opened;
     private bool _prefilled;
     private string _lookedUp = string.Empty;
@@ -41,8 +42,10 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         IBarcodeScanner scanner,
         IProductLookup lookup,
         QuickSearchViewModel quickSearch,
+        IConfirmSheet confirm,
         ILogger<ProductFormViewModel> logger)
     {
+        this.confirm = confirm;
         this.validator = validator;
         this.productService = productService;
         this.currentUser = currentUser;
@@ -415,16 +418,31 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         SaveDraft();
     }
 
+    // Typed input is not thrown away without asking
+    private bool HasUnsavedInput => _editing is null
+        ? Name.Trim().Length > 0 || Barcode.Trim().Length > 0 || Photo.Path is not null
+        : Name != _editing.Name || Barcode != _editing.Barcode || Photo.IsChanged;
+
     [RelayCommand]
-    private Task CancelAsync()
+    private async Task CancelAsync()
     {
+        if (HasUnsavedInput && !await confirm.AskAsync(new ConfirmRequest(
+                _editing is null ? "Discard the new product?" : "Discard the changes?",
+                "What you entered here is not saved.", "Discard", "Keep editing")
+            {
+                IsDestructive = true
+            }))
+        {
+            return;
+        }
+
         Photo.Discard();
         if (_editing is null)
         {
             appState.ClearDraft<ProductFormDraft>();
         }
 
-        return navigation.GoToAsync(Routes.Back);
+        await navigation.GoToAsync(Routes.Back);
     }
 
     private bool CanSave() =>

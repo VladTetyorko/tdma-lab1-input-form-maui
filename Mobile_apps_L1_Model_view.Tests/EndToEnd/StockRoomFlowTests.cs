@@ -127,6 +127,7 @@ public class StockRoomFlowTests : IDisposable
         var weight = detail.Characteristics.Single(c => c.Name == "Weight (kg)");
         Assert.Equal("0.4", weight.Value);
 
+        detail.ToggleEditCommand.Execute(null);
         weight.Value = "9.5";
         Assert.True(detail.SaveCommand.CanExecute(null));
         await detail.SaveCommand.ExecuteAsync(null);
@@ -201,8 +202,8 @@ public class StockRoomFlowTests : IDisposable
         // The detail page reloads its data when it appears again
         await detail.LoadCommand.ExecuteAsync(null);
         Assert.Equal(34, detail.Quantity);
-        Assert.Equal(OperationDirection.Out, detail.History[0].Direction);
-        Assert.Equal(2, detail.History[0].Quantity);
+        Assert.Equal(OperationDirection.Out, detail.History[0].Item.Direction);
+        Assert.Equal(2, detail.History[0].Item.Quantity);
     }
 
     [Fact]

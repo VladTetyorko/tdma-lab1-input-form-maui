@@ -228,6 +228,6 @@ public class SqliteFlowTests : IDisposable
         detail.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = summary });
         await detail.LoadCommand.ExecuteAsync(null);
 
-        Assert.Contains(detail.History, h => h.Counterparty == "Acme Ltd");
+        Assert.Contains(detail.History, h => h.Item.Counterparty == "Acme Ltd");
     }
 }

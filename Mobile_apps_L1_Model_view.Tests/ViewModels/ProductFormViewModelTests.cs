@@ -17,6 +17,7 @@ public class ProductFormViewModelTests
     private readonly FakeAlertService _alerts = new();
     private readonly AppStateService _appState = new(new FakePreferencesStore());
     private readonly FakePhotoService _photos = new();
+    private readonly FakeConfirmSheet _confirm = new();
     private readonly FakeBarcodeScanner _scanner = new();
     private readonly FakeProductLookup _lookup = new();
     private readonly ProductFormViewModel _viewModel;
@@ -46,7 +47,7 @@ public class ProductFormViewModelTests
             new FakeKeyboard(),
             NullLogger<QuickSearchViewModel>.Instance);
         return new ProductFormViewModel(validator, service, _currentUser, guard, appState, _navigation, photo,
-            _scanner, _lookup, search, NullLogger<ProductFormViewModel>.Instance);
+            _scanner, _lookup, search, _confirm, NullLogger<ProductFormViewModel>.Instance);
     }
 
     private async Task SignInAsManagerWithADrillAsync()
@@ -392,6 +393,28 @@ public class ProductFormViewModelTests
         await _viewModel.SaveCommand.ExecuteAsync(null);
 
         Assert.Null(_appState.GetDraft<ProductFormDraft>());
+    }
+
+    [Fact]
+    public async Task Cancel_WithTypedInput_AsksAndStaysWhenRefused()
+    {
+        FillValidForm();
+        _confirm.Answer = false;
+
+        await _viewModel.CancelCommand.ExecuteAsync(null);
+
+        Assert.Equal("Discard the new product?", Assert.Single(_confirm.Asked).Title);
+        Assert.Empty(_navigation.RequestedRoutes);
+        Assert.NotNull(_appState.GetDraft<ProductFormDraft>());
+    }
+
+    [Fact]
+    public async Task Cancel_OfAnEmptyForm_AsksNothing()
+    {
+        await _viewModel.CancelCommand.ExecuteAsync(null);
+
+        Assert.Empty(_confirm.Asked);
+        Assert.Equal(Routes.Back, Assert.Single(_navigation.RequestedRoutes));
     }
 
     [Fact]

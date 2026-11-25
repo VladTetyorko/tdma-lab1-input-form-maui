@@ -24,7 +24,8 @@ public partial class ProductDetailViewModel(
     IMapLauncher maps,
     IDeviceFeedback feedback,
     ILogger<ProductDetailViewModel> logger,
-    IStockDocumentDraftStore drafts) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
+    IStockDocumentDraftStore drafts,
+    IClock clock) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private ProductSummary? _product;
 
@@ -40,7 +41,7 @@ public partial class ProductDetailViewModel(
     public ProductPhotoEditor Photo { get; } = photo;
 
     // Newest first
-    public ObservableCollection<OperationHistoryItem> History { get; } = [];
+    public ObservableCollection<ProductHistoryRow> History { get; } = [];
 
     [ObservableProperty]
     public partial string Name { get; set; } = string.Empty;
@@ -49,11 +50,37 @@ public partial class ProductDetailViewModel(
     public partial string Barcode { get; set; } = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OnHandText))]
+    [NotifyPropertyChangedFor(nameof(IsOutOfStock))]
+    [NotifyPropertyChangedFor(nameof(IsInStock))]
     public partial int Quantity { get; set; }
+
+    public string OnHandText => $"{Quantity} on hand";
+
+    public bool IsOutOfStock => Quantity <= 0;
+
+    public bool IsInStock => !IsOutOfStock;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleEditCommand))]
+    [NotifyPropertyChangedFor(nameof(CanStartEditing))]
     public partial bool CanEdit { get; set; }
+
+    // The characteristics and the photo are read only until Edit is chosen; the bottom bar then saves
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyPropertyChangedFor(nameof(IsViewing))]
+    [NotifyPropertyChangedFor(nameof(CanStartEditing))]
+    public partial bool IsEditing { get; set; }
+
+    public bool IsViewing => !IsEditing;
+
+    public bool CanStartEditing => CanEdit && !IsEditing;
+
+    // Take / Pick are offered under the photo area after a tap on it
+    [ObservableProperty]
+    public partial bool IsPhotoMenuOpen { get; set; }
 
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
@@ -63,6 +90,8 @@ public partial class ProductDetailViewModel(
         if (query.TryGetValue(NavigationKeys.SelectedProduct, out var value) && value is ProductSummary product)
         {
             _product = product;
+            IsEditing = false;
+            IsPhotoMenuOpen = false;
             ShowSummary(product);
         }
     }
@@ -101,13 +130,38 @@ public partial class ProductDetailViewModel(
         History.Clear();
         foreach (var line in details.History)
         {
-            History.Add(line);
+            History.Add(ProductHistoryRow.From(line, clock.UtcNow));
         }
 
         StatusMessage = string.Empty;
         SaveCommand.NotifyCanExecuteChanged();
         logger.LogDebug("Product {ProductId} details loaded: {Count} operations in the history", _product.Id, History.Count);
     }
+
+    // Into edit mode, or out of it: leaving drops what was not saved
+    [RelayCommand(CanExecute = nameof(CanEdit))]
+    private void ToggleEdit()
+    {
+        IsPhotoMenuOpen = false;
+        if (IsEditing)
+        {
+            Photo.Discard();
+            appState.ClearDraft<ProductDetailDraft>();
+            _rebuilding = true;
+            foreach (var item in Characteristics)
+            {
+                item.Value = _stored.GetValueOrDefault(item.CharacteristicId, string.Empty);
+            }
+
+            _rebuilding = false;
+            StatusMessage = string.Empty;
+        }
+
+        IsEditing = !IsEditing;
+    }
+
+    [RelayCommand]
+    private void TogglePhotoMenu() => IsPhotoMenuOpen = CanEdit && !IsPhotoMenuOpen;
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
@@ -142,34 +196,33 @@ public partial class ProductDetailViewModel(
         }
 
         appState.ClearDraft<ProductDetailDraft>();
+        IsEditing = false;
         await ReturnToListAsync();
     }
 
     [RelayCommand]
-    private async Task TakePhotoAsync()
-    {
-        StatusMessage = await Photo.TakeAsync(Barcode);
-        SaveDraft();
-    }
+    private Task TakePhotoAsync() => ChangePhotoAsync(() => Photo.TakeAsync(Barcode));
 
     [RelayCommand]
-    private async Task PickPhotoAsync()
-    {
-        StatusMessage = await Photo.PickAsync(Barcode);
-        SaveDraft();
-    }
+    private Task PickPhotoAsync() => ChangePhotoAsync(() => Photo.PickAsync(Barcode));
 
     [RelayCommand]
-    private async Task RemovePhotoAsync()
+    private Task RemovePhotoAsync() => ChangePhotoAsync(Photo.RemoveAsync);
+
+    // A changed photo is staged, so the page goes into edit mode and offers Save
+    private async Task ChangePhotoAsync(Func<Task<string>> change)
     {
-        StatusMessage = await Photo.RemoveAsync();
+        StatusMessage = await change();
         SaveDraft();
+        IsPhotoMenuOpen = false;
+        IsEditing |= CanEdit && Photo.IsChanged;
     }
 
     // The maps app shows where an operation was recorded
     [RelayCommand]
-    private async Task OpenLocationAsync(OperationHistoryItem? item)
+    private async Task OpenLocationAsync(ProductHistoryRow? row)
     {
+        var item = row?.Item;
         if (item?.Location is not { } location)
         {
             return;
@@ -230,7 +283,7 @@ public partial class ProductDetailViewModel(
             : navigation.GoToAsync(Routes.Operation,
                 new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = _product });
 
-    private bool CanSave() => CanEdit && _product is not null && Characteristics.All(c => c.Error.Length == 0);
+    private bool CanSave() => CanEdit && IsEditing && _product is not null && Characteristics.All(c => c.Error.Length == 0);
 
     // Sends the product, as it is now, back so the list can update its row without reloading
     private async Task ReturnToListAsync()
@@ -288,6 +341,9 @@ public partial class ProductDetailViewModel(
         {
             Photo.Restore(draft.PhotoPath);
         }
+
+        // Unsaved edits are shown where they can be saved
+        IsEditing = true;
     }
 
     // The draft is the set of values that differ from the stored ones plus an unsaved photo; none = no draft

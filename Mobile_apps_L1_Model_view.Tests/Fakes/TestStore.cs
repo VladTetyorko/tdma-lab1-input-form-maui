@@ -88,7 +88,7 @@ public sealed class TestStore
         new(Catalog, CharacteristicService, CurrentUser, Guard, Navigation, Keyboard, Logger<QuickSearchViewModel>());
 
     public ProductFormViewModel ProductForm => new(new ProductValidator(Products), ProductService, CurrentUser, Guard,
-        AppState, Navigation, PhotoEditor, Scanner, Lookup, QuickSearch, Logger<ProductFormViewModel>());
+        AppState, Navigation, PhotoEditor, Scanner, Lookup, QuickSearch, Confirm, Logger<ProductFormViewModel>());
 
     public IDiagnosticsService Diagnostics => new DiagnosticsService(CurrentUser, CrashReporter, Logger<DiagnosticsService>());
 

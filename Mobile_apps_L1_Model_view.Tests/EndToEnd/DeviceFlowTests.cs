@@ -67,7 +67,7 @@ public class DeviceFlowTests : IDisposable
         detail.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = product });
         await detail.LoadCommand.ExecuteAsync(null);
         var line = Assert.Single(detail.History, h => h.HasLocation);
-        Assert.Equal(DropOff, line.Location);
+        Assert.Equal(DropOff, line.Item.Location);
 
         // "Open in maps" from the history goes to the maps launcher
         await detail.OpenLocationCommand.ExecuteAsync(line);

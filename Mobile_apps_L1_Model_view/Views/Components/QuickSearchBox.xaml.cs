@@ -17,6 +17,42 @@ public partial class QuickSearchBox : ContentView
         Field.Completed += (_, _) => InputCompleted?.Invoke(this, EventArgs.Empty);
     }
 
+    public static readonly BindableProperty NoticeTextProperty = BindableProperty.Create(nameof(NoticeText),
+        typeof(string), typeof(QuickSearchBox), propertyChanged: (box, _, value) =>
+        {
+            ((QuickSearchBox)box).NoticeLabel.Text = (string?)value;
+            ((QuickSearchBox)box).NoticeRow.IsVisible = !string.IsNullOrEmpty((string?)value);
+        });
+
+    public static readonly BindableProperty NoticeCommandProperty = BindableProperty.Create(nameof(NoticeCommand),
+        typeof(System.Windows.Input.ICommand), typeof(QuickSearchBox),
+        propertyChanged: (box, _, value) => ((QuickSearchBox)box).NoticeButton.Command = (System.Windows.Input.ICommand?)value);
+
+    public string? NoticeText
+    {
+        get => (string?)GetValue(NoticeTextProperty);
+        set => SetValue(NoticeTextProperty, value);
+    }
+
+    public System.Windows.Input.ICommand? NoticeCommand
+    {
+        get => (System.Windows.Input.ICommand?)GetValue(NoticeCommandProperty);
+        set => SetValue(NoticeCommandProperty, value);
+    }
+
+    // The product form's name field is not a search to the user
+    public bool ShowSearchIcon
+    {
+        get => Field.Icon is not null;
+        set
+        {
+            if (!value)
+            {
+                Field.Icon = null;
+            }
+        }
+    }
+
     public event EventHandler? InputFocusChanged;
 
     // Enter was pressed in the box

@@ -16,7 +16,7 @@ public class ProductDetailPhotoTests
     private ProductDetailViewModel CreateViewModel() => new(
         _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState,
         _store.Navigation, _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback,
-        _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()));
+        _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()), _store.Clock);
 
     private async Task<(ProductDetailViewModel ViewModel, Product Product)> OpenAsync(Role role, string? photoPath = null)
     {
