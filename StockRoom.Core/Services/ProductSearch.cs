@@ -14,10 +14,7 @@ public static class ProductSearch
     }
 
     private static bool Matches(ProductSummary product, string query) =>
-        Contains(product.Name, query)
-        || Contains(product.Barcode, query)
-        || product.Values.Values.Any(value => Contains(value, query));
-
-    private static bool Contains(string? source, string query) =>
-        source is not null && source.Contains(query, StringComparison.OrdinalIgnoreCase);
+        TextMatch.Contains(product.Name, query)
+        || TextMatch.Contains(product.Barcode, query)
+        || product.Values.Values.Any(value => TextMatch.Contains(value, query));
 }
