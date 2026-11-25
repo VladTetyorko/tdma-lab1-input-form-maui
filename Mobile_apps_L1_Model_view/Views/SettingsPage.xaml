@@ -15,7 +15,6 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
-            <components:StatusHeader />
             <components:AccountSection />
             <Grid IsVisible="{OnIdiom Default=False, Phone=True}">
                 <components:RecentActivityPanel x:Name="Recent" />

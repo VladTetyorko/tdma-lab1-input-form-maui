@@ -17,7 +17,7 @@
 
     <Grid>
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="8">
-            <components:StatusHeader Grid.Row="0" />
+            <components:SyncChip Grid.Row="0" OnlyWhenNeeded="True" HorizontalOptions="End" />
 
             <!-- Page actions; on a phone "Add product" is the round button below instead -->
             <FlexLayout Grid.Row="1" Wrap="Wrap" AlignItems="Center">

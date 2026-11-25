@@ -25,6 +25,7 @@ public class StartupGuardTests
         services.AddSingleton<IScanFeedback, FakeScanFeedback>();
         services.AddSingleton<IToastService, FakeToastService>();
         services.AddSingleton<IBarcodeScanner, FakeBarcodeScanner>();
+        services.AddSingleton<INavigationDrawer, FakeNavigationDrawer>();
 
         using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
     }

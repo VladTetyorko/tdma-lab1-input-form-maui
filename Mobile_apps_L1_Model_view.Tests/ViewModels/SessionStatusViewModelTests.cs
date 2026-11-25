@@ -12,14 +12,11 @@ public class SessionStatusViewModelTests
 
     private readonly TestStore _store = new();
     private readonly SessionStatusViewModel _status;
-    private readonly StockDocumentDraftStore _drafts;
 
     public SessionStatusViewModelTests()
     {
-        _drafts = new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets),
-            new CapturingLogger<StockDocumentDraftStore>());
         _status = new SessionStatusViewModel(_store.CurrentUser, _store.Session, _store.AppState, _store.Banner,
-            _store.Navigation, _drafts, _store.Logger<SessionStatusViewModel>());
+            _store.Navigation, _store.Logger<SessionStatusViewModel>());
     }
 
     [Theory]
@@ -101,25 +98,10 @@ public class SessionStatusViewModelTests
     }
 
     [Fact]
-    public async Task DraftCounts_FollowTheDraftsAndVanishOnSignOut()
+    public async Task OpenSync_GoesToSettings()
     {
-        await _store.SignInAsync(Role.Manager);
-        var draft = new StockDocumentDraft(OperationDirection.In);
-        draft.Add(DrillBarcode, 4);
-
-        await _drafts.SaveAsync(draft);
-
-        Assert.Equal(("Receive (1)", "Issue"), (_status.ReceiveTitle, _status.IssueTitle));
-        await _status.SignOutCommand.ExecuteAsync(null);
-        Assert.Equal("Receive", _status.ReceiveTitle);
-    }
-
-    [Fact]
-    public async Task ScanAndOpenSync_Navigate()
-    {
-        await _status.ScanCommand.ExecuteAsync(null);
         await _status.OpenSyncCommand.ExecuteAsync(null);
 
-        Assert.Equal([Routes.Scanner, Routes.Settings], _store.Navigation.RequestedRoutes);
+        Assert.Equal(Routes.Settings, Assert.Single(_store.Navigation.RequestedRoutes));
     }
 }

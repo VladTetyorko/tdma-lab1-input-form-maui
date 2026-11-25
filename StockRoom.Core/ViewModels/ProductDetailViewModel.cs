@@ -220,7 +220,7 @@ public partial class ProductDetailViewModel(
         var draft = await drafts.LoadAsync(direction);
         draft.Add(_product.Barcode);
         await drafts.SaveAsync(draft);
-        await navigation.GoToAsync(Routes.Absolute(route));
+        await navigation.GoToAsync(route);
     }
 
     [RelayCommand]

@@ -110,8 +110,8 @@ public sealed partial class HomeViewModel : ObservableObject, IPageLifecycleAwar
             return Task.CompletedTask;
         }
 
-        // The form returns here, not to the product list: the list must read the products again when it is next shown
-        if (route == Routes.ProductForm)
+        // Pages opened from here do not tell the product list what they changed, so it reads the products again
+        if (route == Routes.Products)
         {
             _changes.Mark();
         }

@@ -20,6 +20,7 @@ public sealed partial class ConnectivityBannerViewModel(
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsOffline))]
     [NotifyPropertyChangedFor(nameof(IsNotOffline))]
+    [NotifyPropertyChangedFor(nameof(NeedsAttention))]
     public partial ConnectivityState State { get; set; } = ConnectivityState.Synced;
 
     [ObservableProperty]
@@ -29,6 +30,9 @@ public sealed partial class ConnectivityBannerViewModel(
     public bool IsOffline => State == ConnectivityState.Offline;
 
     public bool IsNotOffline => !IsOffline;
+
+    // Anything but "all synced": pages show the chip only then
+    public bool NeedsAttention => State != ConnectivityState.Synced;
 
     public void Attach()
     {

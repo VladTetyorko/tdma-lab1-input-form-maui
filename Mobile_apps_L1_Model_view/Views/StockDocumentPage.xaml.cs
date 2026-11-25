@@ -3,7 +3,7 @@ using Mobile_apps_L1_Model_view.ViewModels;
 
 namespace Mobile_apps_L1_Model_view.Views;
 
-// One page for both batch directions: the menu creates it once as "receive" and once as "issue"
+// One page for both batch directions, created as ReceivePage or IssuePage
 public partial class StockDocumentPage : ContentPage
 {
     public StockDocumentPage(StockDocumentViewModel viewModel, OperationDirection direction)

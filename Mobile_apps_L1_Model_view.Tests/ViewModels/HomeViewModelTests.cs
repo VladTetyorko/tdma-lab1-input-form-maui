@@ -102,13 +102,15 @@ public class HomeViewModelTests
     }
 
     [Fact]
-    public async Task AddProduct_MarksTheProductListForReloading()
+    public async Task FindProduct_MarksTheProductListForReloading()
     {
         var viewModel = await OpenAsync(Role.Manager);
 
         await viewModel.AddProductCommand.ExecuteAsync(null);
+        Assert.Equal(0, _changes.Version);
+        await viewModel.FindProductCommand.ExecuteAsync(null);
 
-        Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal([Routes.ProductForm, Routes.Products], _store.Navigation.RequestedRoutes);
         Assert.Equal(1, _changes.Version);
     }
 

@@ -88,6 +88,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProductPhotoEditor>();
         services.AddTransient<ConnectivityBannerViewModel>();
         services.AddSingleton<SessionStatusViewModel>();
+        services.AddSingleton<DrawerViewModel>();
         services.AddTransient<ProductFormViewModel>();
         services.AddTransient<ProductDetailViewModel>();
         services.AddTransient<CharacteristicsViewModel>();

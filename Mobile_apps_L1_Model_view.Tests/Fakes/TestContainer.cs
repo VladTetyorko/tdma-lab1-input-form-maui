@@ -24,6 +24,8 @@ public static class TestContainer
         services.AddSingleton<INavigationService>(navigation);
         services.AddSingleton(alerts);
         services.AddSingleton<IAlertService>(alerts);
+        services.AddSingleton<FakeNavigationDrawer>();
+        services.AddSingleton<INavigationDrawer>(provider => provider.GetRequiredService<FakeNavigationDrawer>());
         services.AddSingleton(applier);
         services.AddSingleton<IThemeApplier>(applier);
         var feedback = new FakeScanFeedback();

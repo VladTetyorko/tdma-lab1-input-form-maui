@@ -403,6 +403,6 @@ public class ProductDetailViewModelTests
         await _viewModel.StartIssueCommand.ExecuteAsync(null);
 
         Assert.False(_viewModel.CanIssue);
-        Assert.Equal(Routes.Absolute(Routes.Receive), Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.Receive, Assert.Single(_store.Navigation.RequestedRoutes));
     }
 }

@@ -64,7 +64,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<IScanFeedback, MauiScanFeedback>();
         builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
+        builder.Services.AddSingleton<INavigationDrawer, ShellNavigationDrawer>();
         builder.Services.AddTransient<LoginPage>();
+        builder.Services.AddTransient<HomePage>();
+        builder.Services.AddTransient<ReceivePage>();
+        builder.Services.AddTransient<IssuePage>();
         builder.Services.AddTransient<ProductsPage>();
         builder.Services.AddTransient<ProductFormPage>();
         builder.Services.AddTransient<ProductDetailPage>();

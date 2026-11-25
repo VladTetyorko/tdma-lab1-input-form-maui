@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The whole drawer: user card with the close button, the entries of the role, sync state and sign-out -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:converters="clr-namespace:Mobile_apps_L1_Model_view.Converters"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.DrawerContent"
+             x:DataType="viewModels:DrawerViewModel"
+             x:Name="ThisDrawer">
+
+    <ContentView.Resources>
+        <converters:ResourceKeyConverter x:Key="ResourceKey" />
+    </ContentView.Resources>
+
+    <Grid RowDefinitions="Auto,1,*,1,Auto" BackgroundColor="{DynamicResource Surface}">
+
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="16,16,8,12">
+            <Border HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" StrokeThickness="0"
+                    Background="{DynamicResource PrimarySoftBrush}" VerticalOptions="Center">
+                <Label Text="{Binding Status.Initials}" Style="{StaticResource TextBodyStrong}"
+                       HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                <Label Text="{Binding Status.UserName}" Style="{StaticResource TextBodyStrong}" LineBreakMode="TailTruncation" />
+                <Label Text="{Binding Status.RoleText}" Style="{StaticResource TextCaption}" />
+            </VerticalStackLayout>
+            <Button Grid.Column="2" Text="{StaticResource IconDismiss}" StyleClass="Icon"
+                    WidthRequest="48" HeightRequest="48" Command="{Binding CloseCommand}"
+                    SemanticProperties.Description="Close menu" AutomationId="CloseMenuButton" />
+        </Grid>
+
+        <BoxView Grid.Row="1" />
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}" Padding="8" Spacing="4">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:DrawerItem">
+                        <Grid MinimumHeightRequest="56">
+                            <Border StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                                    Background="{DynamicResource PrimarySoftBrush}" IsVisible="{Binding IsSelected}" />
+                            <Grid ColumnDefinitions="24,*" ColumnSpacing="16" Padding="12,0">
+                                <Label Text="{Binding Glyph, Converter={StaticResource ResourceKey}}"
+                                       Style="{StaticResource IconGlyph}" FontSize="24"
+                                       TextColor="{DynamicResource PrimaryText}" />
+                                <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource TextBody}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            <!-- On top, so the whole row is one focusable button -->
+                            <Button StyleClass="RowOverlay" CommandParameter="{Binding .}"
+                                    Command="{Binding BindingContext.OpenCommand, Source={x:Reference ThisDrawer}}"
+                                    SemanticProperties.Description="{Binding Title}"
+                                    AutomationId="{Binding AutomationId}" />
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <BoxView Grid.Row="3" />
+
+        <VerticalStackLayout Grid.Row="4" Padding="16" Spacing="12">
+            <components:SyncChip />
+            <Button Text="Sign out" StyleClass="Outlined" Command="{Binding SignOutCommand}" AutomationId="SignOutButton" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentView>
