@@ -17,4 +17,13 @@ public static class RolePermissions
 
     public static bool CanRecord(Role role, OperationDirection direction) =>
         direction == OperationDirection.In || role != Role.Driver;
+
+    // Correcting a quantity records an operation, so it follows the same rule
+    public static bool CanCorrect(Role role, OperationDirection direction) => CanRecord(role, direction);
+
+    // entities.md: the Driver may view only the operations he recorded
+    public static bool CanViewAllOperations(Role role) => role != Role.Driver;
+
+    // Counting the shelves and posting the differences
+    public static bool CanCountStock(Role role) => role == Role.Manager;
 }

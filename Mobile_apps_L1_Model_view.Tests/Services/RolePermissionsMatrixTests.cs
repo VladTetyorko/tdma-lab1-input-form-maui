@@ -15,7 +15,11 @@ public class RolePermissionsMatrixTests
         ("CanViewLogs", false, false, true),
         ("CanUseDiagnostics", false, false, true),
         ("RecordIn", true, true, true),
-        ("RecordOut", true, false, true));
+        ("RecordOut", true, false, true),
+        ("CorrectIn", true, true, true),
+        ("CorrectOut", true, false, true),
+        ("CanViewAllOperations", true, false, true),
+        ("CanCountStock", false, false, true));
 
     [Theory]
     [MemberData(nameof(Matrix))]
@@ -30,10 +34,9 @@ public class RolePermissionsMatrixTests
             .ToHashSet();
         var documented = Matrix.Select(row => (string)row[0]).ToHashSet();
 
-        // CanRecord has a direction parameter, so the matrix has one row per direction
-        documented.Remove("RecordIn");
-        documented.Remove("RecordOut");
-        documented.Add("CanRecord");
+        // CanRecord and CanCorrect have a direction parameter, so the matrix has one row per direction
+        documented.ExceptWith(["RecordIn", "RecordOut", "CorrectIn", "CorrectOut"]);
+        documented.UnionWith(["CanRecord", "CanCorrect"]);
 
         Assert.Equal(documented.Order(), methods.Order());
     }
@@ -50,6 +53,10 @@ public class RolePermissionsMatrixTests
         "CanUseDiagnostics" => RolePermissions.CanUseDiagnostics(role),
         "RecordIn" => RolePermissions.CanRecord(role, OperationDirection.In),
         "RecordOut" => RolePermissions.CanRecord(role, OperationDirection.Out),
+        "CorrectIn" => RolePermissions.CanCorrect(role, OperationDirection.In),
+        "CorrectOut" => RolePermissions.CanCorrect(role, OperationDirection.Out),
+        "CanViewAllOperations" => RolePermissions.CanViewAllOperations(role),
+        "CanCountStock" => RolePermissions.CanCountStock(role),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Not in the matrix")
     };
 

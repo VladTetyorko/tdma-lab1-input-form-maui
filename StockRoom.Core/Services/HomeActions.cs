@@ -14,12 +14,12 @@ public static class HomeActions
         List<HomeAction> tiles = [];
         if (RolePermissions.CanRecord(role, OperationDirection.In))
         {
-            tiles.Add(new HomeAction(Routes.Receive, NavigationMenu.ReceiveTitle, ReceiveHint));
+            tiles.Add(new HomeAction(Routes.Receive, "Receive goods", ReceiveHint));
         }
 
         if (RolePermissions.CanRecord(role, OperationDirection.Out))
         {
-            tiles.Add(new HomeAction(Routes.Issue, NavigationMenu.IssueTitle, IssueHint));
+            tiles.Add(new HomeAction(Routes.Issue, "Issue goods", IssueHint));
         }
 
         return tiles;

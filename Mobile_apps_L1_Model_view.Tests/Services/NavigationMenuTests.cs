@@ -5,35 +5,30 @@ namespace Mobile_apps_L1_Model_view.Tests.Services;
 
 public class NavigationMenuTests
 {
-    private static IEnumerable<string> RoutesFor(Role role) => NavigationMenu.For(role).Select(entry => entry.Route);
+    private static IEnumerable<string> Bottom(Role role) => NavigationMenu.BottomFor(role).Select(entry => entry.Route);
 
-    [Fact]
-    public void For_Manager_SeesEveryEntryInOrder()
+    private static IEnumerable<string> Drawer(Role role) => NavigationMenu.DrawerFor(role).Select(entry => entry.Route);
+
+    [Theory]
+    [InlineData(Role.Manager)]
+    [InlineData(Role.Storekeeper)]
+    public void BottomFor_StaffSeeBothActionsInTheMiddle(Role role)
     {
-        Assert.Equal(
-            [Routes.Home, Routes.Receive, Routes.Issue, Routes.Products, Routes.Map, Routes.Characteristics, Routes.Settings],
-            RoutesFor(Role.Manager));
+        Assert.Equal([Routes.Home, Routes.Products, Routes.Receive, Routes.Issue, Routes.Search, Routes.Activity], Bottom(role));
     }
 
     [Fact]
-    public void For_Storekeeper_HasNoCharacteristics()
+    public void BottomFor_Driver_HasNoIssue()
     {
-        Assert.Equal([Routes.Home, Routes.Receive, Routes.Issue, Routes.Products, Routes.Map, Routes.Settings],
-            RoutesFor(Role.Storekeeper));
+        Assert.Equal([Routes.Home, Routes.Products, Routes.Receive, Routes.Search, Routes.Activity], Bottom(Role.Driver));
     }
 
     [Fact]
-    public void For_Driver_HasNoIssueAndNoCharacteristics()
+    public void DrawerFor_KeepsOnlyTheRareEntries()
     {
-        Assert.Equal([Routes.Home, Routes.Receive, Routes.Products, Routes.Map, Routes.Settings], RoutesFor(Role.Driver));
-    }
-
-    [Fact]
-    public void OnlyHomeProductsAndSettingsAreTopLevelPages()
-    {
-        var top = NavigationMenu.For(Role.Manager).Where(entry => entry.Kind == MenuEntryKind.Top).Select(entry => entry.Route);
-
-        Assert.Equal([Routes.Home, Routes.Products, Routes.Settings], top);
-        Assert.All(NavigationMenu.For(Role.Manager), entry => Assert.StartsWith("Icon", entry.Glyph));
+        Assert.Equal([Routes.Characteristics, Routes.Map, Routes.Settings], Drawer(Role.Manager));
+        Assert.Equal([Routes.Map, Routes.Settings], Drawer(Role.Storekeeper));
+        Assert.Equal([Routes.Map, Routes.Settings], Drawer(Role.Driver));
+        Assert.All(NavigationMenu.DrawerFor(Role.Manager), entry => Assert.StartsWith("Icon", entry.Glyph));
     }
 }

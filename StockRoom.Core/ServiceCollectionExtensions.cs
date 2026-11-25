@@ -90,6 +90,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ConnectivityBannerViewModel>();
         services.AddSingleton<SessionStatusViewModel>();
         services.AddSingleton<DrawerViewModel>();
+        services.AddSingleton<BottomNavViewModel>();
         services.AddTransient<ProductFormViewModel>();
         services.AddTransient<ProductDetailViewModel>();
         services.AddTransient<CharacteristicsViewModel>();
