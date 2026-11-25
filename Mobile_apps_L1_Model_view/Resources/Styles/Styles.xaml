@@ -709,6 +709,14 @@
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
+    <!-- Filled surface of a Home tile: HomeTileHeight 120 phone / 112 desktop, no shadow -->
+    <Style TargetType="Border" x:Key="ActionTileSurface">
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="MinimumHeightRequest" Value="{OnIdiom 120, Desktop=112}" />
+    </Style>
+
     <!-- Cards and chips: a 1 px edge and surface tone, never a shadow. A chip always has text -->
 
     <Style TargetType="Border" Class="SectionCard">

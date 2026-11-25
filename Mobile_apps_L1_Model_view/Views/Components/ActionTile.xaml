@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- A big filled main action: icon, title and one line below. The transparent button on top makes the whole tile one
+     focusable target -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.ActionTile">
+    <Grid>
+        <Border Style="{StaticResource ActionTileSurface}" />
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16" Padding="20,12">
+            <Label x:Name="GlyphLabel" Style="{StaticResource IconGlyph}" FontSize="32"
+                   TextColor="{DynamicResource OnPrimary}" />
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                <Label x:Name="TitleLabel" Style="{StaticResource TextTitle}" TextColor="{DynamicResource OnPrimary}" />
+                <Label x:Name="CaptionText" Style="{StaticResource TextBody}" TextColor="{DynamicResource OnPrimary}" />
+            </VerticalStackLayout>
+        </Grid>
+        <Button x:Name="TileButton" StyleClass="RowOverlay" />
+    </Grid>
+</ContentView>

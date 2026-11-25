@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.HomePage"
              x:DataType="viewModels:HomeViewModel"
@@ -12,7 +13,46 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="12">
-        <Label Text="{Binding Greeting}" Style="{StaticResource TextTitle}" />
-    </VerticalStackLayout>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Scan" Command="{Binding ScanCommand}" AutomationId="HomeScanButton"
+                     SemanticProperties.Description="Scan a barcode">
+            <ToolbarItem.IconImageSource>
+                <FontImageSource FontFamily="FluentIcons" Glyph="{StaticResource IconScan}" Size="24"
+                                 Color="{DynamicResource TextPrimary}" />
+            </ToolbarItem.IconImageSource>
+        </ToolbarItem>
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="12" MaximumWidthRequest="1200">
+            <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
+
+            <VerticalStackLayout>
+                <Label Text="{Binding Greeting}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
+                <Label Text="{Binding RoleText}" Style="{StaticResource TextCaption}" />
+            </VerticalStackLayout>
+
+            <!-- One column on a phone, two side by side on a wide window (code-behind) -->
+            <Grid x:Name="Tiles" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+                <components:ActionTile x:Name="ReceiveTile" ButtonId="HomeReceiveTile" Title="Receive goods"
+                                       Glyph="{StaticResource IconReceive}" Caption="{Binding ReceiveCaption}"
+                                       Command="{Binding OpenReceiveCommand}" IsVisible="{Binding CanReceive}" />
+                <components:ActionTile x:Name="IssueTile" Grid.Row="1" ButtonId="HomeIssueTile" Title="Issue goods"
+                                       Glyph="{StaticResource IconIssue}" Caption="{Binding IssueCaption}"
+                                       Command="{Binding OpenIssueCommand}" IsVisible="{Binding CanIssue}" />
+            </Grid>
+            <Label Text="{Binding IssueNote}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasIssueNote}"
+                   AutomationId="HomeIssueNotAllowedLabel" />
+
+            <FlexLayout Wrap="Wrap">
+                <Button Text="Find a product" StyleClass="Outlined" Margin="0,0,12,8"
+                        Command="{Binding FindProductCommand}" AutomationId="HomeFindProductButton" />
+                <Button Text="Add product" StyleClass="Outlined" Margin="0,0,12,8"
+                        Command="{Binding AddProductCommand}" IsVisible="{Binding CanAddProduct}"
+                        AutomationId="HomeAddProductButton" />
+            </FlexLayout>
+
+            <components:RecentActivityPanel x:Name="Recent" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
