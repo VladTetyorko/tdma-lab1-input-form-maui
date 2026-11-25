@@ -33,6 +33,9 @@ public sealed partial class BottomNavViewModel : ObservableObject
         Refresh();
     }
 
+    // A place of the bar is about to be opened (Search then takes the cursor; a return from a pushed page does not)
+    public event EventHandler<string>? Opening;
+
     // The place that is already open was tapped again: Search clears and focuses its field
     public event EventHandler<string>? Reselected;
 
@@ -98,6 +101,7 @@ public sealed partial class BottomNavViewModel : ObservableObject
             _changes.Mark();
         }
 
+        Opening?.Invoke(this, route);
         await _navigation.GoToAsync(route);
     }
 

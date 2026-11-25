@@ -37,7 +37,15 @@
                 <Grid Grid.Row="4" ColumnDefinitions="Auto,*" Margin="0,4,0,0">
                     <Button Text="{Binding SecondaryText}" StyleClass="Outlined" HeightRequest="56" MinimumWidthRequest="104"
                             Margin="0,0,8,0" IsVisible="{Binding HasSecondary}" Command="{Binding SecondaryCommand}"
-                            AutomationId="ConfirmCancelButton" />
+                            AutomationId="ConfirmCancelButton">
+                        <Button.Triggers>
+                            <!-- Alone, the way back takes the whole width -->
+                            <DataTrigger TargetType="Button" Binding="{Binding HasPrimary}" Value="False">
+                                <Setter Property="Grid.ColumnSpan" Value="2" />
+                                <Setter Property="Margin" Value="0" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
                     <Button x:Name="PrimaryButton" Grid.Column="1" Text="{Binding PrimaryText}" FontSize="17"
                             HeightRequest="56" IsVisible="{Binding HasPrimary}" Command="{Binding PrimaryCommand}"
                             AutomationId="ConfirmAcceptButton" />

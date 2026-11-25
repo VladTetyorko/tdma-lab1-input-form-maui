@@ -51,11 +51,17 @@ public partial class AppShell : Shell
         MauiThemeApplier.ShowStatusBar();
     }
 
-    // Back on Products, Search or Activity goes to Home; only Home leaves the app
+    // Back closes the open menu; on Products, Search or Activity it goes to Home; only Home leaves the app
     protected override bool OnBackButtonPressed()
     {
+        if (FlyoutIsPresented)
+        {
+            FlyoutIsPresented = false;
+            return true;
+        }
+
         var route = Routes.Leaf(CurrentState?.Location?.OriginalString);
-        if (!FlyoutIsPresented && Routes.IsRoot(route) && route != Routes.Home)
+        if (Routes.IsRoot(route) && route != Routes.Home)
         {
             _ = GoToAsync(Routes.Absolute(Routes.Home));
             return true;

@@ -15,9 +15,28 @@ public partial class SearchPage : ContentPage
 
         if (DeviceInfo.Current.Idiom == DeviceIdiom.Phone)
         {
-            // Dispatched, so the clear button does not count as "stopped typing"
-            Field.InputFocusChanged += (_, _) => Dispatcher.Dispatch(() => _viewModel.IsTyping = Field.IsInputFocused);
+            // The camera makes room for the results as soon as something is typed, not before
+            viewModel.QuickSearch.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(QuickSearchViewModel.Query))
+                {
+                    _viewModel.IsTyping = viewModel.QuickSearch.Query.Length > 0;
+                }
+            };
         }
+
+        // "Do we have X?": opened from the bar, the field has the cursor (J4). Coming back from a product page it does
+        // not, so the keyboard does not cover the bar again. The page is created by the first such opening
+        var focus = true;
+        bar.Opening += (_, route) => focus |= route == Routes.Search;
+        Appearing += (_, _) =>
+        {
+            if (focus)
+            {
+                focus = false;
+                Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(300), Field.FocusInput);
+            }
+        };
 
         // A tap on the tab that is already open: an empty field with the keyboard
         bar.Reselected += (_, route) =>

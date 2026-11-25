@@ -310,7 +310,12 @@ public sealed partial class StockCountViewModel : ObservableObject, IPageLifecyc
         var counted = Rows.Count(row => row.Counted is not null);
         var differences = Rows.Count(row => row.IsDifferent && row.Problem.Length == 0);
         Progress = $"{counted} of {Rows.Count} counted";
-        ReviewText = differences == 1 ? "Review 1 difference" : $"Review {differences} differences";
+        ReviewText = differences switch
+        {
+            0 => "Review count",
+            1 => "Review 1 difference",
+            _ => $"Review {differences} differences"
+        };
         ReviewHint = counted == 0 ? "Count a product first" : string.Empty;
         ReviewCommand.NotifyCanExecuteChanged();
     }

@@ -39,7 +39,7 @@
                 <Grid ColumnDefinitions="*,48,64,40" ColumnSpacing="8" Padding="12,0" HeightRequest="36"
                       BackgroundColor="{DynamicResource SurfaceAlt}">
                     <Label Text="Product" Style="{StaticResource TableHeader}" />
-                    <Label Grid.Column="1" Text="On hand" Style="{StaticResource TextCaption}" HorizontalTextAlignment="End"
+                    <Label Grid.Column="1" Text="Stock" Style="{StaticResource TextCaption}" HorizontalTextAlignment="End"
                            VerticalOptions="Center" />
                     <Label Grid.Column="2" Text="Counted" Style="{StaticResource TextCaption}" HorizontalTextAlignment="Center"
                            VerticalOptions="Center" />

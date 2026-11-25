@@ -56,7 +56,7 @@
                         <DataTemplate x:DataType="viewModels:StockDocumentLineItem">
                             <Grid RowDefinitions="Auto,Auto,1">
                                 <components:ProductRow ProductName="{Binding Name}" Code="{Binding Barcode}" Margin="-12,0"
-                                                       IsOutOfStock="{Binding IsOutOfStock}" Note="{Binding StockText}"
+                                                       IsOutOfStock="{Binding ShowOutChip}" Note="{Binding StockText}"
                                                        Problem="{Binding Problem}">
                                     <components:ProductRow.Right>
                                         <HorizontalStackLayout>
@@ -68,7 +68,7 @@
                                                             Command="{Binding BindingContext.DecrementCommand, Source={x:Reference ThisPage}}"
                                                             CommandParameter="{Binding .}" AutomationId="DecrementLineButton" />
                                                     <components:BorderlessEntry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric"
-                                                           WidthRequest="52" MaxLength="5" HorizontalTextAlignment="Center"
+                                                           WidthRequest="52" MaxLength="5" HorizontalTextAlignment="Center" VerticalOptions="Center"
                                                            VerticalTextAlignment="Center"
                                                            SemanticProperties.Description="{Binding Name, StringFormat='Quantity of {0}'}"
                                                            ReturnCommand="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}"

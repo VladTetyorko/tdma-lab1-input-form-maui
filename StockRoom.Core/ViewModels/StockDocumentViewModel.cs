@@ -527,8 +527,17 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         return changed;
     }
 
-    private void ShowCommitText() =>
-        CommitText = $"Review {Plural.Units(Lines.Sum(line => line.TypedQuantity))}";
+    // The button and the summary follow what is typed, before it is confirmed
+    private void ShowCommitText()
+    {
+        var units = Lines.Sum(line => line.TypedQuantity);
+        CommitText = $"Review {Plural.Units(units)}";
+        CommitHint = Lines.Count == 0 ? "Add a product first"
+            : Lines.Any(line => line.IsInvalid) ? "Fix the red lines first"
+            : string.Empty;
+        CommitCommand.NotifyCanExecuteChanged();
+        SummaryText = Lines.Count == 0 ? string.Empty : $"Draft · {Plural.Lines(Lines.Count)} · {Plural.Units(units)}";
+    }
 
     private async Task<bool> AddAsync(string? text, bool debounce)
     {
@@ -619,14 +628,8 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
 
         _focusBarcode = null;
 
-        var units = _draft.TotalUnits;
-        SummaryText = Lines.Count == 0 ? string.Empty : $"Draft · {Plural.Lines(Lines.Count)} · {Plural.Units(units)}";
         ShowCommitText();
-        CommitHint = Lines.Count == 0 ? "Add a product first"
-            : Lines.Any(line => line.IsInvalid) ? "Fix the red lines first"
-            : string.Empty;
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(HasLines));
-        CommitCommand.NotifyCanExecuteChanged();
     }
 }

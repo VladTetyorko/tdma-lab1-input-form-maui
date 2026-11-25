@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 
@@ -5,12 +6,15 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 
 // One line as the page shows it. Product is null when no product has the barcode
 public sealed record StockDocumentLineItem(string Barcode, ProductSummary? Product, int Quantity, OperationDirection Direction)
+    : INotifyPropertyChanged
 {
     private string? _typed;
 
     public bool IsUnknown => Product is null;
 
-    public bool ExceedsStock => Product is not null && OperationRules.ExceedsStock(Direction, Quantity, Product.Quantity);
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public bool ExceedsStock => Product is not null && OperationRules.ExceedsStock(Direction, TypedQuantity, Product.Quantity);
 
     // An invalid line blocks the commit; the sentence in Problem says why
     public bool IsInvalid => IsUnknown || ExceedsStock;
@@ -21,11 +25,14 @@ public sealed record StockDocumentLineItem(string Barcode, ProductSummary? Produ
 
     public bool IsOutOfStock => Product is not null && Product.Quantity <= 0;
 
-    public int After => Direction == OperationDirection.In ? OnHand + Quantity : OnHand - Quantity;
+    // An invalid line says "Out of stock" in red already, so it needs no chip as well
+    public bool ShowOutChip => IsOutOfStock && !IsInvalid;
+
+    public int After => Direction == OperationDirection.In ? OnHand + TypedQuantity : OnHand - TypedQuantity;
 
     // Stock never goes below zero: what is missing is said in words
     public string StockText => Product is null ? string.Empty
-        : ExceedsStock ? $"on hand {OnHand} → 0, short by {Quantity - OnHand}"
+        : ExceedsStock ? $"on hand {OnHand} → 0, short by {TypedQuantity - OnHand}"
         : $"on hand {OnHand} → {After}";
 
     public string Problem => IsUnknown
@@ -46,6 +53,11 @@ public sealed record StockDocumentLineItem(string Barcode, ProductSummary? Produ
         set
         {
             _typed = value;
+            foreach (var name in new[] { nameof(StockText), nameof(Problem), nameof(IsInvalid), nameof(ShowOutChip) })
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            }
+
             Typed?.Invoke();
         }
     }
