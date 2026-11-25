@@ -30,6 +30,24 @@ public partial class ProductListViewModel(
     // Only ever grows (characteristics are never deleted), so the picker keeps its selection
     public ObservableCollection<SortOption> SortOptions { get; } = [SortOption.ByName, SortOption.ByQuantity];
 
+    // The table: the stretching name column, the other headers and the rows in header order
+    [ObservableProperty]
+    public partial TableColumn NameColumn { get; set; } = ProductTable.NameColumn(SortOption.ByName, false);
+
+    public ObservableCollection<TableColumn> Columns { get; } = [];
+
+    public ObservableCollection<ProductTableRow> Rows { get; } = [];
+
+    // Characteristics a narrow (phone) table can show as its one extra column
+    public ObservableCollection<SortOption> ExtraColumnOptions { get; } = [];
+
+    [ObservableProperty]
+    public partial SortOption? SelectedExtraColumn { get; set; }
+
+    // Set by the page from its width
+    [ObservableProperty]
+    public partial bool IsNarrow { get; set; }
+
     [ObservableProperty]
     public partial SortOption? SelectedSortOption { get; set; } = SortOption.ByName;
 
@@ -70,6 +88,24 @@ public partial class ProductListViewModel(
     partial void OnSortDescendingChanged(bool value) => ApplySort();
 
     partial void OnSearchTextChanged(string value) => ApplySort();
+
+    partial void OnSelectedExtraColumnChanged(SortOption? value) => ApplySort();
+
+    partial void OnIsNarrowChanged(bool value) => ApplySort();
+
+    // A tap on a column header: the same column flips the direction, another one starts ascending
+    [RelayCommand]
+    private void SortByColumn(TableColumn? column)
+    {
+        if (column?.Sort is not { } clicked || SelectedSortOption is null)
+        {
+            return;
+        }
+
+        var (sort, descending) = ProductTable.Toggle(SelectedSortOption, SortDescending, clicked);
+        SortDescending = descending;
+        SelectedSortOption = sort;
+    }
 
     // The shake sensor listens only while the page is visible. Shake opens the scanner ("quick scan")
     public void OnAppearing()
@@ -249,10 +285,16 @@ public partial class ProductListViewModel(
             if (!SortOptions.Contains(option))
             {
                 SortOptions.Add(option);
+                if (option.Kind == SortKind.Characteristic)
+                {
+                    ExtraColumnOptions.Add(option);
+                }
             }
         }
 
         _sortOptionsStale = false;
+        SelectedExtraColumn ??= ExtraColumnOptions.FirstOrDefault();
+        ApplySort();
     }
 
     private void ApplySort()
@@ -269,6 +311,30 @@ public partial class ProductListViewModel(
             Products.Add(product);
         }
 
+        ApplyTable(SelectedSortOption);
+
         EmptyText = Products.Count == 0 && _all.Count > 0 ? $"No products match \"{SearchText.Trim()}\"." : string.Empty;
+    }
+
+    private void ApplyTable(SortOption sorted)
+    {
+        NameColumn = ProductTable.NameColumn(sorted, SortDescending);
+        var columns = ProductTable.Columns([.. SortOptions], sorted, SortDescending, IsNarrow, SelectedExtraColumn);
+
+        // Headers are replaced only when they change, so tapping or typing does not rebuild them for nothing
+        if (!Columns.SequenceEqual(columns))
+        {
+            Columns.Clear();
+            foreach (var column in columns)
+            {
+                Columns.Add(column);
+            }
+        }
+
+        Rows.Clear();
+        foreach (var product in Products)
+        {
+            Rows.Add(ProductTable.Row(product, columns));
+        }
     }
 }
