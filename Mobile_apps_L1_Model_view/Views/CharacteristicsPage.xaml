@@ -17,7 +17,7 @@
         <BackButtonBehavior Command="{Binding GoBackCommand}" />
     </Shell.BackButtonBehavior>
 
-    <Grid RowDefinitions="*,Auto" Padding="20,10" RowSpacing="10">
+    <Grid RowDefinitions="*,Auto" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="10">
         <CollectionView Grid.Row="0" ItemsSource="{Binding Items}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Characteristic">
@@ -32,13 +32,13 @@
         <VerticalStackLayout Grid.Row="1" Spacing="6">
             <VerticalStackLayout IsVisible="{Binding CanManage}" Spacing="6">
                 <Label Text="New characteristic" Style="{StaticResource SectionLabel}" />
-                <Entry Text="{Binding NewName, Mode=TwoWay}" Placeholder="Name" />
+                <Entry Text="{Binding NewName, Mode=TwoWay}" AutomationId="CharacteristicNameEntry" Placeholder="Name" />
                 <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" />
                 <Picker ItemsSource="{Binding ValueTypes}"
-                        SelectedItem="{Binding NewValueType, Mode=TwoWay}"
+                        SelectedItem="{Binding NewValueType, Mode=TwoWay}" AutomationId="ValueTypePicker"
                         Title="Value type" />
                 <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
-                <Button StyleClass="Primary" Text="Add" Command="{Binding AddCommand}" />
+                <Button StyleClass="Primary" Text="Add" Command="{Binding AddCommand}" AutomationId="AddCharacteristicButton" />
             </VerticalStackLayout>
             <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" />
         </VerticalStackLayout>

@@ -12,29 +12,35 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <VerticalStackLayout Padding="30,20" Spacing="16">
-        <Label Text="Sign in" Style="{StaticResource Headline}" />
-        <Label Text="Enter the login and password you were given." Style="{StaticResource CaptionLabel}" />
+    <ScrollView>
+        <Grid Padding="{OnIdiom Default=24, Phone=16}">
+            <Border StyleClass="SectionCard" MaximumWidthRequest="400" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="12">
+                <Label Text="StockRoom" Style="{StaticResource Headline}" />
+                <Label Text="Warehouse. Sign in with the login and password you were given." Style="{StaticResource CaptionLabel}" />
 
-        <Entry Text="{Binding Login, Mode=TwoWay}"
-               Placeholder="Login"
-               Keyboard="Plain"
-               AutomationId="LoginEntry" />
-        <Entry Text="{Binding Password, Mode=TwoWay}"
-               Placeholder="Password"
-               IsPassword="True"
-               ReturnCommand="{Binding SignInCommand}"
-               AutomationId="PasswordEntry" />
+                <Entry Text="{Binding Login, Mode=TwoWay}"
+                       Placeholder="Login"
+                       Keyboard="Plain"
+                       AutomationId="LoginEntry" />
+                <Entry Text="{Binding Password, Mode=TwoWay}"
+                       Placeholder="Password"
+                       IsPassword="True"
+                       ReturnCommand="{Binding SignInCommand}"
+                       AutomationId="PasswordEntry" />
 
-        <Label Text="{Binding ErrorMessage}"
-               IsVisible="{Binding HasError}"
-               Style="{StaticResource ErrorLabel}"
-               AutomationId="ErrorLabel" />
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding HasError}"
+                       Style="{StaticResource ErrorLabel}"
+                       AutomationId="ErrorLabel" />
 
-        <Button StyleClass="Primary" Text="Sign in" Command="{Binding SignInCommand}" AutomationId="LoginButton" />
-        <Button StyleClass="Outlined" Text="Unlock with biometrics"
-                Command="{Binding BiometricSignInCommand}"
-                IsVisible="{Binding IsBiometricAvailable}"
-                AutomationId="BiometricButton" />
-    </VerticalStackLayout>
+                <Button StyleClass="Primary" Text="Sign in" Command="{Binding SignInCommand}" AutomationId="LoginButton" />
+                <Button StyleClass="Outlined" Text="Unlock with biometrics"
+                        Command="{Binding BiometricSignInCommand}"
+                        IsVisible="{Binding IsBiometricAvailable}"
+                        AutomationId="BiometricButton" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </ScrollView>
 </ContentPage>

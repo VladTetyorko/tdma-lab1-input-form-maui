@@ -17,7 +17,7 @@
     </Shell.BackButtonBehavior>
 
     <ScrollView>
-        <VerticalStackLayout Padding="30,20" Spacing="8">
+        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
             <Label Text="Name" />
             <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Product name" AutomationId="ProductNameEntry" />
             <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" AutomationId="NameErrorLabel" />

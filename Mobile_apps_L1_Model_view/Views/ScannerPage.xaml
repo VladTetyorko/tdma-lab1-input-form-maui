@@ -17,7 +17,7 @@
     </Shell.BackButtonBehavior>
 
     <ScrollView>
-        <VerticalStackLayout Padding="30,20" Spacing="8">
+        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
             <views:CameraScannerView HeightRequest="280"
                                      IsVisible="{Binding IsCameraSupported}"
                                      IsActive="{Binding IsCameraActive}"
@@ -39,9 +39,9 @@
             <HorizontalStackLayout Spacing="10">
                 <Button StyleClass="Outlined" Text="Add this product" Command="{Binding CreateProductCommand}"
                         IsVisible="{Binding CanCreateProduct}" AutomationId="AddThisProductButton" />
-                <Button StyleClass="Outlined" Text="Create from Open Food Facts" Command="{Binding CreateFromLookupCommand}"
+                <Button StyleClass="Outlined" Text="Create from Open Food Facts" Command="{Binding CreateFromLookupCommand}" AutomationId="CreateFromLookupButton"
                         IsVisible="{Binding CanCreateProduct}" />
-                <Button StyleClass="Outlined" Text="Scan again" Command="{Binding ScanAgainCommand}"
+                <Button StyleClass="Outlined" Text="Scan again" Command="{Binding ScanAgainCommand}" AutomationId="ScanAgainButton"
                         IsVisible="{Binding CanScanAgain}" />
             </HorizontalStackLayout>
 

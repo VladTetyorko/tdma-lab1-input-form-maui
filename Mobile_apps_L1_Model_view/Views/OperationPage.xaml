@@ -18,8 +18,8 @@
     </Shell.BackButtonBehavior>
 
     <ScrollView>
-        <VerticalStackLayout Padding="30,20" Spacing="8">
-            <Label Text="{Binding ProductName}" Style="{StaticResource Headline}" />
+        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
+            <Label Text="{Binding ProductName}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
             <Label Text="{Binding QuantityOnHand, StringFormat='On hand: {0} pcs'}"
                    Style="{StaticResource CaptionLabel}" />
 

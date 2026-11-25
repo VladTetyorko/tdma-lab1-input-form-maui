@@ -18,10 +18,10 @@
     </Shell.BackButtonBehavior>
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,10" Spacing="6">
-            <Label Text="{Binding Name}" Style="{StaticResource Headline}" />
+        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
+            <Label Text="{Binding Name}" Style="{StaticResource TextTitle}" SemanticProperties.HeadingLevel="Level1" />
             <Label Text="{Binding Barcode, StringFormat='Barcode {0}'}" Style="{StaticResource CaptionLabel}" />
-            <Label Text="{Binding Quantity, StringFormat='On hand: {0} pcs'}" FontAttributes="Bold" />
+            <Label Text="{Binding Quantity, StringFormat='On hand: {0} pcs'}" Style="{StaticResource TextDisplay}" />
 
             <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
                    Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
@@ -34,65 +34,74 @@
                         IsVisible="{Binding Photo.HasPhoto}" StyleClass="Compact,Danger" Margin="0,0,10,6" />
             </FlexLayout>
 
-            <Label Text="Characteristics" Style="{StaticResource SectionLabel}" />
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Characteristics}" Spacing="4">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="viewModels:CharacteristicEditItem">
-                        <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto">
-                            <Label Grid.Column="0" Text="{Binding Name}" VerticalOptions="Center" />
-                            <Entry Grid.Column="1"
-                                   Text="{Binding Value, Mode=TwoWay}"
-                                   Placeholder="{Binding Placeholder}"
-                                   IsReadOnly="{Binding IsReadOnly}" />
-                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding Error}"
-                                   Style="{StaticResource ErrorLabel}" />
-                        </Grid>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </VerticalStackLayout>
-            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+            <Border StyleClass="SectionCard">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Characteristics" Style="{StaticResource SectionLabel}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Characteristics}" Spacing="4">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:CharacteristicEditItem">
+                                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto">
+                                    <Label Grid.Column="0" Text="{Binding Name}" VerticalOptions="Center" />
+                                    <Entry Grid.Column="1"
+                                           Text="{Binding Value, Mode=TwoWay}"
+                                           Placeholder="{Binding Placeholder}"
+                                           IsReadOnly="{Binding IsReadOnly}" />
+                                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding Error}"
+                                           Style="{StaticResource ErrorLabel}" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+                </VerticalStackLayout>
+            </Border>
 
             <FlexLayout Wrap="Wrap">
-                <Button StyleClass="Outlined" Text="Save" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" />
-                <Button StyleClass="Primary" Text="Record In/Out" Command="{Binding OpenOperationCommand}" />
+                <Button StyleClass="Outlined" Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveCharacteristicsButton" IsVisible="{Binding CanEdit}" />
+                <Button StyleClass="Primary" Text="Record In/Out" Command="{Binding OpenOperationCommand}" AutomationId="RecordOperationButton" />
                 <Button StyleClass="Outlined" Text="Receive" Command="{Binding StartReceiveCommand}" AutomationId="DetailReceiveButton" />
                 <Button StyleClass="Outlined" Text="Issue" Command="{Binding StartIssueCommand}" IsVisible="{Binding CanIssue}"
                         AutomationId="DetailIssueButton" />
-                <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" />
+                <Button StyleClass="Ghost" Text="Back" Command="{Binding GoBackCommand}" AutomationId="BackButton" />
             </FlexLayout>
 
-            <Label Text="History" Style="{StaticResource SectionLabel}" />
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding History}" Spacing="6">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="services:OperationHistoryItem">
-                        <VerticalStackLayout>
-                            <Label FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding Direction}" />
-                                        <Span Text=" " />
-                                        <Span Text="{Binding Quantity}" />
-                                        <Span Text=" pcs" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Label Text="{Binding At, StringFormat='{0:yyyy-MM-dd HH:mm} UTC'}"
-                                   Style="{StaticResource CaptionLabel}" />
-                            <Label Text="{Binding UserName, StringFormat='By {0}'}"
-                                   Style="{StaticResource CaptionLabel}" />
-                            <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
-                            <!-- Only for an operation recorded with a location -->
-                            <HorizontalStackLayout Spacing="8" IsVisible="{Binding HasLocation}">
-                                <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}"
-                                       VerticalOptions="Center" AutomationId="HistoryLocationLabel" />
-                                <Button Text="Open in maps" StyleClass="Compact,Outlined" AutomationId="OpenInMapsButton"
-                                        Command="{Binding OpenLocationCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductDetailViewModel}}}"
-                                        CommandParameter="{Binding .}" />
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </VerticalStackLayout>
+            <Border StyleClass="SectionCard">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="History" Style="{StaticResource SectionLabel}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding History}" Spacing="6">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="services:OperationHistoryItem">
+                                <VerticalStackLayout>
+                                    <Label FontAttributes="Bold">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{Binding Direction}" />
+                                                <Span Text=" " />
+                                                <Span Text="{Binding Quantity}" />
+                                                <Span Text=" pcs" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                    <Label Text="{Binding At, StringFormat='{0:yyyy-MM-dd HH:mm} UTC'}"
+                                           Style="{StaticResource CaptionLabel}" />
+                                    <Label Text="{Binding UserName, StringFormat='By {0}'}"
+                                           Style="{StaticResource CaptionLabel}" />
+                                    <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
+                                    <!-- Only for an operation recorded with a location -->
+                                    <HorizontalStackLayout Spacing="8" IsVisible="{Binding HasLocation}">
+                                        <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}"
+                                               VerticalOptions="Center" AutomationId="HistoryLocationLabel" />
+                                        <Button Text="Open in maps" StyleClass="Compact,Outlined" AutomationId="OpenInMapsButton"
+                                                Command="{Binding OpenLocationCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductDetailViewModel}}}"
+                                                CommandParameter="{Binding .}" />
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

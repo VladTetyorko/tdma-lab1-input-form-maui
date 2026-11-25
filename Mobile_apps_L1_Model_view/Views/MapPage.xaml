@@ -13,7 +13,7 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20,10" RowSpacing="8">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="8">
         <Label Grid.Row="0"
                Text="Operations recorded with a location. Tap Open in maps to see a place in your maps app."
                Style="{StaticResource CaptionLabel}" />

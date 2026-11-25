@@ -13,7 +13,7 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,Auto,*" Padding="20,10" RowSpacing="8">
+    <Grid RowDefinitions="Auto,Auto,*" Padding="{OnIdiom Default=24, Phone=16}" RowSpacing="8">
         <HorizontalStackLayout Grid.Row="0" Spacing="10">
             <Label Text="Level" VerticalOptions="Center" />
             <Picker ItemsSource="{Binding Levels}"

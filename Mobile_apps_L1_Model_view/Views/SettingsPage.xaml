@@ -14,25 +14,33 @@
     </ContentPage.Behaviors>
 
     <ScrollView>
-        <VerticalStackLayout Padding="30,20" Spacing="8">
+        <VerticalStackLayout Padding="{OnIdiom Default=24, Phone=16}" Spacing="8" MaximumWidthRequest="720">
             <components:StatusHeader />
             <components:AccountSection />
 
-            <Label Text="Theme" Style="{StaticResource SectionLabel}" />
-            <Label Text="System follows the device setting." Style="{StaticResource CaptionLabel}" />
-            <Picker ItemsSource="{Binding ThemeOptions}"
-                    SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
+            <Border StyleClass="SectionCard">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Appearance" Style="{StaticResource SectionLabel}" />
+                    <Label Text="Theme. System follows the device setting." Style="{StaticResource CaptionLabel}" />
+                    <Picker ItemsSource="{Binding ThemeOptions}"
+                            SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" AutomationId="ThemePicker" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="Gestures" Style="{StaticResource SectionLabel}" />
-            <HorizontalStackLayout Spacing="10">
-                <Label Text="Shake to scan" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding ShakeToScan, Mode=TwoWay}" IsEnabled="{Binding IsShakeSupported}"
-                        VerticalOptions="Center" AutomationId="ShakeToScanSwitch" />
-            </HorizontalStackLayout>
-            <Label Text="Shake the device on the product list to open the scanner."
-                   Style="{StaticResource CaptionLabel}" />
-            <Label Text="This device has no accelerometer, so shaking is not available here."
-                   Style="{StaticResource CaptionLabel}" IsVisible="{Binding IsShakeUnsupported}" />
+            <Border StyleClass="SectionCard">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Gestures" Style="{StaticResource SectionLabel}" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Shake to scan" VerticalOptions="Center" />
+                        <Switch IsToggled="{Binding ShakeToScan, Mode=TwoWay}" IsEnabled="{Binding IsShakeSupported}"
+                                VerticalOptions="Center" AutomationId="ShakeToScanSwitch" />
+                    </HorizontalStackLayout>
+                    <Label Text="Shake the device on the product list to open the scanner."
+                           Style="{StaticResource CaptionLabel}" />
+                    <Label Text="This device has no accelerometer, so shaking is not available here."
+                           Style="{StaticResource CaptionLabel}" IsVisible="{Binding IsShakeUnsupported}" />
+                </VerticalStackLayout>
+            </Border>
 
             <VerticalStackLayout IsVisible="{Binding IsBiometricSupported}" Spacing="8">
                 <Label Text="Security" Style="{StaticResource SectionLabel}" />
@@ -45,23 +53,31 @@
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
-            <Label Text="Synchronisation" Style="{StaticResource SectionLabel}" />
-            <Label Text="Changes are saved on this device first and sent to the server when a network is available."
-                   Style="{StaticResource CaptionLabel}" />
-            <Label Text="{Binding NetworkText, StringFormat='Network: {0}'}" />
-            <Label Text="{Binding PendingCount, StringFormat='Waiting to be sent: {0}'}" FontAttributes="Bold" />
-            <HorizontalStackLayout Spacing="10">
-                <Label Text="Simulate offline" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding SimulateOffline, Mode=TwoWay}" VerticalOptions="Center" />
-            </HorizontalStackLayout>
-            <Button StyleClass="Outlined" Text="Sync now" Command="{Binding SyncNowCommand}" HorizontalOptions="Start" />
-            <Label Text="{Binding SyncText}" Style="{StaticResource CaptionLabel}" />
+            <Border StyleClass="SectionCard">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Synchronisation" Style="{StaticResource SectionLabel}" />
+                    <Label Text="Changes are saved on this device first and sent to the server when a network is available."
+                           Style="{StaticResource CaptionLabel}" />
+                    <Label Text="{Binding NetworkText, StringFormat='Network: {0}'}" />
+                    <Label Text="{Binding PendingCount, StringFormat='Waiting to be sent: {0}'}" FontAttributes="Bold" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Simulate offline" VerticalOptions="Center" />
+                        <Switch IsToggled="{Binding SimulateOffline, Mode=TwoWay}" AutomationId="SimulateOfflineSwitch" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Button StyleClass="Outlined" Text="Sync now" Command="{Binding SyncNowCommand}" AutomationId="SyncNowButton" HorizontalOptions="Start" />
+                    <Label Text="{Binding SyncText}" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="Database" Style="{StaticResource SectionLabel}" />
-            <Label Text="Share the SQLite file (stockroom.db3) to open it on a PC. Counterparty names are encrypted in it."
-                   Style="{StaticResource CaptionLabel}" />
-            <Button StyleClass="Outlined" Text="Share database" Command="{Binding ShareDatabaseCommand}" HorizontalOptions="Start" />
-            <Label Text="{Binding ExportText}" Style="{StaticResource CaptionLabel}" />
+            <Border StyleClass="SectionCard">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Database" Style="{StaticResource SectionLabel}" />
+                    <Label Text="Share the SQLite file (stockroom.db3) to open it on a PC. Counterparty names are encrypted in it."
+                           Style="{StaticResource CaptionLabel}" />
+                    <Button StyleClass="Outlined" Text="Share database" Command="{Binding ShareDatabaseCommand}" AutomationId="ShareDatabaseButton" HorizontalOptions="Start" />
+                    <Label Text="{Binding ExportText}" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Border>
 
             <VerticalStackLayout IsVisible="{Binding ShowDiagnostics}" Spacing="8">
                 <Label Text="Diagnostics" Style="{StaticResource SectionLabel}" />
@@ -78,11 +94,16 @@
                 <Label Text="{Binding DiagnosticsText}" Style="{StaticResource CaptionLabel}" />
             </VerticalStackLayout>
 
-            <Label Text="Open a link" Style="{StaticResource SectionLabel}" />
-            <Label Text="Try a deep link without another app, e.g. stockroom://product/3017620422003"
-                   Style="{StaticResource CaptionLabel}" />
-            <Entry Text="{Binding LinkText, Mode=TwoWay}" Placeholder="stockroom://product/{barcode}" />
-            <Button StyleClass="Outlined" Text="Open" Command="{Binding OpenLinkCommand}" HorizontalOptions="Start" />
+            <Border StyleClass="SectionCard">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Open a link" Style="{StaticResource SectionLabel}" />
+                    <Label Text="Try a deep link without another app, e.g. stockroom://product/3017620422003"
+                           Style="{StaticResource CaptionLabel}" />
+                    <Entry Text="{Binding LinkText, Mode=TwoWay}" AutomationId="LinkEntry" Placeholder="stockroom://product/{barcode}" />
+                    <Button StyleClass="Outlined" Text="Open" Command="{Binding OpenLinkCommand}" AutomationId="OpenLinkButton" HorizontalOptions="Start" />
+                </VerticalStackLayout>
+            </Border>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
