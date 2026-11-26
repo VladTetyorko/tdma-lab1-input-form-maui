@@ -17,8 +17,10 @@ Read this file, [`README.md`](README.md), [`docs/plan.md`](docs/plan.md) and
   counting, the differences are posted as compensating operations after a confirmation).
 - Scanning accepts 1-D barcodes **and QR codes**. A QR code may carry a plain
   barcode or a StockRoom deep link (`stockroom://product/{barcode}`).
-- Unknown barcodes can be looked up in the **Open Food Facts** open database
-  (ODbL; keep the attribution) to prefill a new product. Seed data uses real
+- Unknown barcodes can be looked up in open databases (Open Library for books,
+  the Open Food / Beauty / Pet Food / Products Facts family; see
+  [`docs/domain/open-data.md`](docs/domain/open-data.md), keep the attribution)
+  to prefill a new product. Seed data uses real
   barcodes from that database, not invented ones.
 - Authentication is **local and minimal**: fixed accounts, a login and a
   password, no registration, no password recovery, no server accounts.
