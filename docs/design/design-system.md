@@ -176,7 +176,7 @@ if not, use a fixed `WidthRequest` cell with end alignment (good enough) — Q10
 ### Symmetry and alignment rules (revision 3)
 
 1. One content edge: 16 on a phone, 24 on desktop. Title, fields, cards, table and bottom bar start and end there.
-2. Top bar (`Views/Components/AppBar`, `AppBarHeight` 56): a `48 | * | 48` grid; menu on root pages, Back elsewhere;
+2. Top bar (`Views/Components/AppBar`, `AppBarHeight` 48 phone / 56 desktop, directly under the status bar inset): a `48 | * | 48` grid; menu on root pages, Back elsewhere;
    title centred on a phone; one action or an empty slot on the right. Same colour as the page and the status bar.
    The Shell navigation bar is hidden everywhere.
 3. Pairs of buttons share the width 50 / 50 with an 8 gap; a single secondary button is full width.
