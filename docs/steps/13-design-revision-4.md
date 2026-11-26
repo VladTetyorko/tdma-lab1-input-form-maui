@@ -102,11 +102,19 @@ Settings lists several outlined buttons inside the collapsed Diagnostics.
 - Windows was built, not run. Appium UI tests were updated to the new ids, not run.
 - A `UnhandledExceptionLoggerTests` test (a real unobserved task) failed once and passed on the next run.
 - A correction is linked by its note only; see "Known limits" in the README.
+- On a phone the cursor goes to the quantity after each scan, so a Bluetooth or USB keyboard scanner would type its next
+  code into that box (at most 5 digits are taken). The camera scan is not affected; on a desktop the search box keeps
+  the cursor. To be decided when such a scanner is used with a phone.
+- In the operation sheet *Open product* stands where other sheets have *Back* (as in the wireframe): it navigates
+  instead of only closing; closing is the scrim, the handle or the system Back.
+- A draft typed just before the process is killed can be lost: drafts reach preferences when the window stops (as
+  before this revision).
 
 ## 8. Screenshots
 
-[`../design/screenshots/r4`](../design/screenshots/r4), from the final build. Compared with r3: the tiles and the
-recent-activity blob are gone; products and operations each have one format; every question is a sheet.
+[`../design/screenshots/r4`](../design/screenshots/r4), from the final build (01-39 without a camera, 40-41 with the
+emulated one). Compared with r3: the tiles and the recent-activity blob are gone; products and operations each have
+one format; every question is a sheet.
 
 ## Owner actions
 
