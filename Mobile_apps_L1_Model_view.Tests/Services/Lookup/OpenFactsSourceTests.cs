@@ -2,11 +2,12 @@ using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.Services.Lookup;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
 
-namespace Mobile_apps_L1_Model_view.Tests.Services;
+namespace Mobile_apps_L1_Model_view.Tests.Services.Lookup;
 
-public class OpenFoodFactsLookupTests
+public class OpenFactsSourceTests
 {
     private const string Barcode = "3017620422003";
 
@@ -17,13 +18,15 @@ public class OpenFoodFactsLookupTests
         """;
 
     private readonly FakeHttpMessageHandler _handler = new();
-    private readonly OpenFoodFactsLookup _lookup;
+    private readonly OpenFactsSource _lookup;
 
-    public OpenFoodFactsLookupTests()
+    public OpenFactsSourceTests()
     {
-        _lookup = new OpenFoodFactsLookup(
-            OpenFoodFactsLookup.CreateClient(_handler), NullLogger<OpenFoodFactsLookup>.Instance);
+        _lookup = Source(OpenFactsSite.Food);
     }
+
+    private OpenFactsSource Source(OpenFactsSite site) =>
+        new(LookupHttpClient.Create(_handler), site, NullLogger<OpenFactsSource>.Instance);
 
     [Fact]
     public async Task Find_KnownProduct_ReturnsNameBrandQuantityAndCategory()
@@ -32,7 +35,11 @@ public class OpenFoodFactsLookupTests
 
         var result = await _lookup.FindAsync(Barcode);
 
-        Assert.Equal(LookupResult.Found("Nutella", "Ferrero", "400 g e", "Chocolate spreads"), result);
+        Assert.Equal(LookupResult.Found("Nutella", "Ferrero", "400 g e", "Chocolate spreads") with
+        {
+            Source = "Open Food Facts",
+            Attribution = "Data: Open Food Facts (ODbL), openfoodfacts.org"
+        }, result);
     }
 
     [Fact]
@@ -51,7 +58,7 @@ public class OpenFoodFactsLookupTests
     [Fact]
     public void Client_HasAFiveSecondTimeout()
     {
-        using var client = OpenFoodFactsLookup.CreateClient(_handler);
+        using var client = LookupHttpClient.Create(_handler);
 
         Assert.Equal(TimeSpan.FromSeconds(5), client.Timeout);
     }
@@ -63,7 +70,7 @@ public class OpenFoodFactsLookupTests
 
         var result = await _lookup.FindAsync(Barcode);
 
-        Assert.Equal(LookupResult.Found("Water", "", "", ""), result);
+        Assert.Equal(("Water", "", "", ""), (result.Name, result.Brand, result.QuantityText, result.Category));
     }
 
     [Theory]
@@ -134,32 +141,26 @@ public class OpenFoodFactsLookupTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => _lookup.FindAsync(Barcode, cts.Token));
     }
 
-    [Fact]
-    public async Task Container_BuildsTheLookupOverTheRegisteredHandler()
+    [Theory]
+    [InlineData("Open Beauty Facts", "openbeautyfacts.org")]
+    [InlineData("Open Pet Food Facts", "openpetfoodfacts.org")]
+    [InlineData("Open Products Facts", "openproductsfacts.org")]
+    public async Task TheSisterDatabases_UseTheSameApiOnTheirOwnHost(string name, string host)
     {
-        using var provider = new ServiceCollection().AddStockRoomCore().AddFakePlatform().BuildServiceProvider();
-        var network = provider.GetRequiredService<FakeHttpMessageHandler>();
-        network.RespondWith(HttpStatusCode.OK, FoundJson);
+        _handler.RespondWith(HttpStatusCode.OK, FoundJson);
 
-        var result = await provider.GetRequiredService<IProductLookup>().FindAsync(Barcode);
+        var result = await Source(OpenFactsSite.All.Single(site => site.Name == name)).FindAsync(Barcode);
 
-        Assert.True(result.IsFound);
-        Assert.Single(network.Requests);
+        Assert.Equal((name, $"Data: {name} (ODbL), {host}"), (result.Source, result.Attribution));
+        Assert.Equal($"https://world.{host}/api/v2/product/{Barcode}",
+            _handler.Requests.Single().RequestUri!.GetLeftPart(UriPartial.Path));
     }
 
     [Fact]
-    public async Task Container_WithoutANetwork_AnswersOfflineInsteadOfThrowing()
+    public async Task Find_ATooLongName_IsCutToWhatAProductMayHave()
     {
-        using var provider = new ServiceCollection().AddStockRoomCore().AddFakePlatform().BuildServiceProvider();
+        _handler.RespondWith(HttpStatusCode.OK, "{\"status\":1,\"product\":{\"product_name\":\"" + new string('a', 300) + "\"}}");
 
-        var result = await provider.GetRequiredService<IProductLookup>().FindAsync(Barcode);
-
-        Assert.Equal(LookupStatus.Offline, result.Status);
-    }
-
-    [Fact]
-    public void Attribution_NamesTheSourceAndLicence()
-    {
-        Assert.Equal("Data: Open Food Facts (ODbL)", _lookup.Attribution);
+        Assert.Equal(ProductValidator.MaxNameLength, (await _lookup.FindAsync(Barcode)).Name.Length);
     }
 }

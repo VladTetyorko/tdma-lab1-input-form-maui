@@ -170,12 +170,13 @@ public sealed partial class QuickSearchViewModel(
             return;
         }
 
-        // Digits are taken as the barcode, anything else as the name
-        var key = text.All(char.IsAsciiDigit) ? NavigationKeys.Barcode : NavigationKeys.ProductName;
+        // A code (or any digits) is taken as the barcode, anything else as the name
+        var code = BarcodeNormalizer.ToEan13(text);
+        var key = code is not null || text.All(char.IsAsciiDigit) ? NavigationKeys.Barcode : NavigationKeys.ProductName;
         logger.LogInformation("Opening the product form from the quick search");
         Query = string.Empty;
         CreateRequested?.Invoke(this, EventArgs.Empty);
-        await navigation.GoToAsync(Routes.NewProduct, new Dictionary<string, object> { [key] = text });
+        await navigation.GoToAsync(Routes.NewProduct, new Dictionary<string, object> { [key] = code ?? text });
     }
 
     // Arrows wrap around the ends

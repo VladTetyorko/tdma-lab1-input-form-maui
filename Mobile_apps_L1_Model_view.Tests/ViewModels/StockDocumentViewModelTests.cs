@@ -47,7 +47,7 @@ public class StockDocumentViewModelTests
             _store.Guard, _store.Navigation, _store.Keyboard, _store.Logger<QuickSearchViewModel>());
         var viewModel = new StockDocumentViewModel(_drafts, service, _store.Catalog, _store.CurrentUser, _scanner,
             _feedback, _toasts, _store.Confirm, _sheets, _store.Guard, _store.Navigation, _changes, _store.Clock, search,
-            _store.Logger<StockDocumentViewModel>())
+            _store.Lookup, _store.Logger<StockDocumentViewModel>())
         {
             Direction = direction,
             ReturnDelay = TimeSpan.Zero
@@ -152,6 +152,77 @@ public class StockDocumentViewModelTests
         Assert.False(viewModel.CanCreateProducts);
         Assert.Empty(_store.Navigation.RequestedRoutes);
         Assert.NotEqual(string.Empty, viewModel.StatusMessage);
+    }
+
+    [Theory]
+    [InlineData(OperationDirection.In, Role.Manager, true)]
+    [InlineData(OperationDirection.Out, Role.Driver, false)]
+    public async Task UnknownBarcode_SaysWhatTheItemIs_ToEveryRole(OperationDirection direction, Role role, bool scanned)
+    {
+        _store.Lookup.Result = LookupResult.Found("Nutella", "Ferrero", "400 g", "Spreads");
+        var viewModel = await OpenAsync(role, direction);
+
+        if (scanned)
+        {
+            await viewModel.ScanDetectedCommand.ExecuteAsync(Unknown);
+        }
+        else
+        {
+            await TypeAsync(viewModel, Unknown);
+        }
+
+        await viewModel.Lookups;
+
+        var line = viewModel.Lines.Single();
+        Assert.Equal("Found in Fake Facts: Nutella · Ferrero · 400 g\nData: Fake (test)", line.LookupText);
+        Assert.True(line.IsUnknown);
+        Assert.Null(await _store.Products.GetByBarcodeAsync(Unknown));
+    }
+
+    [Fact]
+    public async Task UnknownBarcode_CreatingIt_TakesTheFoundNameAlong()
+    {
+        _store.Lookup.Result = LookupResult.Found("Nutella", "Ferrero", "400 g", "Spreads");
+        var viewModel = await OpenAsync();
+        await TypeAsync(viewModel, Unknown);
+        await viewModel.Lookups;
+
+        await viewModel.CreateProductCommand.ExecuteAsync(viewModel.Lines.Single());
+
+        var parameters = _store.Navigation.RequestedParameters.Last()!;
+        Assert.Equal(("Nutella", "Data: Fake (test)"),
+            ((string)parameters[NavigationKeys.ProductName], (string)parameters[NavigationKeys.DataSource]));
+    }
+
+    [Fact]
+    public async Task UnknownBarcode_ASlowLookup_NeverBlocks_AndIsCancelledWhenLeaving()
+    {
+        _store.Lookup.Gate = new TaskCompletionSource();
+        var viewModel = await OpenAsync();
+
+        await TypeAsync(viewModel, Unknown);
+        await TypeAsync(viewModel, Drill);
+
+        Assert.Equal(2, viewModel.Lines.Count);
+        var unknown = viewModel.Lines.Single(line => line.IsUnknown);
+        Assert.Equal(LookupMessages.Searching, unknown.LookupText);
+        var running = viewModel.Lookups;
+        viewModel.OnDisappearing();
+        await running;
+        Assert.Equal(LookupMessages.Searching, unknown.LookupText);
+    }
+
+    [Fact]
+    public async Task UnknownBarcode_Offline_SaysSoOnTheLine()
+    {
+        _store.Lookup.Result = LookupResult.Offline();
+        var viewModel = await OpenAsync(Role.Storekeeper);
+
+        await TypeAsync(viewModel, Unknown);
+        await viewModel.Lookups;
+
+        Assert.Equal(LookupMessages.Failure(LookupStatus.Offline, Unknown, canAdd: false),
+            viewModel.Lines.Single().LookupText);
     }
 
     [Fact]

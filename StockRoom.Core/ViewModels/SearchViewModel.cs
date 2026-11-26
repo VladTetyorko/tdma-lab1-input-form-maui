@@ -2,11 +2,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.Services.Lookup;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
 // "This one product, now": the camera on top, a field with at most five results below. A known code opens the product
-// page at once; an unknown one is looked up in Open Food Facts and the Manager may create it
+// page at once; an unknown one is looked up in the open databases and the Manager may create it
 public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAware
 {
     private readonly IProductCatalog _catalog;
@@ -14,11 +15,11 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
     private readonly IPermissionGuard _guard;
     private readonly INavigationService _navigation;
     private readonly IBarcodeScanner _scanner;
-    private readonly IProductLookup _lookup;
+    private readonly LatestLookup _lookup;
     private readonly IScanFeedback _feedback;
     private readonly ILogger<SearchViewModel> _logger;
     private readonly ScanDebouncer _debouncer;
-    private string _foundName = string.Empty;
+    private LookupResult? _found;
 
     public SearchViewModel(
         IProductCatalog catalog,
@@ -37,7 +38,7 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
         _guard = guard;
         _navigation = navigation;
         _scanner = scanner;
-        _lookup = lookup;
+        _lookup = new LatestLookup(lookup);
         _feedback = feedback;
         _logger = logger;
         _debouncer = new ScanDebouncer(clock);
@@ -50,6 +51,7 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
             if (e.PropertyName == nameof(QuickSearchViewModel.Query) && quickSearch.Query.Length > 0
                 && quickSearch.Query != UnknownBarcode)
             {
+                _lookup.Cancel();
                 UnknownBarcode = string.Empty;
             }
         };
@@ -89,7 +91,7 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
         : MayCreate ? $"{UnknownBarcode} is not in the catalogue."
         : $"{UnknownBarcode} is not in the catalogue. Ask the manager to add it.";
 
-    // What Open Food Facts said about the unknown code
+    // What the open databases said about the unknown code, with the attribution of the one that knew it
     [ObservableProperty]
     public partial string LookupText { get; set; } = string.Empty;
 
@@ -102,6 +104,12 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
 
     public void OnDisappearing()
     {
+        _lookup.Cancel();
+        if (LookupText == LookupMessages.Searching)
+        {
+            LookupText = string.Empty;
+        }
+
         _scanner.Failed -= OnCameraFailed;
         CameraState = CameraState.Off;
         IsTyping = false;
@@ -110,6 +118,7 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
     // The Search tab tapped again: an empty field
     public void Reset()
     {
+        _lookup.Cancel();
         QuickSearch.Query = string.Empty;
         QuickSearch.CloseCommand.Execute(null);
         UnknownBarcode = string.Empty;
@@ -152,14 +161,7 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
             return;
         }
 
-        var parameters = new Dictionary<string, object> { [NavigationKeys.Barcode] = UnknownBarcode };
-        if (_foundName.Length > 0)
-        {
-            parameters[NavigationKeys.ProductName] = _foundName;
-            parameters[NavigationKeys.DataSource] = _lookup.Attribution;
-        }
-
-        await _navigation.GoToAsync(Routes.NewProduct, parameters);
+        await _navigation.GoToAsync(Routes.NewProduct, LookupParameters.ForNewProduct(UnknownBarcode, _found));
     }
 
     private async Task FindAsync(string? text)
@@ -179,6 +181,7 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
         {
             _logger.LogInformation("Barcode {Barcode} matched product {ProductId}", barcode, product.Id);
             _feedback.Success();
+            _lookup.Cancel();
             QuickSearch.Query = string.Empty;
             UnknownBarcode = string.Empty;
             await OpenProductAsync(product);
@@ -188,30 +191,29 @@ public sealed partial class SearchViewModel : ObservableObject, IPageLifecycleAw
         _logger.LogInformation("Barcode {Barcode} matched no product", barcode);
         _feedback.Error();
         QuickSearch.Query = string.Empty;
-        _foundName = string.Empty;
-        LookupText = string.Empty;
+        _found = null;
+        LookupText = LookupMessages.Searching;
         UnknownBarcode = barcode;
         await LookUpAsync(barcode);
     }
 
-    // One request per unknown code; offline, a timeout or a bad answer only show a message
+    // Offline, a timeout or a bad answer only show a message
     private async Task LookUpAsync(string barcode)
     {
-        var result = await _lookup.FindAsync(barcode);
-        if (UnknownBarcode != barcode)
+        if (await _lookup.FindAsync(barcode) is not { } result || UnknownBarcode != barcode)
         {
             return;
         }
 
         if (!result.IsFound)
         {
-            LookupText = LookupMessages.Failure(result.Status, barcode);
+            LookupText = LookupMessages.Failure(result.Status, barcode, MayCreate);
             _logger.LogWarning("Lookup of barcode {Barcode} gave {Status}", barcode, result.Status);
             return;
         }
 
-        _foundName = result.Name;
-        LookupText = $"Found in Open Food Facts: {result.Name}. {_lookup.Attribution}";
+        _found = result;
+        LookupText = $"{LookupMessages.Found(result)}\n{result.Attribution}";
     }
 
     private Task OpenProductAsync(ProductSummary product) =>

@@ -111,8 +111,24 @@ public class ProductFormViewModelTests
         _viewModel.Name = "My own name";
         _viewModel.Barcode = ValidBarcode;
 
+        // The name stays; the new code is still asked about, for its details
         Assert.Equal("My own name", _viewModel.Name);
-        Assert.Single(_lookup.Asked);
+        Assert.Equal(["3017620422003", ValidBarcode], _lookup.Asked);
+    }
+
+    [Fact]
+    public async Task Lookup_NothingIsSentWhileACodeIsStillBeingTyped()
+    {
+        _currentUser.SignIn(new User { FullName = "Olena", Role = Role.Manager });
+        await _viewModel.AppearCommand.ExecuteAsync(null);
+
+        _viewModel.Barcode = "96385074";
+
+        Assert.Empty(_lookup.Asked);
+        Assert.Equal(string.Empty, _viewModel.BarcodeError);
+
+        _viewModel.NormalizeBarcode();
+        Assert.Equal(["0000096385074"], _lookup.Asked);
     }
 
     [Fact]
@@ -125,7 +141,7 @@ public class ProductFormViewModelTests
         _viewModel.Barcode = "3017620422003";
 
         Assert.Equal(string.Empty, _viewModel.Name);
-        Assert.Contains("Cannot reach Open Food Facts", _viewModel.LookupText);
+        Assert.Contains("Cannot reach the open databases", _viewModel.LookupText);
     }
 
     [Fact]

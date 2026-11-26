@@ -29,8 +29,8 @@
                     <components:CameraStatusBanner Message="{Binding CameraMessage}" ActionText="{Binding CameraActionText}"
                                                    ActionCommand="{Binding StartScanCommand}" />
 
-                    <components:OutlinedField x:Name="BarcodeField" Label="Barcode (EAN-13)" Placeholder="13 digits"
-                                              Keyboard="Numeric" MaxLength="13" EntryId="BarcodeEntry"
+                    <components:OutlinedField x:Name="BarcodeField" Label="Barcode" Placeholder="EAN, UPC or ISBN"
+                                              Keyboard="Numeric" MaxLength="17" EntryId="BarcodeEntry"
                                               ErrorId="BarcodeErrorLabel" ErrorText="{Binding BarcodeError}"
                                               Text="{Binding Barcode, Mode=TwoWay}" />
                     <Label Text="{Binding LookupText}" Style="{StaticResource TextCaption}" AutomationId="LookupLabel" />

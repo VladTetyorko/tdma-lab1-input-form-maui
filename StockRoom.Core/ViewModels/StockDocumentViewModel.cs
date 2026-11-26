@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.Services.Lookup;
 using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
@@ -27,7 +28,12 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     private readonly INavigationService navigation;
     private readonly StockChanges changes;
     private readonly ILogger<StockDocumentViewModel> logger;
+    private readonly IProductLookup lookup;
     private readonly ScanDebouncer _debouncer;
+
+    // What the open databases said about the unknown codes of the draft; null while still asking
+    private readonly Dictionary<string, LookupResult?> _lookups = [];
+    private CancellationTokenSource _lookupCancel = new();
     private readonly Dictionary<string, ProductSummary?> _products = [];
     private StockDocumentDraft _draft = new(OperationDirection.In);
     private (DraftLine Line, int Index)? _removed;
@@ -61,8 +67,10 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         StockChanges changes,
         IClock clock,
         QuickSearchViewModel quickSearch,
+        IProductLookup lookup,
         ILogger<StockDocumentViewModel> logger)
     {
+        this.lookup = lookup;
         this.drafts = drafts;
         this.documents = documents;
         this.catalog = catalog;
@@ -101,6 +109,9 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     public string Title => IsIssue ? "Issue goods" : "Receive goods";
 
     public ObservableCollection<StockDocumentLineItem> Lines { get; } = [];
+
+    // The lookups still running (tests await it; the page never waits)
+    public Task Lookups { get; private set; } = Task.CompletedTask;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CameraMessage))]
@@ -189,6 +200,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         CameraState = CameraState.Off;
         IsTyping = false;
         QuickSearch.CloseCommand.Execute(null);
+        CancelLookups();
     }
 
     // Products may have been added or their stock changed elsewhere, and another user may have signed in:
@@ -270,6 +282,10 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         _creating = null;
         Refresh();
         OnPropertyChanged(nameof(CanCreateProducts));
+        foreach (var barcode in Lines.Where(line => line.IsUnknown).Select(line => line.Barcode).ToList())
+        {
+            StartLookup(barcode);
+        }
     }
 
     // From the camera, which reports a code again and again while it is in view
@@ -384,7 +400,7 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         _createdProduct = true;
         _creating = line.Barcode;
         await navigation.GoToAsync(Routes.NewProduct,
-            new Dictionary<string, object> { [NavigationKeys.Barcode] = line.Barcode });
+            LookupParameters.ForNewProduct(line.Barcode, _lookups.GetValueOrDefault(line.Barcode)));
     }
 
     // The ⋮ menu of the page
@@ -580,10 +596,68 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             logger.LogWarning("Barcode {Barcode} matched no product", barcode);
             feedback.Error();
             feedback.Announce($"No product has barcode {barcode}.");
+            StartLookup(barcode);
         }
 
         await drafts.SaveAsync(_draft);
         return true;
+    }
+
+    // An unknown line says what the item is, whoever scans it. Never awaited: scanning goes on meanwhile.
+    // A found item is kept; a miss is asked again when the code is added again or the page is opened again
+    private void StartLookup(string barcode)
+    {
+        if (_lookups.TryGetValue(barcode, out var known) && known is null or { IsFound: true })
+        {
+            return;
+        }
+
+        _lookups[barcode] = null;
+        ShowLookup(barcode);
+        Lookups = Task.WhenAll(Lookups, LookUpAsync(barcode, _lookupCancel.Token));
+    }
+
+    private async Task LookUpAsync(string barcode, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await lookup.FindAsync(barcode, cancellationToken);
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _lookups[barcode] = result;
+                ShowLookup(barcode);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The page was left: asked again when it comes back
+        }
+    }
+
+    // The line is changed in place: rebuilding the lines would take the cursor away
+    private void ShowLookup(string barcode)
+    {
+        foreach (var line in Lines.Where(line => line.Barcode == barcode && line.IsUnknown))
+        {
+            line.LookupText = LookupTextFor(barcode);
+        }
+    }
+
+    private string LookupTextFor(string barcode) =>
+        !_lookups.TryGetValue(barcode, out var result) ? string.Empty
+        : result is null ? LookupMessages.Searching
+        : result.IsFound ? $"{LookupMessages.Found(result)}\n{result.Attribution}"
+        : LookupMessages.Failure(result.Status, barcode, CanCreateProducts);
+
+    private void CancelLookups()
+    {
+        _lookupCancel.Cancel();
+        _lookupCancel = new CancellationTokenSource();
+        Lookups = Task.CompletedTask;
+        foreach (var barcode in _lookups.Where(pair => pair.Value is null).Select(pair => pair.Key).ToList())
+        {
+            _lookups.Remove(barcode);
+        }
     }
 
     private async Task ChangeAsync(string barcode, int quantity)
@@ -627,7 +701,8 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
             Lines.Add(new StockDocumentLineItem(line.Barcode, _products.GetValueOrDefault(line.Barcode), line.Quantity, Direction)
             {
                 WantsFocus = line.Barcode == _focusBarcode,
-                Typed = ShowCommitText
+                Typed = ShowCommitText,
+                LookupText = _products.GetValueOrDefault(line.Barcode) is null ? LookupTextFor(line.Barcode) : string.Empty
             });
         }
 

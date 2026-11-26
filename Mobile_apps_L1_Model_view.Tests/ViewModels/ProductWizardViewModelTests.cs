@@ -44,6 +44,40 @@ public class ProductWizardViewModelTests
         Assert.Equal((2, "Enter a name"), (wizard.Step, wizard.Hint));
     }
 
+    [Theory]
+    [InlineData("96385074", "0000096385074")]
+    [InlineData("978-0-14-032872-1", "9780140328721")]
+    public async Task AShortOrHyphenatedCode_IsRewrittenWhenConfirmed(string typed, string stored)
+    {
+        var wizard = await OpenAsync();
+        wizard.Form.Barcode = typed;
+        Assert.Equal(string.Empty, wizard.Hint);
+
+        await wizard.NextCommand.ExecuteAsync(null);
+
+        Assert.Equal((2, stored), (wizard.Step, wizard.Form.Barcode));
+    }
+
+    [Fact]
+    public async Task ABook_FillsAuthorPublisherAndShowsTheSource()
+    {
+        await _store.AddCharacteristicAsync("Author", CharacteristicValueType.Text);
+        await _store.AddCharacteristicAsync("Publisher", CharacteristicValueType.Text);
+        await _store.AddCharacteristicAsync("Volume (l)", CharacteristicValueType.Number);
+        _store.Lookup.Result = LookupResult.Found("Fantastic Mr. Fox", "", "330 ml", "Book") with
+        {
+            Authors = "Roald Dahl",
+            Publisher = "Puffin"
+        };
+
+        var wizard = await OpenAsync(query: WithCode);
+        Assert.Equal(_store.Lookup.Attribution, wizard.Form.DataSource);
+        Assert.Contains("Roald Dahl", wizard.Form.LookupText);
+        await wizard.NextCommand.ExecuteAsync(null);
+
+        Assert.Equal(["Roald Dahl", "Puffin", 0.33m.ToString()], wizard.Details.Select(d => d.Value));
+    }
+
     [Fact]
     public async Task ACodeThatIsInTheCatalogue_CannotGoOn()
     {

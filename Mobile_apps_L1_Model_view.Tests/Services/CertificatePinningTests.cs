@@ -147,12 +147,9 @@ public class CertificatePinningTests : IDisposable
     [Fact]
     public void ThirdPartyClient_DoesNotUseThePinnedHandler()
     {
-        // Open Food Facts is created over the shared HttpMessageHandler registered by the host, never over PinnedHandlerFactory
-        var client = OpenFoodFactsLookup.CreateClient(new HttpClientHandler());
-
-        Assert.Equal(new Uri(OpenFoodFactsLookup.BaseUrl), client.BaseAddress);
+        // The open databases are asked over the shared HttpMessageHandler registered by the host, never over PinnedHandlerFactory
         Assert.Contains("PinnedHandlerFactory", File.ReadAllText(SourceFile("Mobile_apps_L1_Model_view", "MauiProgram.cs")));
-        Assert.DoesNotContain("PinnedHandlerFactory", File.ReadAllText(SourceFile("StockRoom.Core", "Services/OpenFoodFactsLookup.cs")));
+        Assert.DoesNotContain("PinnedHandlerFactory", File.ReadAllText(SourceFile("StockRoom.Core", "Services/Lookup/LookupHttpClient.cs")));
         Assert.DoesNotContain("PinnedHandlerFactory", File.ReadAllText(SourceFile("StockRoom.Core", "ServiceCollectionExtensions.cs")));
     }
 

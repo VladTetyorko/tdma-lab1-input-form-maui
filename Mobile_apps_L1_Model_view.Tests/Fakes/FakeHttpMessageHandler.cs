@@ -15,6 +15,9 @@ public sealed class FakeHttpMessageHandler : HttpMessageHandler
     public void RespondWith(HttpStatusCode status, string body) =>
         _responder = _ => new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
 
+    // For several hosts: the test decides per request
+    public void Respond(Func<HttpRequestMessage, HttpResponseMessage> responder) => _responder = responder;
+
     public void Throw(Exception exception) => _responder = _ => throw exception;
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

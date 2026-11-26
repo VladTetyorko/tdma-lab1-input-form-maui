@@ -1,10 +1,8 @@
 namespace Mobile_apps_L1_Model_view.Services;
 
-// Looks a barcode up in an open product database (online only, never throws for network problems)
+// Looks a barcode up in open product and book databases (online only, never throws for network problems).
+// A found result names its source and the attribution that must be shown with the data
 public interface IProductLookup
 {
-    // Text that must be shown wherever looked-up data is displayed (licence attribution)
-    string Attribution { get; }
-
     Task<LookupResult> FindAsync(string barcode, CancellationToken cancellationToken = default);
 }

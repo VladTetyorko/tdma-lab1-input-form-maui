@@ -83,6 +83,32 @@ public class SearchViewModelTests
     }
 
     [Fact]
+    public async Task AnUnknownCode_ShowsAnyRoleWhatItIs_WithTheSource()
+    {
+        var viewModel = await OpenAsync(Role.Driver);
+        _store.Lookup.Result = LookupResult.Found("Nutella", "Ferrero", "400 g", "Spreads");
+
+        await viewModel.ScanDetectedCommand.ExecuteAsync(Unknown);
+
+        Assert.Equal("Found in Fake Facts: Nutella · Ferrero · 400 g\nData: Fake (test)", viewModel.LookupText);
+        Assert.False(viewModel.CanCreateUnknown);
+    }
+
+    [Fact]
+    public async Task LeavingWhileASearchRuns_CancelsIt()
+    {
+        var viewModel = await OpenAsync();
+        _store.Lookup.Gate = new TaskCompletionSource();
+
+        var running = viewModel.ScanDetectedCommand.ExecuteAsync(Unknown);
+        Assert.Equal(LookupMessages.Searching, viewModel.LookupText);
+        viewModel.OnDisappearing();
+        await running;
+
+        Assert.Equal(string.Empty, viewModel.LookupText);
+    }
+
+    [Fact]
     public async Task Reset_ClearsTheFieldAndTheMessage()
     {
         var viewModel = await OpenAsync();

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Data.Migrations;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.Services.Lookup;
 using Mobile_apps_L1_Model_view.ViewModels;
 
 namespace Mobile_apps_L1_Model_view;
@@ -83,12 +84,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILogReader, LogReader>();
         services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
 
-        // Open product data: one HttpClient (5 s timeout, generic User-Agent) over a replaceable handler,
-        // so tests register a fake HttpMessageHandler instead of touching the network
-        services.AddSingleton<HttpMessageHandler>(_ => new HttpClientHandler());
-        services.AddSingleton<IProductLookup>(provider => new OpenFoodFactsLookup(
-            OpenFoodFactsLookup.CreateClient(provider.GetRequiredService<HttpMessageHandler>()),
-            provider.GetRequiredService<ILogger<OpenFoodFactsLookup>>()));
+        AddOpenData(services);
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<HomeViewModel>();
@@ -114,5 +110,24 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AppBarViewModel>();
 
         return services;
+    }
+
+    // Open product and book data: one HttpClient (5 s timeout, generic User-Agent) over a replaceable handler,
+    // so tests register a fake HttpMessageHandler instead of touching the network. The sources are asked in this
+    // order; Open Library covers only ISBN codes, which it therefore answers first
+    private static void AddOpenData(IServiceCollection services)
+    {
+        services.AddSingleton<HttpMessageHandler>(_ => new HttpClientHandler());
+        services.AddSingleton<IProductLookup>(provider =>
+        {
+            var http = LookupHttpClient.Create(provider.GetRequiredService<HttpMessageHandler>());
+            var openFacts = provider.GetRequiredService<ILogger<OpenFactsSource>>();
+            ILookupSource[] sources =
+            [
+                new OpenLibrarySource(http, provider.GetRequiredService<ILogger<OpenLibrarySource>>()),
+                .. OpenFactsSite.All.Select(site => new OpenFactsSource(http, site, openFacts))
+            ];
+            return new ProductLookupChain(sources, provider.GetRequiredService<ILogger<ProductLookupChain>>());
+        });
     }
 }

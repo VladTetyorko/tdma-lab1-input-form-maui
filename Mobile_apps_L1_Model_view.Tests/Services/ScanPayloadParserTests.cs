@@ -56,6 +56,35 @@ public class ScanPayloadParserTests
         Assert.Equal(ScanPayloadParser.NotStockRoomCodeMessage, result.Error);
     }
 
+    [Theory]
+    [InlineData("96385074", "0000096385074")] // EAN-8
+    [InlineData("04252614", "0042100005264")] // UPC-E, last digit 1
+    [InlineData("0140328726", "9780140328721")] // ISBN-10
+    [InlineData("097522980X", "9780975229804")] // ISBN-10 with X
+    [InlineData("097522980x", "9780975229804")]
+    [InlineData("0-14-032872-6", "9780140328721")]
+    [InlineData("978-0-14-032872-1", "9780140328721")]
+    [InlineData("978 0140328721", "9780140328721")]
+    [InlineData("stockroom://product/96385074", "0000096385074")]
+    [InlineData("3017620422003", "3017620422003")] // what is stored stays as it is
+    public void Parse_OtherForms_BecomeTheStoredEan13(string raw, string expected)
+    {
+        var result = ScanPayloadParser.Parse(raw);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(expected, result.Value);
+    }
+
+    [Theory]
+    [InlineData("96385075")] // wrong EAN-8 check digit
+    [InlineData("04252615")] // wrong UPC-E check digit
+    [InlineData("0140328727")] // wrong ISBN-10 check digit
+    [InlineData("01403X8726")] // X not at the end
+    [InlineData("97522980X")] // too short
+    [InlineData("-3017620422003")]
+    [InlineData("1234567")]
+    public void Parse_BadShortForms_AreRejected(string raw) => Assert.False(ScanPayloadParser.Parse(raw).IsSuccess);
+
     [Fact]
     public void Parse_DeepLinkBuiltByTheApp_RoundTrips()
     {

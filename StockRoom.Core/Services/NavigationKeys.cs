@@ -15,7 +15,7 @@ public static class NavigationKeys
     // string: a barcode (scanner -> add-product form: prefill the barcode that was not found)
     public const string Barcode = "Barcode";
 
-    // string: a product name (scanner -> add-product form: prefill the name found in Open Food Facts)
+    // string: a product name (scanner -> add-product form: prefill the name found in an open database)
     public const string ProductName = "ProductName";
 
     // string: where prefilled data comes from, shown as attribution on the form (licence requirement)

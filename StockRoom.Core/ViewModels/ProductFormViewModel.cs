@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.Services.Lookup;
 using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
@@ -19,13 +20,12 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
     private readonly IAppStateService appState;
     private readonly INavigationService navigation;
     private readonly IBarcodeScanner scanner;
-    private readonly IProductLookup lookup;
+    private readonly LatestLookup lookup;
     private readonly ILogger<ProductFormViewModel> logger;
     private readonly IConfirmSheet confirm;
     private readonly ISheetService? sheets;
     private bool _opened;
     private bool _prefilled;
-    private string _lookedUp = string.Empty;
 
     // A suggestion the user tapped under the name
     private ProductSummary? _picked;
@@ -57,7 +57,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         this.appState = appState;
         this.navigation = navigation;
         this.scanner = scanner;
-        this.lookup = lookup;
+        this.lookup = new LatestLookup(lookup);
         this.logger = logger;
         Photo = photo;
         QuickSearch = quickSearch;
@@ -85,7 +85,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
     // Why it is disabled, or empty
     public string SaveHint => CanSave() ? string.Empty : "Enter a name and a valid barcode first";
 
-    // What Open Food Facts last said about the barcode, when it knew it
+    // What an open database last said about the barcode, when one knew it
     public LookupResult? Found { get; private set; }
 
     // Runs after a new product was added, before the page goes back; may add to what is sent back (the wizard's values)
@@ -117,7 +117,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
 
     public string CameraActionText => CameraMessages.ActionFor(CameraState);
 
-    // What Open Food Facts said about the barcode
+    // What the open databases said about the barcode
     [ObservableProperty]
     public partial string LookupText { get; set; } = string.Empty;
 
@@ -174,8 +174,15 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
 
     partial void OnBarcodeChanged(string value)
     {
-        BarcodeError = validator.ValidateBarcodeFormat(value) ?? string.Empty;
+        // A shorter form (EAN-8, UPC, ISBN-10) is no error: it is rewritten when confirmed (NormalizeBarcode)
+        BarcodeError = validator.ValidateBarcodeFormat(BarcodeNormalizer.ToEan13(value) ?? value) ?? string.Empty;
         LookupText = string.Empty;
+        if (Found is not null)
+        {
+            Found = null;
+            DataSource = string.Empty;
+        }
+
         UpdateDuplicate();
         SaveDraft();
         LookupCommand.Execute(null);
@@ -271,13 +278,14 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         Barcode = parsed.Value!;
     }
 
-    // Asks Open Food Facts about a new, valid barcode and fills the name if it is still empty. Offline or unknown only
-    // shows a message. A barcode that is already in the catalog is not asked about
-    [RelayCommand]
+    // Asks the open databases about a new barcode and fills the name if it is still empty. Offline or unknown only
+    // shows a message. A barcode that is already in the catalog is not asked about. Only the full 13 digits are asked,
+    // so nothing is sent while a longer code is still being typed
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task LookupAsync()
     {
         var barcode = Barcode;
-        if (_editing is not null || barcode == _lookedUp || Name.Length > 0
+        if (_editing is not null
             || currentUser.CurrentUser is not { } user || !RolePermissions.CanManageProducts(user.Role)
             || validator.ValidateBarcodeFormat(barcode) is not null
             || QuickSearch.Products.Any(product => product.Barcode == barcode))
@@ -285,11 +293,10 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
             return;
         }
 
-        _lookedUp = barcode;
-        var result = await lookup.FindAsync(barcode);
+        LookupText = LookupMessages.Searching;
 
-        // The user went on while the answer was on its way
-        if (Barcode != barcode)
+        // Null: the user went on while the answer was on its way
+        if (await lookup.FindAsync(barcode) is not { } result || Barcode != barcode)
         {
             return;
         }
@@ -305,8 +312,18 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         if (Name.Length == 0)
         {
             Name = result.Name;
-            DataSource = lookup.Attribution;
-            LookupText = "Found in Open Food Facts, name filled in.";
+        }
+
+        DataSource = result.Attribution;
+        LookupText = LookupMessages.Found(result);
+    }
+
+    // The code as it is stored: 13 digits. Called when the typed code is confirmed
+    public void NormalizeBarcode()
+    {
+        if (BarcodeNormalizer.ToEan13(Barcode) is { } canonical)
+        {
+            Barcode = canonical;
         }
     }
 
@@ -357,6 +374,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
+        NormalizeBarcode();
         if (await guard.CheckAsync(RolePermissions.CanManageProducts, _editing is null ? "add products" : "edit products") is { } refusal)
         {
             StatusMessage = refusal;
@@ -443,6 +461,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
     // The photo file is named after the barcode, so the barcode must be valid first
     private async Task ChangePhotoAsync(Func<string, Task<string>> change)
     {
+        NormalizeBarcode();
         if (validator.ValidateBarcodeFormat(Barcode) is not null)
         {
             StatusMessage = "Enter a valid barcode first: the photo file is named after it.";
@@ -472,6 +491,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
             return;
         }
 
+        lookup.Cancel();
         Photo.Discard();
         if (_editing is null)
         {
@@ -485,7 +505,7 @@ public partial class ProductFormViewModel : ObservableObject, INavigationParamet
         currentUser.CurrentUser is { } user
         && RolePermissions.CanManageProducts(user.Role)
         && validator.ValidateName(Name) is null
-        && validator.ValidateBarcodeFormat(Barcode) is null;
+        && validator.ValidateBarcodeFormat(BarcodeNormalizer.ToEan13(Barcode) ?? Barcode) is null;
 
     private void SaveDraft()
     {

@@ -121,7 +121,7 @@ public static class MauiProgram
     }
 
     // The local stub server stays the default; a configured https server (Sync:BaseUrl) replaces it. Its HttpClient is the
-    // only one with certificate pinning: Open Food Facts and everything else keep the normal handler
+    // only one with certificate pinning: the open databases and everything else keep the normal handler
     private static void ConfigureSync(MauiAppBuilder builder, string? settingsFile)
     {
         var sync = SyncSettings.Resolve(settingsFile);

@@ -11,7 +11,7 @@ using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
 // Adding a product in three steps: the code, the name and photo, the characteristics we sort by. Everything about the
-// product itself (camera, Open Food Facts, duplicate warning, photo, draft, saving, discarding) is ProductFormViewModel's;
+// product itself (camera, open databases, duplicate warning, photo, draft, saving, discarding) is ProductFormViewModel's;
 // this class only walks through the steps and adds the characteristic values
 public sealed partial class ProductWizardViewModel : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
@@ -75,7 +75,8 @@ public sealed partial class ProductWizardViewModel : ObservableObject, INavigati
         _ => string.Empty
     };
 
-    private bool IsTaken => Form.QuickSearch.Products.Any(product => product.Barcode == Form.Barcode.Trim());
+    private bool IsTaken => Form.QuickSearch.Products.Any(product =>
+        product.Barcode == (BarcodeNormalizer.ToEan13(Form.Barcode) ?? Form.Barcode.Trim()));
 
     private bool CanNext => Hint.Length == 0 && (Step != LastStep || Form.SaveCommand.CanExecute(null));
 
@@ -116,6 +117,11 @@ public sealed partial class ProductWizardViewModel : ObservableObject, INavigati
         {
             await Form.SaveCommand.ExecuteAsync(null);
             return;
+        }
+
+        if (Step == 1)
+        {
+            Form.NormalizeBarcode();
         }
 
         Step++;
@@ -196,7 +202,7 @@ public sealed partial class ProductWizardViewModel : ObservableObject, INavigati
 
     private void OnDetailChanged(object? sender, PropertyChangedEventArgs e) => Refresh();
 
-    // What Open Food Facts said, where a characteristic of the same meaning is still empty
+    // What the open database said, where a characteristic of the same meaning is still empty
     private void Prefill()
     {
         if (Form.Found is not { } found)
@@ -210,7 +216,10 @@ public sealed partial class ProductWizardViewModel : ObservableObject, INavigati
             {
                 "BRAND" => found.Brand,
                 "CATEGORY" => found.Category,
+                "AUTHOR" or "AUTHORS" => found.Authors,
+                "PUBLISHER" => found.Publisher,
                 var name when name.StartsWith("WEIGHT", StringComparison.Ordinal) => Kilograms(found.QuantityText),
+                var name when name.StartsWith("VOLUME", StringComparison.Ordinal) => Litres(found.QuantityText),
                 _ => string.Empty
             };
             if (value.Length > 0 && _validator.ValidateValue(item.ValueType, value) is null)
@@ -220,22 +229,31 @@ public sealed partial class ProductWizardViewModel : ObservableObject, INavigati
         }
     }
 
-    // "400 g" -> "0.4", "1.5 kg" -> "1.5"; anything else (millilitres, packs) is left to the user
-    private static string Kilograms(string quantityText)
+    // "400 g" -> "0.4", "1.5 kg" -> "1.5"; anything else (millilitres, packs) is no weight
+    private static string Kilograms(string quantityText) => Amount(quantityText, WeightPattern(), "g");
+
+    // "330 ml" -> "0.33", "1.5 l" -> "1.5"
+    private static string Litres(string quantityText) => Amount(quantityText, VolumePattern(), "ml");
+
+    private static string Amount(string quantityText, Regex pattern, string thousandthUnit)
     {
-        var match = WeightPattern().Match(quantityText.Trim());
+        var match = pattern.Match(quantityText.Trim());
         if (!match.Success
             || !decimal.TryParse(match.Groups[1].Value.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out var amount))
         {
             return string.Empty;
         }
 
-        var kilograms = match.Groups[2].Value.Equals("g", StringComparison.OrdinalIgnoreCase) ? amount / 1000 : amount;
-        return kilograms.ToString("0.###", CultureInfo.CurrentCulture);
+        var whole = match.Groups[2].Value.Equals(thousandthUnit, StringComparison.OrdinalIgnoreCase) ? amount / 1000 : amount;
+        return whole.ToString("0.###", CultureInfo.CurrentCulture);
     }
 
-    [GeneratedRegex(@"^(\d+(?:[.,]\d+)?)\s*(g|kg)$", RegexOptions.IgnoreCase)]
+    // The trailing "e" is the EU "estimated quantity" mark
+    [GeneratedRegex(@"^(\d+(?:[.,]\d+)?)\s*(g|kg)(?:\s*e)?$", RegexOptions.IgnoreCase)]
     private static partial Regex WeightPattern();
+
+    [GeneratedRegex(@"^(\d+(?:[.,]\d+)?)\s*(ml|l)(?:\s*e)?$", RegexOptions.IgnoreCase)]
+    private static partial Regex VolumePattern();
 
     // Called by the form after the product was added, before it goes back to where the wizard was started
     private async Task<ProductSummary> SaveValuesAsync(ProductSummary product)

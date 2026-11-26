@@ -9,10 +9,25 @@ public sealed record StockDocumentLineItem(string Barcode, ProductSummary? Produ
     : INotifyPropertyChanged
 {
     private string? _typed;
+    private string _lookupText = string.Empty;
 
     public bool IsUnknown => Product is null;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    // For an unknown code: what the open databases say the item is, with their attribution
+    public string LookupText
+    {
+        get => _lookupText;
+        set
+        {
+            _lookupText = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LookupText)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasLookupText)));
+        }
+    }
+
+    public bool HasLookupText => LookupText.Length > 0;
 
     public bool ExceedsStock => Product is not null && OperationRules.ExceedsStock(Direction, TypedQuantity, Product.Quantity);
 
