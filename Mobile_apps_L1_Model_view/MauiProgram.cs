@@ -64,6 +64,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IToastService, MauiToastService>();
         builder.Services.AddSingleton<IVibration>(Vibration.Default);
         builder.Services.AddSingleton<ITonePlayer, MauiTonePlayer>();
+        builder.Services.AddSingleton<ISemanticScreenReader>(SemanticScreenReader.Default);
         builder.Services.AddSingleton<IScanFeedback, MauiScanFeedback>();
         builder.Services.AddSingleton<ISheetService, MauiSheetService>();
         builder.Services.AddSingleton<IKeyboard, MauiKeyboard>();

@@ -333,7 +333,9 @@ public class StockDocumentViewModelTests
         var line = viewModel.Lines.Single();
         Assert.True(line.IsInvalid);
         Assert.Equal(("Out of stock", "on hand 0 → 0, short by 1"), (line.Problem, line.StockText));
-        Assert.Equal("Drill −1", viewModel.StatusMessage);
+        // A good scan shows no message; a screen reader is told
+        Assert.Equal((string.Empty, false), (viewModel.StatusMessage, viewModel.HasStatus));
+        Assert.Equal("Drill −1", _feedback.Announced.Last());
         Assert.Equal(("Review 1 unit", "Draft · 1 line · 1 unit"), (viewModel.CommitText, viewModel.SummaryText));
         Assert.False(viewModel.CommitCommand.CanExecute(null));
         Assert.Equal("Issue goods", viewModel.Title);
@@ -420,7 +422,7 @@ public class StockDocumentViewModelTests
         await Eventually.WaitAsync(() => viewModel.Lines.Count == 1);
 
         Assert.Equal(("Drill", 1, true), (viewModel.Lines[0].Name, viewModel.Lines[0].Quantity, viewModel.Lines[0].WantsFocus));
-        Assert.Equal("Drill +1", viewModel.StatusMessage);
+        Assert.Equal("Drill +1", _feedback.Announced.Last());
     }
 
     [Fact]

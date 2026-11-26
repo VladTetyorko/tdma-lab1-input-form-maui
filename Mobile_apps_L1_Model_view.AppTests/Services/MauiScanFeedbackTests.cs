@@ -44,9 +44,27 @@ public class MauiScanFeedbackTests
         public bool IsEnabled { get; set; } = true;
     }
 
-    private static MauiScanFeedback Create(FakeVibration vibration, FakeTones? tones = null, bool sound = true) =>
+    private sealed class FakeScreenReader : ISemanticScreenReader
+    {
+        public List<string> Said { get; } = [];
+
+        public void Announce(string text) => Said.Add(text);
+    }
+
+    private static MauiScanFeedback Create(FakeVibration vibration, FakeTones? tones = null, bool sound = true,
+        ISemanticScreenReader? screenReader = null) =>
         new(vibration, tones ?? new FakeTones(), new FakeSoundSettings { IsEnabled = sound },
-            NullLogger<MauiScanFeedback>.Instance);
+            screenReader ?? new FakeScreenReader(), NullLogger<MauiScanFeedback>.Instance);
+
+    [Fact]
+    public void Announce_GoesToTheScreenReader()
+    {
+        var reader = new FakeScreenReader();
+
+        Create(new FakeVibration(), screenReader: reader).Announce("Drill +1");
+
+        Assert.Equal(["Drill +1"], reader.Said);
+    }
 
     [Theory]
     [InlineData(true, new[] { "accepted", "refused" })]

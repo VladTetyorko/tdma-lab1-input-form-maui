@@ -130,8 +130,12 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
     [ObservableProperty]
     public partial string Note { get; set; } = string.Empty;
 
+    // Problems only: a successful scan shows in its line, with a sound and a screen-reader announcement
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStatus))]
     public partial string StatusMessage { get; set; } = string.Empty;
+
+    public bool HasStatus => StatusMessage.Length > 0;
 
     // "Received 12 units · R-20261125-0001" after a commit; the page shows it for a moment
     [ObservableProperty]
@@ -565,16 +569,17 @@ public sealed partial class StockDocumentViewModel : ObservableObject, IPageLife
         _draft.Add(barcode);
         _focusBarcode = _products[barcode] is null ? null : barcode;
         Refresh();
+        StatusMessage = string.Empty;
         if (_products[barcode] is { } product)
         {
-            StatusMessage = $"{product.Name} {Signed(1)}";
             feedback.Success();
+            feedback.Announce($"{product.Name} {Signed(1)}");
         }
         else
         {
-            StatusMessage = $"No product has barcode {barcode}.";
             logger.LogWarning("Barcode {Barcode} matched no product", barcode);
             feedback.Error();
+            feedback.Announce($"No product has barcode {barcode}.");
         }
 
         await drafts.SaveAsync(_draft);

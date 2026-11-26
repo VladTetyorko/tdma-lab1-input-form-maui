@@ -8,6 +8,7 @@ public sealed class MauiScanFeedback(
     IVibration vibration,
     ITonePlayer tones,
     IScanSoundSettings sound,
+    ISemanticScreenReader screenReader,
     ILogger<MauiScanFeedback> logger) : IScanFeedback
 {
     private static readonly TimeSpan Short = TimeSpan.FromMilliseconds(60);
@@ -28,6 +29,18 @@ public sealed class MauiScanFeedback(
         if (sound.IsEnabled)
         {
             tones.Refused();
+        }
+    }
+
+    public void Announce(string text)
+    {
+        try
+        {
+            screenReader.Announce(text);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Scan feedback to the screen reader failed");
         }
     }
 

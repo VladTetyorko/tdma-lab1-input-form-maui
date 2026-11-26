@@ -6,4 +6,7 @@ public interface IScanFeedback
     void Success();
 
     void Error();
+
+    // Tells a screen reader what was just done; nothing is shown
+    void Announce(string text);
 }

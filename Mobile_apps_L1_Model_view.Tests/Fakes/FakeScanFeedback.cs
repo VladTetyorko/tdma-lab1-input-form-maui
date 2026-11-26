@@ -11,4 +11,8 @@ public sealed class FakeScanFeedback : IScanFeedback
     public void Success() => Successes++;
 
     public void Error() => Errors++;
+
+    public List<string> Announced { get; } = [];
+
+    public void Announce(string text) => Announced.Add(text);
 }

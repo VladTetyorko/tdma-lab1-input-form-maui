@@ -40,7 +40,7 @@
 
                 <FlexLayout Wrap="Wrap" AlignItems="Center">
                     <Label Text="{Binding StatusMessage}" Style="{StaticResource TextBodyStrong}" FlexLayout.Grow="1"
-                           AutomationId="DocumentStatus" />
+                           IsVisible="{Binding HasStatus}" AutomationId="DocumentStatus" />
                     <!-- Desktop only: a phone offers Undo in the snackbar -->
                     <Grid IsVisible="{OnIdiom Default=True, Phone=False}">
                         <Button Text="{Binding UndoText}" StyleClass="Ghost" Command="{Binding UndoCommand}"
