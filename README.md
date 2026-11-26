@@ -41,7 +41,7 @@ have no operations).
 
 Details: [`docs/domain/domain-model.md`](docs/domain/domain-model.md) (overview, roles)
 and [`docs/domain/entities.md`](docs/domain/entities.md) (every entity, its fields and relations);
-[`docs/domain/open-data.md`](docs/domain/open-data.md) (Open Food Facts seed and lookup, ODbL attribution).
+[`docs/domain/open-data.md`](docs/domain/open-data.md) (Open Food Facts seed, open product and book lookup, attribution).
 
 ## Features
 
@@ -130,6 +130,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 11 | — | [Design revision 2: Home tiles, drawer, camera first, quick search, bottom action bar, APK script](docs/steps/11-design-revision.md) | implemented, not checked on screen or on a device (1387 tests + 42 AppTests) |
 | 13 | — | [Design revision 4: bottom bar, one sheet, operation table, scan then type, wizard, correction, stock count](docs/steps/13-design-revision-4.md) | implemented, checked on an emulator, not on a phone (1485 tests + 44 AppTests) |
 | 12 | — | [Design revision 3: camera safety, own app bar, tolerant search, counter feedback, polished pages](docs/steps/12-design-revision-3.md) | implemented, checked on an emulator, not on a phone (1454 tests + 44 AppTests) |
+| 14 | — | [Open product and book lookup, short barcode forms, tighter app bar](docs/steps/14-open-lookup.md) | implemented, checked on an emulator, not on a phone (1532 tests + 45 AppTests) |
 
 ## Decision log
 
@@ -259,6 +260,11 @@ Every architectural decision, newest last. Details are in the step documents.
 | 120 | — | The Driver sees only his own operations, enforced in `OperationFeed` and `ProductCatalog` | entities.md "view own"; the old Home leaked others |
 | 121 | — | Owner: simple stock count, Manager only, the database quantity visible, differences posted as compensating documents in one transaction after confirmation; local draft, no table | Approved scope addition (AGENTS section 1) |
 | 122 | — | `BorderlessEntry` handlers are never auto-disconnected | A focused box removed from a rebuilt list crashed the app |
+| 123 | — | Owner: unknown codes are asked at a chain of open databases (`ProductLookupChain`: Open Library for 978/979, then Open Food / Beauty / Pet Food / Products Facts), one at a time, fail soft, cancellable (supersedes the single source of 47) | Full dumps are too big to bundle; all sources are keyless and open; sequential requests are gentle on rate limits |
+| 124 | — | Lookup hits are cached in memory only (supersedes "never cached" of 47) | One scan is read by several screens; a disk cache would need expiry and a schema |
+| 125 | — | Every barcode form (EAN-8, UPC-A, UPC-E, ISBN-10) is normalised to the stored 13 digits in `BarcodeNormalizer` (extends 46) | One stored form; existing barcodes still match; no schema change |
+| 126 | — | A good scan on Receive / Issue shows no message line; the line, the sound and a screen-reader announcement (`IScanFeedback.Announce`) confirm it | The line repeated what the list already shows |
+| 127 | — | The phone app bar is 48 high (56 on desktop) | Less empty space under the status bar; its inset stays as the system reports it |
 
 ## Architecture
 
@@ -589,9 +595,12 @@ The package is a debug-signed Release build (git-ignored). Options and the manua
 
 ## Data attribution
 
-Seed products and the "Create from Open Food Facts" lookup use data from [Open Food Facts](https://world.openfoodfacts.org/),
-available under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/) (individual contents under
-the Database Contents License). Search and the new-product steps show the attribution; details in [`docs/domain/open-data.md`](docs/domain/open-data.md).
+Seed products use data from [Open Food Facts](https://world.openfoodfacts.org/). The lookup of an unknown barcode asks
+[Open Library](https://openlibrary.org/) (books), Open Food Facts, [Open Beauty Facts](https://world.openbeautyfacts.org/),
+[Open Pet Food Facts](https://world.openpetfoodfacts.org/) and [Open Products Facts](https://world.openproductsfacts.org/).
+The "Facts" databases are under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/)
+(individual contents under the Database Contents License). Every result is shown with its attribution; details in
+[`docs/domain/open-data.md`](docs/domain/open-data.md).
 
 ## Known limits
 

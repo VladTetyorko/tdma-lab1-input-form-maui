@@ -145,7 +145,7 @@ descriptive data lives in characteristics.
 | Field | Type | Rules |
 |-------|------|-------|
 | `Name` | `string` | Required, not blank |
-| `Barcode` | `string` | Required, unique; EAN-13 (13 digits, valid check digit) |
+| `Barcode` | `string` | Required, unique; EAN-13 (13 digits, valid check digit). EAN-8, UPC and ISBN-10 input is converted to it ([open-data.md](open-data.md)) |
 | `PhotoPath` | `string?` | Photo of the item (Lab 7): path **relative to the app data folder**, `photos/<barcode>_<yyyyMMdd_HHmmss>.jpg`; `NULL` = no photo. Only the path is stored and synced, the file stays on the device. Never rooted, never `..` (`CHECK` in `0004_device.sql` and `PhotoPaths.IsValidRelative`) |
 
 - **Relations:** has many `ProductCharacteristic`s (its description) and many
