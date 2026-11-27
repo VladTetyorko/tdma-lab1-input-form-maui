@@ -131,6 +131,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 13 | — | [Design revision 4: bottom bar, one sheet, operation table, scan then type, wizard, correction, stock count](docs/steps/13-design-revision-4.md) | implemented, checked on an emulator, not on a phone (1485 tests + 44 AppTests) |
 | 12 | — | [Design revision 3: camera safety, own app bar, tolerant search, counter feedback, polished pages](docs/steps/12-design-revision-3.md) | implemented, checked on an emulator, not on a phone (1454 tests + 44 AppTests) |
 | 14 | — | [Open product and book lookup, short barcode forms, tighter app bar](docs/steps/14-open-lookup.md) | implemented, checked on an emulator, not on a phone (1532 tests + 45 AppTests) |
+| 15 | — | [Responsive layout: tables keep their column widths and scroll sideways, bottom bar on phones and navigation rail from 600 wide](docs/steps/15-responsive.md) | implemented, builds on Windows, not checked on screen (1532 tests) |
 
 ## Decision log
 
@@ -265,6 +266,10 @@ Every architectural decision, newest last. Details are in the step documents.
 | 125 | — | Every barcode form (EAN-8, UPC-A, UPC-E, ISBN-10) is normalised to the stored 13 digits in `BarcodeNormalizer` (extends 46) | One stored form; existing barcodes still match; no schema change |
 | 126 | — | A good scan on Receive / Issue shows no message line; the line, the sound and a screen-reader announcement (`IScanFeedback.Announce`) confirm it | The line repeated what the list already shows |
 | 127 | — | The phone app bar is 48 high (56 on desktop) | Less empty space under the status bar; its inset stays as the system reports it |
+| 128 | — | A table has fixed-width columns plus one stretching column with a minimum width (`WideTable`, `ProductTable.MinimumWidth`); wider than that it fills the screen, narrower it scrolls sideways with header and rows together | Owner: columns must not squeeze or hide on a phone, and a tablet or laptop must be used fully |
+| 129 | — | The narrow column chooser (`IsNarrow`, `ExtraColumnPicker`, the code under the name) is removed from the Products table | The table always shows every column; scrolling replaces hiding |
+| 130 | — | Swipe on product rows is removed; edit and delete are an actions column on every device | A horizontal swipe fights the horizontal scroll of the table |
+| 131 | — | Navigation: a bottom bar under 600 wide, a navigation rail from 600 (Material 3 medium); the mode follows the width of the page grid, and only the active layout is built | The fixed 172 pill squeezed the places on 320 dp phones; a bottom bar wastes a tablet; one set of AutomationIds |
 
 ## Architecture
 

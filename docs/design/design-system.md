@@ -237,7 +237,11 @@ Labels are verbs + object ("Receive 37 units", not "OK"); sentence case.
   (borders already separate rows; zebra fights the selection colour).
 - Columns: text left, numbers right, actions right (fixed width). Missing value shows `—` in `TextDisabled`.
 - Header stays visible (it is outside the `CollectionView`, the list scrolls under it).
-- Narrow (< 600): Name (+ barcode caption), Qty, one chosen characteristic column (`▾` picker in its header).
+- Widths: fixed-width columns plus one stretching column (the name) with a minimum width. Wider than the sum, the name
+  stretches and the table fills the screen (no 720 cap); narrower, the table keeps its widths and scrolls sideways
+  (`WideTable`), header and rows together, while the rows still scroll up and down. Columns are never hidden or squeezed.
+  Products: Barcode 130, Qty 96, each characteristic 110, name min 180, actions 104 (edit and delete, Manager), spacing 8,
+  padding 12 (`ProductTable.MinimumWidth`). Operation table: min 376 (`OperationTableMinWidth`), product name up to 2 lines.
 - Loading: 3 skeleton rows (`SurfaceAlt` blocks), no spinner over the table; refresh uses `RefreshView`.
 
 ### Chips (`Border` + `Label`, `StyleClass="Chip…"`)
@@ -336,6 +340,6 @@ Where this section and an earlier one differ, this one wins. Full text: [`revisi
 
 | Part | Tokens and sizes |
 |------|------------------|
-| Bottom bar (`BottomNav`) | 68 high, `Surface` with a 1 px top line; places: 22 glyph, 11 label, selected = `PrimaryText` + `PrimarySoft` marker; pill 56 x 172, `PrimaryBrush`, radius 28, styles `PillHalf`, `PillBadge`; on root pages only, the keyboard covers it |
+| Bottom bar (`BottomNav`) | 68 high, `Surface` with a 1 px top line; places: 22 glyph, 11 label, selected = `PrimaryText` + `PrimarySoft` marker; pill 56 high, as wide as two places (`2.4*` column, max 200), `PrimaryBrush`, radius 28; from 600 wide (`NavRailBreakpoint`) the bar becomes a navigation rail, 88 wide (`NavRailWidth`), full height on the left: Receive and Issue filled on top, then Home, Products, Search, Activity (`NavRail`); the mode follows the width of the page grid, styles `PillHalf`, `PillBadge`; on root pages only, the keyboard covers it |
 | Sheet (`AppSheet`) | `Surface`, top corners 16, handle 40 x 4 `BorderStrong`, scrim `Overlay`, no shadow; footer 56 high: outlined way back + one filled action; desktop: centred, 480 wide |
 | Choice chip (`StyleClass="Choice"`) | outlined, 40 high, radius 20; chosen = `PrimarySoft` fill, 2 px edge (and a tick where the text allows) |
