@@ -13,6 +13,8 @@ public class SettingsViewModelTests
     private readonly FakeSyncService _sync = new();
     private readonly OfflineSimulator _offline = new();
     private readonly FakeDatabaseExporter _exporter = new();
+    private readonly FakeBiometricSettings _biometricSettings = new();
+    private readonly FakeBiometricAuthenticator _biometrics = new();
     private readonly SettingsViewModel _viewModel;
 
     public SettingsViewModelTests()
@@ -22,7 +24,38 @@ public class SettingsViewModelTests
     }
 
     private SettingsViewModel CreateViewModel() => new(_theme, _store.DeepLinks, _sync, _offline, _exporter,
-        _store.Diagnostics, _store.Navigation, _store.Logger<SettingsViewModel>());
+        _store.Diagnostics, _biometricSettings, _biometrics, _store.Navigation, _store.Logger<SettingsViewModel>());
+
+    [Fact]
+    public void BiometricUnlock_IsOffByDefault_AndTheSwitchIsSavedAndLogged()
+    {
+        Assert.False(_viewModel.BiometricUnlock);
+
+        _viewModel.BiometricUnlock = true;
+
+        Assert.True(_biometricSettings.IsEnabled);
+        Assert.Contains(_store.Logs, l => l.Message.Contains("Biometric unlock switched on"));
+    }
+
+    [Fact]
+    public void BiometricUnlock_StartsWithTheSavedChoice()
+    {
+        _biometricSettings.IsEnabled = true;
+
+        Assert.True(CreateViewModel().BiometricUnlock);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task OnAppearing_ShowsTheBiometricSwitchOnlyWhenTheHardwareCanCheck(bool available)
+    {
+        _biometrics.Available = available;
+
+        await _viewModel.CheckBiometricCommand.ExecuteAsync(null);
+
+        Assert.Equal(available, _viewModel.IsBiometricSupported);
+    }
 
     [Fact]
     public void ThemeOptions_ListsSystemLightAndDark()

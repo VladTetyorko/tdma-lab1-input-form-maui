@@ -34,6 +34,23 @@ public class CurrentUserServiceTests
     }
 
     [Fact]
+    public void Role_FollowsTheSignedInUser()
+    {
+        var service = new CurrentUserService();
+        Assert.Null(service.CurrentRole);
+        Assert.False(service.IsInRole(Role.Manager));
+
+        service.SignIn(new User { FullName = "Ivan Shevchenko", Role = Role.Driver });
+
+        Assert.Equal(Role.Driver, service.CurrentRole);
+        Assert.True(service.IsInRole(Role.Driver));
+        Assert.False(service.IsInRole(Role.Manager));
+
+        service.SignOut();
+        Assert.Null(service.CurrentRole);
+    }
+
+    [Fact]
     public void SignIn_RejectsNull()
     {
         Assert.Throws<ArgumentNullException>(() => new CurrentUserService().SignIn(null!));

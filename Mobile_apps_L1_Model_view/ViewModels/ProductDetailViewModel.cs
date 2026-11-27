@@ -15,6 +15,7 @@ public partial class ProductDetailViewModel(
     ICharacteristicService characteristics,
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
+    IPermissionGuard guard,
     IAppStateService appState,
     INavigationService navigation,
     ILogger<ProductDetailViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
@@ -101,6 +102,12 @@ public partial class ProductDetailViewModel(
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
+        if (await guard.CheckAsync(RolePermissions.CanManageProducts, "edit characteristic values") is { } refusal)
+        {
+            StatusMessage = refusal;
+            return;
+        }
+
         var values = Characteristics.ToDictionary(c => c.CharacteristicId, c => (string?)c.Value);
         var result = await characteristics.SetValuesAsync(_product!.Id, values);
         if (!result.IsSuccess)

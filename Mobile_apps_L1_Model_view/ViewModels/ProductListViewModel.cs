@@ -12,9 +12,11 @@ public partial class ProductListViewModel(
     ICharacteristicService characteristics,
     IProductService productService,
     ICurrentUserService currentUser,
+    ISessionStore session,
     IAppStateService appState,
     IStartupNavigator startup,
     IAlertService alerts,
+    IPermissionGuard guard,
     INavigationService navigation,
     ILogger<ProductListViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
@@ -137,21 +139,34 @@ public partial class ProductListViewModel(
                 new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = product });
 
     [RelayCommand(CanExecute = nameof(CanAddProduct))]
-    private Task AddProductAsync() => navigation.GoToAsync(Routes.ProductForm);
+    private async Task AddProductAsync()
+    {
+        if (await RefusedAsync("add products"))
+        {
+            return;
+        }
+
+        await navigation.GoToAsync(Routes.ProductForm);
+    }
 
     [RelayCommand(CanExecute = nameof(CanManageProducts))]
-    private Task EditProductAsync(ProductSummary? product) =>
-        product is null
-            ? Task.CompletedTask
-            : navigation.GoToAsync(Routes.ProductForm,
-                new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = product });
+    private async Task EditProductAsync(ProductSummary? product)
+    {
+        if (product is null || await RefusedAsync("edit products"))
+        {
+            return;
+        }
+
+        await navigation.GoToAsync(Routes.ProductForm,
+            new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = product });
+    }
 
     // Only a product without operations can go: the history of In/Out must stay complete
     [RelayCommand(CanExecute = nameof(CanManageProducts))]
     private async Task DeleteProductAsync(ProductSummary? product)
     {
         StatusMessage = string.Empty;
-        if (product is null)
+        if (product is null || await RefusedAsync("delete products"))
         {
             return;
         }
@@ -177,7 +192,15 @@ public partial class ProductListViewModel(
     }
 
     [RelayCommand(CanExecute = nameof(CanManageCharacteristics))]
-    private Task OpenCharacteristicsAsync() => navigation.GoToAsync(Routes.Characteristics);
+    private async Task OpenCharacteristicsAsync()
+    {
+        if (await RefusedAsync("manage characteristics"))
+        {
+            return;
+        }
+
+        await navigation.GoToAsync(Routes.Characteristics);
+    }
 
     [RelayCommand]
     private Task OpenSettingsAsync() => navigation.GoToAsync(Routes.Settings);
@@ -186,12 +209,34 @@ public partial class ProductListViewModel(
     private Task ScanAsync() => navigation.GoToAsync(Routes.Scanner);
 
     [RelayCommand]
-    private Task SignOutAsync()
+    private async Task SignOutAsync()
     {
         logger.LogInformation("User {UserId} signed out", currentUser.CurrentUser?.Id);
         currentUser.SignOut();
+        try
+        {
+            await session.ClearAsync();
+        }
+        catch (Exception ex)
+        {
+            // Signing out must work even when secure storage does not: the user is signed out in memory anyway
+            logger.LogWarning(ex, "The saved session could not be removed");
+        }
+
         appState.Clear();
-        return navigation.GoToAsync(Routes.Absolute(Routes.Login));
+        await navigation.GoToAsync(Routes.Absolute(Routes.Login));
+    }
+
+    // The role check (the alert and the warning log are the guard's); the reason also goes to the status line
+    private async Task<bool> RefusedAsync(string action)
+    {
+        var refusal = await guard.CheckAsync(RolePermissions.CanManageProducts, action);
+        if (refusal is not null)
+        {
+            StatusMessage = refusal;
+        }
+
+        return refusal is not null;
     }
 
     private async Task SyncSortOptionsAsync()

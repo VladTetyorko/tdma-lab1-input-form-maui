@@ -188,6 +188,58 @@ public class SqliteRepositoryTests : IDisposable
         Assert.Equal(DateTimeKind.Utc, driver.CreatedAt.Kind);
     }
 
+    [Theory]
+    [InlineData("olena", Role.Manager)]
+    [InlineData("OLENA", Role.Manager)]
+    [InlineData("Petro", Role.Storekeeper)]
+    [InlineData("ivan", Role.Driver)]
+    public async Task GetByLogin_SeededLogin_IgnoresCaseAndHasAHashNotAPassword(string login, Role role)
+    {
+        var user = await Users.GetByLoginAsync(login);
+
+        Assert.NotNull(user);
+        Assert.Equal(role, user.Role);
+        Assert.StartsWith("pbkdf2-sha256$", user.PasswordHash);
+    }
+
+    [Fact]
+    public async Task GetByLogin_UnknownLogin_ReturnsNull()
+    {
+        Assert.Null(await Users.GetByLoginAsync("nobody"));
+    }
+
+    [Fact]
+    public async Task AddingAUser_KeepsLoginAndHash_AndTheSyncPayloadHasNoHash()
+    {
+        var user = new User { FullName = "New Person", Role = Role.Driver, Login = "newp", PasswordHash = "pbkdf2-sha256$1$AAAA$AAAA" };
+
+        await Users.AddAsync(user);
+
+        var back = await Users.GetByLoginAsync("NEWP");
+        Assert.Equal("pbkdf2-sha256$1$AAAA$AAAA", back!.PasswordHash);
+        var item = Assert.Single(await Queue.GetPendingAsync());
+        Assert.Contains("newp", item.PayloadJson);
+        Assert.DoesNotContain("PasswordHash", item.PayloadJson);
+        Assert.DoesNotContain("pbkdf2", item.PayloadJson);
+    }
+
+    [Fact]
+    public async Task AddingAUser_WithADuplicateLoginOfAnotherCase_IsRejected()
+    {
+        var duplicate = new User { FullName = "Other", Role = Role.Driver, Login = "OLENA", PasswordHash = "x" };
+
+        await Assert.ThrowsAnyAsync<SQLiteException>(() => Users.AddAsync(duplicate));
+    }
+
+    [Fact]
+    public async Task AddingTwoUsersWithoutALogin_IsAllowed()
+    {
+        await Users.AddAsync(new User { FullName = "A", Role = Role.Driver });
+        await Users.AddAsync(new User { FullName = "B", Role = Role.Driver });
+
+        Assert.Equal(5, (await Users.GetAllAsync()).Count);
+    }
+
     [Fact]
     public async Task AddingAProduct_QueuesOneInsert()
     {

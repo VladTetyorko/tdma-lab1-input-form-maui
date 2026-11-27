@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Sentry;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
@@ -36,6 +36,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPreferencesStore, MauiPreferencesStore>();
         builder.Services.AddSingleton<IDatabasePathProvider, MauiDatabasePathProvider>();
         builder.Services.AddSingleton<ISecretStore, MauiSecretStore>();
+        builder.Services.AddSingleton<IBiometricAuthenticator, MauiBiometricAuthenticator>();
         builder.Services.AddSingleton<IConnectivityMonitor, MauiConnectivityMonitor>();
         builder.Services.AddSingleton<IFileSharer, MauiFileSharer>();
         builder.Services.AddSingleton<IAlertService, ShellAlertService>();
@@ -52,7 +53,9 @@ public static class MauiProgram
         builder.Services.AddTransient<LogsPage>();
 
         ConfigureLogging(builder);
-        ConfigureCrashReporting(builder);
+        var settingsFile = ReadSettingsFile();
+        ConfigureCrashReporting(builder, settingsFile);
+        ConfigureSync(builder, settingsFile);
 
         var app = builder.Build();
         app.Services.GetRequiredService<UnhandledExceptionLogger>().Attach();
@@ -60,9 +63,9 @@ public static class MauiProgram
     }
 
     // The only place that decides between Sentry and the null reporter: a DSN exists or it does not
-    private static void ConfigureCrashReporting(MauiAppBuilder builder)
+    private static void ConfigureCrashReporting(MauiAppBuilder builder, string? settingsFile)
     {
-        var dsn = SentryDsn.Resolve(Environment.GetEnvironmentVariable(SentryDsn.EnvironmentVariable), ReadSettingsFile());
+        var dsn = SentryDsn.Resolve(Environment.GetEnvironmentVariable(SentryDsn.EnvironmentVariable), settingsFile);
         if (dsn is null)
         {
             builder.Services.AddSingleton<ICrashReporter, NullCrashReporter>();
@@ -81,12 +84,31 @@ public static class MauiProgram
         builder.Services.AddSingleton<ICrashReporter, SentryCrashReporter>();
     }
 
+    // The local stub server stays the default; a configured https server (Sync:BaseUrl) replaces it. Its HttpClient is the
+    // only one with certificate pinning: Open Food Facts and everything else keep the normal handler
+    private static void ConfigureSync(MauiAppBuilder builder, string? settingsFile)
+    {
+        var sync = SyncSettings.Resolve(settingsFile);
+        if (!sync.IsConfigured)
+        {
+            return;
+        }
+
+        builder.Services.AddSingleton<ISyncApi>(provider => new HttpSyncApi(
+            new HttpClient(PinnedHandlerFactory.Create(new CertificatePinValidator(sync.Pins)), disposeHandler: true)
+            {
+                BaseAddress = sync.BaseUrl,
+                Timeout = HttpSyncApi.Timeout
+            },
+            provider.GetRequiredService<ILogger<HttpSyncApi>>()));
+    }
+
     // appsettings.local.json is an untracked app asset (see README); missing = null
     private static string? ReadSettingsFile()
     {
         try
         {
-            using var stream = FileSystem.OpenAppPackageFileAsync(SentryDsn.SettingsFileName).GetAwaiter().GetResult();
+            using var stream = FileSystem.OpenAppPackageFileAsync(LocalSettings.FileName).GetAwaiter().GetResult();
             using var reader = new StreamReader(stream);
             return reader.ReadToEnd();
         }

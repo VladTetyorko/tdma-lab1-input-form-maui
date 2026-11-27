@@ -14,7 +14,7 @@ public class LogsViewModelTests
 
     public LogsViewModelTests()
     {
-        _viewModel = new LogsViewModel(_reader, _store.CurrentUser, _store.Logger<LogsViewModel>());
+        _viewModel = new LogsViewModel(_reader, _store.Guard, _store.Logger<LogsViewModel>());
     }
 
     private static LogEntry Entry(LogLevel level, string message) =>
@@ -80,7 +80,9 @@ public class LogsViewModelTests
         Assert.Equal(LogsViewModel.DeniedMessage, _viewModel.EmptyText);
         Assert.Empty(_reader.RequestedLevels);
         var warning = Assert.Single(_store.Logs, r => r.Level == LogLevel.Warning);
+        Assert.Equal(nameof(PermissionGuard), warning.Category);
         Assert.Contains(role.ToString(), warning.Message);
+        Assert.Equal(PermissionGuard.AlertTitle, Assert.Single(_store.Alerts.Shown).Title);
     }
 
     [Fact]

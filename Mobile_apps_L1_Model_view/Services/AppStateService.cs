@@ -4,15 +4,14 @@ namespace Mobile_apps_L1_Model_view.Services;
 
 public sealed class AppStateService(IPreferencesStore store) : IAppStateService
 {
-    private const string UserKey = "state.user";
+    // Written by versions before Lab 6, which saved the signed-in user id here; removed on the next save
+    private const string LegacyUserKey = "state.user";
     private const string RouteKey = "state.route";
     private const string DraftsKey = "state.drafts";
 
     // Draft type name -> JSON
     private Dictionary<string, string> _drafts = [];
     private string? _resumeRoute;
-
-    public Guid? SignedInUserId { get; set; }
 
     public string? LastRoute { get; set; }
 
@@ -45,14 +44,13 @@ public sealed class AppStateService(IPreferencesStore store) : IAppStateService
 
     public void Save()
     {
-        Write(UserKey, SignedInUserId?.ToString());
+        store.Remove(LegacyUserKey);
         Write(RouteKey, LastRoute);
         Write(DraftsKey, _drafts.Count == 0 ? null : JsonSerializer.Serialize(_drafts));
     }
 
     public void Restore()
     {
-        SignedInUserId = Guid.TryParse(store.Get(UserKey), out var userId) ? userId : null;
         LastRoute = store.Get(RouteKey);
         _resumeRoute = LastRoute;
         _drafts = ReadDrafts();
@@ -67,7 +65,6 @@ public sealed class AppStateService(IPreferencesStore store) : IAppStateService
 
     public void Clear()
     {
-        SignedInUserId = null;
         LastRoute = null;
         _resumeRoute = null;
         _drafts.Clear();

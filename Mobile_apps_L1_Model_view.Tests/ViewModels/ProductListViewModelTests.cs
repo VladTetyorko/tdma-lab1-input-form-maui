@@ -15,7 +15,7 @@ public class ProductListViewModelTests
 
     public ProductListViewModelTests()
     {
-        _viewModel = new ProductListViewModel(_store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.AppState, _store.Startup, _store.Alerts, _store.Navigation,
+        _viewModel = new ProductListViewModel(_store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Session, _store.AppState, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation,
             _store.Logger<ProductListViewModel>());
     }
 
@@ -276,17 +276,31 @@ public class ProductListViewModelTests
     }
 
     [Fact]
+    public async Task SignOut_SecretStoreFails_StillSignsOutAndGoesToLogin()
+    {
+        var manager = await _store.SignInAsync(Role.Manager);
+        await _store.Session.SaveAsync(manager);
+        _store.Secrets.Failing = true;
+
+        await _viewModel.SignOutCommand.ExecuteAsync(null);
+
+        Assert.Null(_store.CurrentUser.CurrentUser);
+        Assert.Equal(Routes.Absolute(Routes.Login), Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Contains(_store.Logs, l => l.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
+    }
+
+    [Fact]
     public async Task SignOut_ClearsTheSignedInUserAndTheSavedState()
     {
         var manager = await _store.SignInAsync(Role.Manager);
-        _store.AppState.SignedInUserId = manager.Id;
+        await _store.Session.SaveAsync(manager);
         _store.AppState.SetDraft(new ProductFormDraft("Saw", DrillBarcode));
         _store.AppState.Save();
 
         await _viewModel.SignOutCommand.ExecuteAsync(null);
 
         Assert.Null(_store.CurrentUser.CurrentUser);
-        Assert.Null(_store.AppState.SignedInUserId);
+        Assert.False(_store.Secrets.Values.ContainsKey(SessionStore.TokenKey));
         Assert.Null(_store.AppState.GetDraft<ProductFormDraft>());
         Assert.Empty(_store.Preferences.Values);
         Assert.Equal(Routes.Absolute(Routes.Login), Assert.Single(_store.Navigation.RequestedRoutes));

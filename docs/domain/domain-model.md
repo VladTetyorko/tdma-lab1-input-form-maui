@@ -28,14 +28,19 @@ separate decision.
 | Add characteristic, set its value on a product | — | — | ✔ |
 | View operation history | ✔ | own only | ✔ |
 
-There is no real authentication. On start the user picks one of the three
-seeded accounts.
+Authentication is local and minimal (Lab 6): each of the three seeded users has a
+login and a password; the database keeps only a salted PBKDF2 hash. There is no
+registration, password recovery or server account. The demo logins are in the
+README ("Demo accounts"). A signed token in secure storage keeps the user signed
+in for 30 days; biometrics can unlock that token. Every row above is enforced
+twice: the UI hides what the role cannot do, and the command and the service
+refuse it with a message.
 
 ## Database (SQLite, implemented in Lab 4)
 
 The C# entities match this schema one to one (see [`entities.md`](entities.md)).
 It is created by `Data/Migrations/0001_initial.sql` and seeded by
-`0002_seed.sql`; the full column and constraint listing, the migration
+`0002_seed.sql`; `0003_auth.sql` adds the login and the password hash of `Users`; the full column and constraint listing, the migration
 mechanism, the sync queue and the encryption are in
 [`docs/steps/04-sqlite.md`](../steps/04-sqlite.md). Foreign keys are switched on
 for every connection, so the constraints below are enforced by the database,
@@ -64,6 +69,8 @@ erDiagram
         TEXT Id PK "UUID"
         TEXT FullName
         TEXT Role "Storekeeper | Driver | Manager"
+        TEXT Login "unique, NOCASE (0003)"
+        TEXT PasswordHash "pbkdf2-sha256$..., never sent to the server"
         TEXT CreatedAt
         TEXT UpdatedAt
     }

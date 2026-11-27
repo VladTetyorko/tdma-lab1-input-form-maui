@@ -9,7 +9,7 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 // The in-app log viewer (Manager only): the newest log entries at or above the chosen level, newest first
 public partial class LogsViewModel(
     ILogReader reader,
-    ICurrentUserService currentUser,
+    IPermissionGuard guard,
     ILogger<LogsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
     public const string DeniedMessage = "Only a Manager can view the logs.";
@@ -35,10 +35,9 @@ public partial class LogsViewModel(
     private async Task RefreshAsync()
     {
         Entries.Clear();
-        if (currentUser.CurrentUser is not { } user || !RolePermissions.CanViewLogs(user.Role))
+        if (await guard.CheckAsync(RolePermissions.CanViewLogs, "view the logs") is not null)
         {
             EmptyText = DeniedMessage;
-            logger.LogWarning("Log viewer denied: role {Role} cannot view logs", currentUser.CurrentUser?.Role);
             return;
         }
 

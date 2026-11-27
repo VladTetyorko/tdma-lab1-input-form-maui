@@ -35,4 +35,43 @@ public class RolePermissionsTests
     {
         Assert.Equal(expected, RolePermissions.CanRecord(role, direction));
     }
+
+    // The whole role table of docs/domain/domain-model.md in one place: a changed rule must change this table
+    [Theory]
+    [InlineData(Role.Manager, "ManageProducts", true)]
+    [InlineData(Role.Manager, "ViewLogs", true)]
+    [InlineData(Role.Manager, "UseDiagnostics", true)]
+    [InlineData(Role.Manager, "RecordIn", true)]
+    [InlineData(Role.Manager, "RecordOut", true)]
+    [InlineData(Role.Storekeeper, "ManageProducts", false)]
+    [InlineData(Role.Storekeeper, "ViewLogs", false)]
+    [InlineData(Role.Storekeeper, "UseDiagnostics", false)]
+    [InlineData(Role.Storekeeper, "RecordIn", true)]
+    [InlineData(Role.Storekeeper, "RecordOut", true)]
+    [InlineData(Role.Driver, "ManageProducts", false)]
+    [InlineData(Role.Driver, "ViewLogs", false)]
+    [InlineData(Role.Driver, "UseDiagnostics", false)]
+    [InlineData(Role.Driver, "RecordIn", true)]
+    [InlineData(Role.Driver, "RecordOut", false)]
+    public void RoleMatrix(Role role, string action, bool expected)
+    {
+        var actual = action switch
+        {
+            "ManageProducts" => RolePermissions.CanManageProducts(role),
+            "ViewLogs" => RolePermissions.CanViewLogs(role),
+            "UseDiagnostics" => RolePermissions.CanUseDiagnostics(role),
+            "RecordIn" => RolePermissions.CanRecord(role, OperationDirection.In),
+            "RecordOut" => RolePermissions.CanRecord(role, OperationDirection.Out),
+            _ => throw new ArgumentOutOfRangeException(nameof(action))
+        };
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void RoleMatrix_CoversEveryRole()
+    {
+        // A new role added to the enum must be added to the matrix above
+        Assert.Equal(3, Enum.GetValues<Role>().Length);
+    }
 }

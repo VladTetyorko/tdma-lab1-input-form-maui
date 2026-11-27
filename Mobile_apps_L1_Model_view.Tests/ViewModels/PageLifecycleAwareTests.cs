@@ -26,22 +26,22 @@ public class PageLifecycleAwareTests : IDisposable
     }
 
     [Fact]
-    public async Task LoginPage_OnAppearing_LoadsTheUsers()
+    public async Task LoginPage_OnAppearing_SignsOutAndClearsTheForm()
     {
+        await DemoAccounts.SignInAsync(_provider, Role.Driver);
         var login = _provider.GetRequiredService<LoginViewModel>();
+        login.ErrorMessage = "old error";
 
         ((IPageLifecycleAware)login).OnAppearing();
 
-        await Eventually.WaitAsync(() => login.Users.Count == 3);
+        await Eventually.WaitAsync(() => login.ErrorMessage.Length == 0);
+        Assert.Null(_provider.GetRequiredService<ICurrentUserService>().CurrentUser);
     }
 
     [Fact]
     public async Task ProductsPage_OnAppearing_LoadsTheProducts()
     {
-        var users = _provider.GetRequiredService<LoginViewModel>();
-        await users.LoadCommand.ExecuteAsync(null);
-        users.SelectedUser = users.Users.Single(u => u.Role == Role.Manager);
-        await users.SignInCommand.ExecuteAsync(null);
+        await DemoAccounts.SignInAsync(_provider, Role.Manager);
         var list = _provider.GetRequiredService<ProductListViewModel>();
 
         ((IPageLifecycleAware)list).OnAppearing();

@@ -19,6 +19,17 @@
             <Picker ItemsSource="{Binding ThemeOptions}"
                     SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
 
+            <VerticalStackLayout IsVisible="{Binding IsBiometricSupported}" Spacing="8">
+                <Label Text="Security" Style="{StaticResource SectionLabel}" />
+                <Label Text="With biometric unlock on, the app asks for your fingerprint (or face) after a restart instead of opening straight away. The password always works."
+                       Style="{StaticResource CaptionLabel}" />
+                <HorizontalStackLayout Spacing="10">
+                    <Label Text="Biometric unlock" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding BiometricUnlock, Mode=TwoWay}" VerticalOptions="Center"
+                            AutomationId="BiometricUnlockSwitch" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
             <Label Text="Synchronisation" Style="{StaticResource SectionLabel}" />
             <Label Text="Changes are saved on this device first and sent to the server when a network is available."
                    Style="{StaticResource CaptionLabel}" />

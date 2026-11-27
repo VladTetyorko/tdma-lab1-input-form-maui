@@ -3,7 +3,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
-             xmlns:models="clr-namespace:Mobile_apps_L1_Model_view.Models"
              xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
              x:Class="Mobile_apps_L1_Model_view.Views.LoginPage"
              x:DataType="viewModels:LoginViewModel"
@@ -14,22 +13,28 @@
     </ContentPage.Behaviors>
 
     <VerticalStackLayout Padding="30,20" Spacing="16">
-        <Label Text="Who is working?" Style="{StaticResource Headline}" />
-        <Label Text="Pick your account" Style="{StaticResource CaptionLabel}" />
+        <Label Text="Sign in" Style="{StaticResource Headline}" />
+        <Label Text="Enter the login and password you were given." Style="{StaticResource CaptionLabel}" />
 
-        <CollectionView ItemsSource="{Binding Users}"
-                        SelectionMode="Single"
-                        SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:User">
-                    <VerticalStackLayout Padding="0,8">
-                        <Label Text="{Binding FullName}" FontAttributes="Bold" />
-                        <Label Text="{Binding Role}" Style="{StaticResource CaptionLabel}" />
-                    </VerticalStackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <Entry Text="{Binding Login, Mode=TwoWay}"
+               Placeholder="Login"
+               Keyboard="Plain"
+               AutomationId="LoginEntry" />
+        <Entry Text="{Binding Password, Mode=TwoWay}"
+               Placeholder="Password"
+               IsPassword="True"
+               ReturnCommand="{Binding SignInCommand}"
+               AutomationId="PasswordEntry" />
 
-        <Button Text="Sign in" Command="{Binding SignInCommand}" />
+        <Label Text="{Binding ErrorMessage}"
+               IsVisible="{Binding HasError}"
+               Style="{StaticResource ErrorLabel}"
+               AutomationId="ErrorLabel" />
+
+        <Button Text="Sign in" Command="{Binding SignInCommand}" AutomationId="LoginButton" />
+        <Button Text="Unlock with biometrics"
+                Command="{Binding BiometricSignInCommand}"
+                IsVisible="{Binding IsBiometricAvailable}"
+                AutomationId="BiometricButton" />
     </VerticalStackLayout>
 </ContentPage>
