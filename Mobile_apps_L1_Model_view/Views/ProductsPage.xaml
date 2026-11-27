@@ -67,7 +67,7 @@
                                 </BindableLayout.ItemTemplate>
                             </HorizontalStackLayout>
                             <!-- The room of the edit and delete buttons of the rows -->
-                            <BoxView WidthRequest="{StaticResource TableActionsWidth}" Color="Transparent"
+                            <BoxView WidthRequest="{x:Static services:ProductTable.ActionsWidth}" Color="Transparent"
                                      IsVisible="{Binding CanManageProducts}" />
                         </HorizontalStackLayout>
                     </Grid>
@@ -105,7 +105,7 @@
                                                         </BindableLayout.ItemTemplate>
                                                     </HorizontalStackLayout>
                                                     <!-- Edit and delete, on every device (a swipe would fight the sideways scroll) -->
-                                                    <HorizontalStackLayout Spacing="8" WidthRequest="{StaticResource TableActionsWidth}"
+                                                    <HorizontalStackLayout Spacing="8" WidthRequest="{x:Static services:ProductTable.ActionsWidth}"
                                                                            IsVisible="{Binding BindingContext.CanManageProducts, Source={x:Reference ThisPage}}">
                                                         <Button StyleClass="Icon" Text="{StaticResource IconEdit}" AutomationId="EditProductButton"
                                                                 SemanticProperties.Description="{Binding Name, StringFormat='Edit {0}'}"

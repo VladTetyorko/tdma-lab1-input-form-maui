@@ -78,7 +78,7 @@
                     </ScrollView>
                 </Grid>
             </components:WideTable>
-            <Label Grid.Row="2" Text="{Binding EmptyText}" Style="{StaticResource TextBody}" Margin="0,36,0,0" Padding="0,24"
+            <Label Grid.Row="2" Text="{Binding EmptyText}" Style="{StaticResource TextBody}" Margin="0,36,0,0" Padding="0,24" InputTransparent="True"
                    VerticalOptions="Start" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextSecondary}" />
         </Grid>
         <components:BottomNav Grid.Row="2" Grid.Column="1" />

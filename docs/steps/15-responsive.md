@@ -52,7 +52,7 @@ and rows together; the rows still scroll vertically.
   `SelectedExtraColumn`).
 - App: `Views/Components/WideTable.cs`, `BottomNav` (placement and mode), `BottomNavBar`, `NavRail`;
   `ProductsPage`, `ActivityPage`, `HomePage`, `ProductDetailPage`, `SearchPage` (rail column), `OperationTable`
-  (two-line product name); `Styles.xaml` (`TableActionsWidth`, `OperationTableMinWidth`, `NavRailBreakpoint`,
+  (two-line product name); `Styles.xaml` (`OperationTableMinWidth`, `NavRailBreakpoint`,
   `NavRailWidth`).
 - Tests: columns always Barcode, Qty and every characteristic; `MinimumWidth` with and without actions;
   `TableMinimumWidth` follows characteristics and `CanManageProducts`.

@@ -8,9 +8,8 @@
 
     <!-- Sizes (design-system.md section 6) -->
     <x:Double x:Key="DrawerWidth">320</x:Double>
-    <!-- Tables: the actions column of the product table (two icon buttons) and the least width of the operation table
-         (8 + 48 + 8 + 200 + 8 + 32 + 8 + 56 + 8); narrower than that a table scrolls sideways -->
-    <x:Double x:Key="TableActionsWidth">104</x:Double>
+    <!-- Tables: the least width of the operation table (8 + 48 + 8 + 200 + 8 + 32 + 8 + 56 + 8); narrower than that it
+         scrolls sideways. The product table computes its own (ProductTable.MinimumWidth) -->
     <x:Double x:Key="OperationTableMinWidth">376</x:Double>
     <!-- Navigation: a bar below this width, a rail from it (Material 3 medium window) -->
     <x:Double x:Key="NavRailBreakpoint">600</x:Double>
