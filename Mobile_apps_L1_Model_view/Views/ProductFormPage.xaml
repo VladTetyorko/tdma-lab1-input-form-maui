@@ -19,12 +19,12 @@
     <ScrollView>
         <VerticalStackLayout Padding="30,20" Spacing="8">
             <Label Text="Name" />
-            <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Product name" />
-            <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" />
+            <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Product name" AutomationId="ProductNameEntry" />
+            <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" AutomationId="NameErrorLabel" />
 
             <Label Text="Barcode (EAN-13)" />
-            <Entry Text="{Binding Barcode, Mode=TwoWay}" Placeholder="13 digits" Keyboard="Numeric" MaxLength="13" />
-            <Label Text="{Binding BarcodeError}" Style="{StaticResource ErrorLabel}" />
+            <Entry Text="{Binding Barcode, Mode=TwoWay}" Placeholder="13 digits" Keyboard="Numeric" MaxLength="13" AutomationId="BarcodeEntry" />
+            <Label Text="{Binding BarcodeError}" Style="{StaticResource ErrorLabel}" AutomationId="BarcodeErrorLabel" />
 
             <Label Text="Photo" />
             <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
@@ -38,13 +38,13 @@
                         IsVisible="{Binding Photo.HasPhoto}" Margin="0,0,10,6" />
             </FlexLayout>
 
-            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
 
             <Label Text="{Binding DataSource}" Style="{StaticResource CaptionLabel}" />
 
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Save" Command="{Binding SaveCommand}" />
-                <Button Text="Cancel" Command="{Binding CancelCommand}" />
+                <Button Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveProductButton" />
+                <Button Text="Cancel" Command="{Binding CancelCommand}" AutomationId="CancelProductButton" />
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

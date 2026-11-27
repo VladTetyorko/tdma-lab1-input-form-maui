@@ -49,11 +49,11 @@ Views/         XAML pages, no logic in code-behind except lifecycle forwarding
 Converters/    value converters
 ```
 
-From Lab 8 the first five folders live in the platform-neutral **`StockRoom.Core`**
-library (`net10.0`, **no reference to `Microsoft.Maui.*`**). The MAUI app keeps
-`Views/`, `Converters/`, `Platforms/`, the `Maui*` implementations of Core
-interfaces and `MauiProgram`. Before Lab 8 the same rule is followed inside one
-project, so the move is only `git mv` plus a project reference.
+From Lab 8 `Models/`, `Data/`, `ViewModels/` and the platform-free part of `Services/` live in the
+platform-neutral **`StockRoom.Core`** project (`net10.0`, **no reference to `Microsoft.Maui.*`**; namespaces are
+unchanged, `Mobile_apps_L1_Model_view.*`). The MAUI app keeps `Views/`, `Converters/`, `Platforms/`, the
+`Maui*` / `Shell*` / `Camera*` / `Sentry*` implementations of Core interfaces (in its `Services/` folder) and
+`MauiProgram`. A new platform-free class goes to Core; a class that needs a MAUI type goes to the app behind a Core interface.
 
 ## 2a. Cross-cutting rules (Labs 5–9)
 

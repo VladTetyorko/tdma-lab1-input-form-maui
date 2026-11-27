@@ -1,5 +1,7 @@
 # StockRoom — a warehouse app built lab by lab
 
+[![CI](https://github.com/VladTetyorko/tdma-lab1-input-form-maui/actions/workflows/ci.yml/badge.svg)](https://github.com/VladTetyorko/tdma-lab1-input-form-maui/actions/workflows/ci.yml)
+
 StockRoom is a .NET MAUI (C#, MVVM) mobile app for running a small warehouse.
 It is also a **teaching project**: it is built one lab at a time for the
 *Mobile Development (.NET MAUI)* course, and the repository records every step
@@ -100,7 +102,7 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 05 | 5 | [Logging, global error handling, log viewer, crash reporter](docs/steps/05-logging.md) | done (775 tests) |
 | 06 | 6 | [Login, password hashing, session token, roles, biometrics, certificate pinning](docs/steps/06-auth.md) | done (950 tests) |
 | 07 | 7 | [Device capabilities: permissions, product photo, operation location, map, shake, connectivity banner](docs/steps/07-device.md) | done (1206 tests) |
-| 08 | 8 | Core library, Moq tests, CI, UI tests | planned |
+| 08 | 8 | [Core library, Moq tests, integration tests, GitHub Actions CI with coverage gate, AutomationId, Appium UI tests](docs/steps/08-testing-ci.md) | done (1227 tests + 2 UI tests not run; ViewModels 97.4 % coverage) |
 | 09 | 9 | Final module: search, access matrix, APK, v1.0 | planned |
 
 ## Decision log
@@ -183,6 +185,13 @@ Every architectural decision, newest last. Details are in the step documents.
 | 72 | 7 | `IShakeDetector` counts `Start` / `Stop`; `IShakeGesture` (one per page) debounces 2 s with `IClock`, runs the action through `IMainThread`, and is off when signed out or switched off in Settings (default on); shake on the list opens the scanner, on the scanner it scans again | The next page can start before the previous one stops; one shake raises several events; a shake must not navigate from the login page or stack scanners |
 | 73 | 7 | `ConnectivityBannerViewModel` shows offline / syncing / N waiting / all synced from existing events; `ISyncService` gains `IsSyncing` and `Started`; nothing polls | Reusable by any page (DRY); polling wakes the radio and the database; only "syncing" had no signal |
 | 74 | 7 | Android: `CAMERA`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`; camera, location, GPS and accelerometer `uses-feature` are `required="false"`; `<queries>` for the camera and `geo:` intents; iOS usage strings for camera, photos and location | The app must install and work without the hardware (manual entry, no location, no shake); Android 11 package visibility |
+| 75 | 8 | New project `StockRoom.Core` (`net10.0`, no `Microsoft.Maui.*`) holds `Models/`, `Data/` (+ embedded migrations), `Services/` (interfaces and pure logic), `ViewModels/` and `AddStockRoomCore`; the app keeps `Views/`, `Converters/`, `Platforms/`, `Maui*` / `Shell*` / `Camera*` / `Sentry*` implementations and `MauiProgram`. **Namespaces and `RootNamespace` stay `Mobile_apps_L1_Model_view.*`** | Only projects and folders move (`git mv`, history kept); renaming would touch 150+ files and every XAML `xmlns` for no behaviour. Core cannot reference MAUI, so the compiler enforces the layer rule |
+| 76 | 8 | The ViewModels receive navigation parameters through `INavigationParameterReceiver` (Core); the four pages implement the Shell's `IQueryAttributable` and forward | `IQueryAttributable` was the last Shell type in a ViewModel; same pattern as `PageLifecycleBehavior`; method name unchanged, so no test changed |
+| 77 | 8 | `Mobile_apps_L1_Model_view.Tests` is plain `net10.0` and references Core only (+ the patched native `SQLitePCLRaw.lib.e_sqlite3` 2.1.14); tests of MAUI-bound classes (42) are in `Mobile_apps_L1_Model_view.AppTests` (Windows, reuses the Core test fakes, not in CI); none was deleted | The CI job runs on ubuntu without the MAUI workloads (verified in Docker: 1185 pass on Linux); the native sqlite library is chosen by the host, not by Core |
+| 78 | 8 | Moq and FluentAssertions 6.12.x are used only by the new `*MoqTests` and `RepositoryCrudIntegrationTests`; the existing fake-based tests are not rewritten | AGENTS 3; fakes also serve the end-to-end container; mocks are for verifying interactions (`Times.Never` for a denied role) |
+| 79 | 8 | CI: `test` (ubuntu, coverage, ReportGenerator, artifact) then `build-android` (windows, `needs: test`, `maui-android` workload, Release); no Windows build job | Cheap fast feedback first; the Android build compiles XAML and `MauiProgram`; Windows adds minutes for little signal |
+| 80 | 8 | Coverage gate: `.github/scripts/check_coverage.py` fails the job when line coverage of classes under `Mobile_apps_L1_Model_view.ViewModels.` is below 60 % (measured 97.4 %); it counts distinct (file, line) pairs | A readable script that runs locally on the same Cobertura file; compiler-generated classes of one ViewModel are not counted twice |
+| 81 | 8 | UI tests (`Mobile_apps_L1_Model_view.UiTests`, Appium, `[Trait("Category","UI")]`) are a separate project that nothing references; platform chosen by `STOCKROOM_UI_PLATFORM` (`windows` / `android`); they are not run by CI or by `dotnet test <Tests project>` | They need a device and a server; a plain checkout must never fail for lack of an emulator. Written but **not executed** by the agent |
 
 ## Architecture
 
@@ -447,10 +456,14 @@ Without a key the map area is blank; the pin list and *Open in maps* still work.
 ## Repository layout
 
 ```
-Mobile_apps_L1_Model_view/        MAUI app (Models, Services, Data, ViewModels, Views, Converters)
-Mobile_apps_L1_Model_view/Data/Migrations/  Numbered SQL schema scripts (embedded resources)
+StockRoom.Core/                   Platform-free core (net10.0): Models, Services, Data, ViewModels, AddStockRoomCore
+StockRoom.Core/Data/Migrations/   Numbered SQL schema scripts (embedded resources)
+Mobile_apps_L1_Model_view/        MAUI app: Views, Converters, Platforms, Maui*/Shell* implementations, MauiProgram
 Mobile_apps_L1_Model_view/docks/  Lab assignments (PDF, Ukrainian)
-Mobile_apps_L1_Model_view.Tests/  Unit and end-to-end tests (real SQLite file, fake platform services)
+Mobile_apps_L1_Model_view.Tests/  Unit, integration and end-to-end tests of Core (net10.0, any OS; real SQLite file, fake platform services)
+Mobile_apps_L1_Model_view.AppTests/  Tests of MAUI-bound classes (Windows only)
+Mobile_apps_L1_Model_view.UiTests/ Appium UI tests ([Category=UI], not run in CI)
+.github/                          CI workflow and the coverage gate script
 docs/domain/                      Domain model, roles, entity catalogue
 docs/steps/                       One document per step / PR
 ```
@@ -465,6 +478,14 @@ dotnet test Mobile_apps_L1_Model_view.Tests
 ```
 
 Android: add `-f net10.0-android -p:AndroidSdkDirectory="$LOCALAPPDATA/Android/Sdk"`.
+
+Other test commands (details in [step 08](docs/steps/08-testing-ci.md)):
+
+```bash
+dotnet test Mobile_apps_L1_Model_view.Tests --filter "Category!=UI" --collect:"XPlat Code Coverage"   # what CI runs (any OS)
+dotnet test Mobile_apps_L1_Model_view.AppTests        # MAUI-bound tests, Windows only
+dotnet test Mobile_apps_L1_Model_view.UiTests         # Appium; needs a running Appium server and an app (see step 08)
+```
 
 **Database.** The first start creates and seeds `stockroom.db3` in the app data
 folder (Windows, unpackaged: `%LOCALAPPDATA%/User Name/com.companyname.mobile_apps_l1_model_view/Data`).

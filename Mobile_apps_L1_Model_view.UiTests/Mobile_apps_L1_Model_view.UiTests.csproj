@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- UI tests drive the running app through Appium (Windows driver or Android UiAutomator2). They need an app or an
+         emulator, so every test carries [Trait("Category","UI")] and CI filters them out with Category!=UI.
+         Not referenced by the default test project: dotnet test Mobile_apps_L1_Model_view.Tests never runs them. -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Appium.WebDriver" Version="5.0.0"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Only for the Ean13 helper that makes a valid barcode for the new product -->
+        <ProjectReference Include="..\StockRoom.Core\StockRoom.Core.csproj"/>
+    </ItemGroup>
+
+</Project>

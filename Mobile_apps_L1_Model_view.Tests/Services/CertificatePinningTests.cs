@@ -151,19 +151,20 @@ public class CertificatePinningTests : IDisposable
         var client = OpenFoodFactsLookup.CreateClient(new HttpClientHandler());
 
         Assert.Equal(new Uri(OpenFoodFactsLookup.BaseUrl), client.BaseAddress);
-        Assert.Contains("PinnedHandlerFactory", File.ReadAllText(SourceFile("MauiProgram.cs")));
-        Assert.DoesNotContain("PinnedHandlerFactory", File.ReadAllText(SourceFile("Services/OpenFoodFactsLookup.cs")));
-        Assert.DoesNotContain("PinnedHandlerFactory", File.ReadAllText(SourceFile("ServiceCollectionExtensions.cs")));
+        Assert.Contains("PinnedHandlerFactory", File.ReadAllText(SourceFile("Mobile_apps_L1_Model_view", "MauiProgram.cs")));
+        Assert.DoesNotContain("PinnedHandlerFactory", File.ReadAllText(SourceFile("StockRoom.Core", "Services/OpenFoodFactsLookup.cs")));
+        Assert.DoesNotContain("PinnedHandlerFactory", File.ReadAllText(SourceFile("StockRoom.Core", "ServiceCollectionExtensions.cs")));
     }
 
-    private static string SourceFile(string relative)
+    // The source lives in the app project (MauiProgram) or in the Core project (everything else)
+    private static string SourceFile(string project, string relative)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Mobile_apps_L1_Model_view", relative)))
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, project, relative)))
         {
             directory = directory.Parent;
         }
 
-        return Path.Combine(directory?.FullName ?? throw new FileNotFoundException(relative), "Mobile_apps_L1_Model_view", relative);
+        return Path.Combine(directory?.FullName ?? throw new FileNotFoundException(relative), project, relative);
     }
 }

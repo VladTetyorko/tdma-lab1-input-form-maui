@@ -18,7 +18,7 @@ public partial class OperationViewModel(
     INavigationService navigation,
     ILocationService locationService,
     IDeviceFeedback feedback,
-    ILogger<OperationViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    ILogger<OperationViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private Guid _productId;
     private string _barcode = string.Empty;

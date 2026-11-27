@@ -61,7 +61,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
@@ -71,14 +70,11 @@
         <PackageReference Include="Serilog.Extensions.Logging" Version="11.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-        <!-- SQLite: sqlite-net-pcl is the thin ORM; the bundle ships the native sqlite3 library per platform -->
-        <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-        <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
     </ItemGroup>
 
-    <!-- Numbered schema scripts are read by MigrationRunner; the logical name is the file name -->
+    <!-- Models, services, SQLite data layer and ViewModels (CommunityToolkit.Mvvm, sqlite-net-pcl come with it) -->
     <ItemGroup>
-        <EmbeddedResource Include="Data\Migrations\*.sql" LogicalName="Migrations/%(Filename)%(Extension)" />
+        <ProjectReference Include="..\StockRoom.Core\StockRoom.Core.csproj" />
     </ItemGroup>
 
     <!-- The bundle's native sqlite3 (2.1.11) has a known vulnerability (GHSA-2m69-gcr7-jv3q); 2.1.14 fixes it.
