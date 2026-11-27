@@ -12,5 +12,8 @@ public sealed class InMemoryOperationRepository : InMemoryRepository<Operation>,
 
     public async Task<bool> AnyForProductAsync(Guid productId) => (await GetByProductAsync(productId)).Count > 0;
 
+    public async Task<IReadOnlyList<Operation>> GetRecentAsync(int count) =>
+        [.. (await GetAllAsync()).Reverse().OrderByDescending(o => o.CreatedAt).Take(count)];
+
     public Task AddAsync(Operation operation) => InsertAsync(operation);
 }

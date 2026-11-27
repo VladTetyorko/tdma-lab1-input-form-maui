@@ -28,4 +28,20 @@ public class RoutesTests
         Assert.Equal(string.Empty, Routes.Leaf(null));
         Assert.Equal(string.Empty, Routes.Leaf(string.Empty));
     }
+
+    [Theory]
+    [InlineData(Routes.Products, "//products")]
+    [InlineData(Routes.Home, "//home")]
+    [InlineData(Routes.Search, "//search")]
+    [InlineData(Routes.Activity, "//activity")]
+    [InlineData(Routes.Receive, "receive")]
+    [InlineData(Routes.Issue, "issue")]
+    [InlineData(Routes.Settings, "settings")]
+    [InlineData(Routes.ProductForm, "productform")]
+    [InlineData("//products", "//products")]
+    [InlineData("..", "..")]
+    public void ForShell_MakesOnlyTheMainEntriesAbsolute(string route, string expected)
+    {
+        Assert.Equal(expected, Routes.ForShell(route));
+    }
 }

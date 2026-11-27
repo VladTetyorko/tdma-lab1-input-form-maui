@@ -29,11 +29,11 @@ public sealed class StockService(
             return Result<Operation>.Failure("Sign in before recording operations.");
         }
 
-        if (!RolePermissions.CanRecord(user.Role, direction))
+        if (OperationRules.RoleRefusal(user.Role, direction) is { } refusal)
         {
             logger.LogWarning("Role {Role} (user {UserId}) denied recording {Direction} on product {ProductId}",
                 user.Role, user.Id, direction, productId);
-            return Result<Operation>.Failure($"Your role ({user.Role}) cannot record {direction} operations.");
+            return Result<Operation>.Failure(refusal);
         }
 
         if (quantity <= 0)
@@ -48,7 +48,8 @@ public sealed class StockService(
             return Result<Operation>.Failure("Product not found.");
         }
 
-        if (direction == OperationDirection.Out && quantity > await GetQuantityOnHandAsync(productId))
+        if (direction == OperationDirection.Out
+            && OperationRules.ExceedsStock(direction, quantity, await GetQuantityOnHandAsync(productId)))
         {
             logger.LogWarning("Out of {Quantity} units of product {ProductId} rejected: not enough on hand", quantity, productId);
             return Result<Operation>.Failure("Not enough units on hand.");

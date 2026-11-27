@@ -9,7 +9,7 @@ namespace Mobile_apps_L1_Model_view.Tests.Data;
 public class MigrationRunnerTests : IDisposable
 {
     private static readonly string[] StockRoomTables =
-        ["Users", "Products", "Characteristics", "ProductCharacteristics", "Operations", "SyncQueue"];
+        ["Users", "Products", "Characteristics", "ProductCharacteristics", "Operations", "SyncQueue", "StockDocuments"];
 
     private readonly TempDatabasePath _paths = new();
     private readonly List<SQLiteAsyncConnection> _connections = [];
@@ -42,8 +42,8 @@ public class MigrationRunnerTests : IDisposable
 
         var version = await StockRoomRunner().MigrateAsync(connection);
 
-        Assert.Equal(4, version);
-        Assert.Equal(4, await connection.ExecuteScalarAsync<int>("PRAGMA user_version"));
+        Assert.Equal(5, version);
+        Assert.Equal(5, await connection.ExecuteScalarAsync<int>("PRAGMA user_version"));
         var tables = await connection.QueryScalarsAsync<string>(
             "SELECT name FROM sqlite_master WHERE type = 'table'");
         foreach (var table in StockRoomTables)
@@ -62,7 +62,7 @@ public class MigrationRunnerTests : IDisposable
 
         var version = await runner.MigrateAsync(connection);
 
-        Assert.Equal(4, version);
+        Assert.Equal(5, version);
         Assert.Equal(3, usersAfterFirstRun);
         Assert.Equal(usersAfterFirstRun, await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Users"));
     }
@@ -133,13 +133,37 @@ public class MigrationRunnerTests : IDisposable
     {
         var migrations = new EmbeddedMigrationSource().GetMigrations();
 
-        Assert.Equal([1, 2, 3, 4], migrations.Select(m => m.Version));
-        Assert.Equal(["0001_initial", "0002_seed", "0003_auth", "0004_device"], migrations.Select(m => m.Name));
+        Assert.Equal([1, 2, 3, 4, 5], migrations.Select(m => m.Version));
+        Assert.Equal(["0001_initial", "0002_seed", "0003_auth", "0004_device", "0005_documents"], migrations.Select(m => m.Name));
         Assert.All(migrations, m => Assert.False(string.IsNullOrWhiteSpace(m.Sql)));
     }
 
     private sealed class FakeMigrationSource(params Migration[] migrations) : IMigrationSource
     {
         public IReadOnlyList<Migration> GetMigrations() => migrations.OrderBy(m => m.Version).ToList();
+    }
+
+    private sealed class UpTo(int version) : IMigrationSource
+    {
+        public IReadOnlyList<Migration> GetMigrations() =>
+            [.. new EmbeddedMigrationSource().GetMigrations().Where(m => m.Version <= version)];
+    }
+
+    [Fact]
+    public async Task DatabaseAtVersion4_GetsDocuments_AndKeepsItsOperations()
+    {
+        var connection = Open();
+        await new MigrationRunner(new UpTo(4)).MigrateAsync(connection);
+        await connection.ExecuteAsync(
+            "INSERT INTO Operations (Id, ProductId, Direction, Quantity, CreatedByUserId, CreatedAt, UpdatedAt) " +
+            "SELECT 'old', Id, 'In', 7, CreatedByUserId, CreatedAt, UpdatedAt FROM Products LIMIT 1");
+
+        var version = await StockRoomRunner().MigrateAsync(connection);
+
+        Assert.Equal(5, version);
+        Assert.Equal(7, await connection.ExecuteScalarAsync<int>("SELECT Quantity FROM Operations WHERE Id = 'old'"));
+        Assert.Equal(1, await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM Operations WHERE Id = 'old' AND DocumentId IS NULL"));
+        Assert.Equal(0, await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM StockDocuments"));
     }
 }

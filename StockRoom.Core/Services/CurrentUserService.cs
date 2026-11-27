@@ -4,6 +4,8 @@ namespace Mobile_apps_L1_Model_view.Services;
 
 public sealed class CurrentUserService : ICurrentUserService
 {
+    public event EventHandler? Changed;
+
     public User? CurrentUser { get; private set; }
 
     public Role? CurrentRole => CurrentUser?.Role;
@@ -14,10 +16,12 @@ public sealed class CurrentUserService : ICurrentUserService
     {
         ArgumentNullException.ThrowIfNull(user);
         CurrentUser = user;
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     public void SignOut()
     {
         CurrentUser = null;
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 }

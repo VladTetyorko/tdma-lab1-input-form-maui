@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The green confirmation after a commit. It leaves by itself -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.SuccessBanner"
+             IsVisible="False">
+    <Border StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12"
+            Background="{DynamicResource PrimarySoftBrush}" AutomationId="SuccessBanner">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+            <Label Text="{StaticResource IconCheckmarkCircle}" Style="{StaticResource IconGlyph}" FontSize="24"
+                   TextColor="{DynamicResource ChipSuccessForeground}" />
+            <Label x:Name="MessageText" Grid.Column="1" Style="{StaticResource TextBodyStrong}" VerticalOptions="Center"
+                   AutomationId="SuccessText" />
+        </Grid>
+    </Border>
+</ContentView>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The navigation of the four root pages (design revision 4, section 3.2). The code-behind puts a BottomNavBar (a
+     phone) or a NavRail (600 wide and more) in here, so only one set of AutomationIds exists at a time -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.BottomNav" />

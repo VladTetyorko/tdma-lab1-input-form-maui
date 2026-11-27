@@ -48,7 +48,7 @@ public class DatabaseExporterTests : IDisposable
         {
             Assert.Equal("ok", await copy.ExecuteScalarAsync<string>("PRAGMA integrity_check"));
             Assert.Equal(13, await copy.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Products"));
-            Assert.Equal(4, await copy.ExecuteScalarAsync<int>("PRAGMA user_version"));
+            Assert.Equal(5, await copy.ExecuteScalarAsync<int>("PRAGMA user_version"));
         }
         finally
         {

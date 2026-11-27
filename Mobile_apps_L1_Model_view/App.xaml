@@ -2,11 +2,14 @@
 
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:themes="clr-namespace:Mobile_apps_L1_Model_view.Resources.Styles.Themes"
              x:Class="Mobile_apps_L1_Model_view.App">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <!-- Default theme; MauiThemeApplier swaps it (light green / dark) when the theme choice is applied -->
+                <themes:LightGreen />
+                <ResourceDictionary Source="Resources/Styles/Icons.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

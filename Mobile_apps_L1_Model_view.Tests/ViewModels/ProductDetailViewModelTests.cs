@@ -2,6 +2,7 @@ using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
 using Mobile_apps_L1_Model_view.ViewModels;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.Tests.ViewModels;
 
@@ -19,7 +20,7 @@ public class ProductDetailViewModelTests
 
     private ProductDetailViewModel NewViewModel() => new(
         _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation,
-        _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback, _store.Logger<ProductDetailViewModel>());
+        _store.ProductService, _store.PhotoEditor, _store.Feed, _store.Viewer, _store.Sheets, _store.Confirm, _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()), _store.Clock);
 
     [Fact]
     public async Task ApplyQueryAttributes_ShowsTheSelectedProductBeforeLoad()
@@ -67,7 +68,73 @@ public class ProductDetailViewModelTests
 
         await ApplyAsync(drill.Id);
 
-        Assert.Equal(new[] { 2, 5 }, _viewModel.History.Select(h => h.Quantity));
+        Assert.Equal(new[] { 2, 5 }, _viewModel.History.SelectMany(day => day.Rows).Select(row => row.Entry.Quantity));
+    }
+
+    [Theory]
+    [InlineData(Role.Storekeeper)]
+    [InlineData(Role.Driver)]
+    public async Task Menu_OfAnotherRole_HasOnlyRecordWithReason(Role role)
+    {
+        await _store.SignInAsync(role);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        await ApplyAsync(drill.Id);
+        _store.Sheets.OnShow = FakeSheetService.DismissAsync;
+
+        await _viewModel.OpenMenuCommand.ExecuteAsync(null);
+        await _viewModel.OpenPhotoMenuCommand.ExecuteAsync(null);
+        await _viewModel.DeleteCommand.ExecuteAsync(null);
+
+        var menu = Assert.IsType<ActionSheetViewModel>(Assert.Single(_store.Sheets.Shown));
+        Assert.Equal(["RecordOperationButton"], menu.Actions.Select(a => a.Id));
+        Assert.NotNull(await _store.Products.GetByIdAsync(drill.Id));
+        Assert.Equal($"Your role ({role}) cannot delete products.", _viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task Menu_OfTheManager_EditsAndDeletes()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        await ApplyAsync(drill.Id);
+        var choose = "EditDetailButton";
+        _store.Sheets.OnShow = sheet =>
+        {
+            var menu = (ActionSheetViewModel)sheet;
+            menu.ChooseCommand.Execute(menu.Actions.Single(a => a.Id == choose));
+            return Task.CompletedTask;
+        };
+
+        await _viewModel.OpenMenuCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.IsEditing);
+        _viewModel.ToggleEditCommand.Execute(null);
+
+        choose = "DeleteProductButton";
+        await _viewModel.OpenMenuCommand.ExecuteAsync(null);
+
+        Assert.Null(await _store.Products.GetByIdAsync(drill.Id));
+        Assert.Equal(Routes.Back, _store.Navigation.RequestedRoutes.Last());
+    }
+
+    [Fact]
+    public async Task History_ShowsAtMostFive_AndItsHeaderOpensActivityForTheProduct()
+    {
+        var manager = await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        for (var i = 1; i <= 7; i++)
+        {
+            await _store.Operations.AddAsync(new Operation
+            {
+                ProductId = drill.Id, Direction = OperationDirection.In, Quantity = i, CreatedByUserId = manager.Id,
+                CreatedAt = new DateTime(2026, 1, i, 9, 0, 0, DateTimeKind.Utc)
+            });
+        }
+
+        await ApplyAsync(drill.Id);
+        await _viewModel.OpenHistoryCommand.ExecuteAsync(null);
+
+        Assert.Equal(5, _viewModel.History.Single().Rows.Count);
+        Assert.Equal(Routes.Activity, _store.Navigation.RequestedRoutes.Last());
     }
 
     [Fact]
@@ -130,6 +197,7 @@ public class ProductDetailViewModelTests
         var drill = await _store.AddProductAsync("Drill", DrillBarcode);
         await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         var weight = _viewModel.Characteristics.Single();
 
         weight.Value = "heavy";
@@ -137,6 +205,40 @@ public class ProductDetailViewModelTests
 
         weight.Value = "2";
         Assert.True(_viewModel.SaveCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task Edit_IsAModeThatOffersSave_AndLeavingItDropsTheChanges()
+    {
+        await _store.SignInAsync(Role.Manager);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
+        await _store.SetValueAsync(drill, weight, "1.5");
+        await ApplyAsync(drill.Id);
+        Assert.True(_viewModel.CanStartEditing && _viewModel.IsViewing);
+        Assert.False(_viewModel.SaveCommand.CanExecute(null));
+
+        _viewModel.ToggleEditCommand.Execute(null);
+        Item(weight.Id).Value = "2";
+        Assert.True(_viewModel.IsEditing && _viewModel.SaveCommand.CanExecute(null));
+
+        _viewModel.ToggleEditCommand.Execute(null);
+
+        Assert.False(_viewModel.IsEditing);
+        Assert.Equal("1.5", Item(weight.Id).Value);
+        Assert.Null(_store.AppState.GetDraft<ProductDetailDraft>());
+    }
+
+    [Fact]
+    public async Task ANonManager_HasNoEdit()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        var drill = await _store.AddProductAsync("Drill", DrillBarcode);
+        await ApplyAsync(drill.Id);
+
+        Assert.False(_viewModel.ToggleEditCommand.CanExecute(null));
+        Assert.False(_viewModel.CanStartEditing);
+        Assert.Equal(("0 on hand", true), (_viewModel.OnHandText, _viewModel.IsOutOfStock));
     }
 
     [Fact]
@@ -157,6 +259,7 @@ public class ProductDetailViewModelTests
         var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
         await _store.SetValueAsync(drill, weight, "1.5");
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         _viewModel.Characteristics.Single().Value = "heavy";
 
         await _viewModel.SaveCommand.ExecuteAsync(null);
@@ -172,6 +275,7 @@ public class ProductDetailViewModelTests
         var drill = await _store.AddProductAsync("Drill", DrillBarcode);
         var weight = await _store.AddCharacteristicAsync("Weight (kg)", CharacteristicValueType.Number);
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         _viewModel.Characteristics.Single().Value = "2.5";
 
         await _viewModel.SaveCommand.ExecuteAsync(null);
@@ -189,6 +293,7 @@ public class ProductDetailViewModelTests
         var drill = await _store.AddProductAsync("Drill", DrillBarcode);
         await _store.AddCharacteristicAsync("Color", CharacteristicValueType.Text);
         await ApplyAsync(drill.Id);
+        _viewModel.ToggleEditCommand.Execute(null);
         _store.CurrentUser.SignOut();
 
         await _viewModel.SaveCommand.ExecuteAsync(null);
@@ -387,5 +492,22 @@ public class ProductDetailViewModelTests
             [NavigationKeys.SelectedProduct] = summary!
         });
         await _viewModel.LoadCommand.ExecuteAsync(null);
+    }
+
+    [Fact]
+    public async Task StartReceive_PutsTheProductOnTheDraftAndOpensReceive()
+    {
+        await _store.SignInAsync(Role.Driver);
+        var product = await _store.AddProductAsync("Drill", "4006381333931");
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.SelectedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
+        });
+
+        await _viewModel.StartReceiveCommand.ExecuteAsync(null);
+        await _viewModel.StartIssueCommand.ExecuteAsync(null);
+
+        Assert.False(_viewModel.CanIssue);
+        Assert.Equal(Routes.Receive, Assert.Single(_store.Navigation.RequestedRoutes));
     }
 }

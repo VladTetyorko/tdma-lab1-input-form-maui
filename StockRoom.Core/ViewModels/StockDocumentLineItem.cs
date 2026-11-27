@@ -1,0 +1,82 @@
+using System.ComponentModel;
+using Mobile_apps_L1_Model_view.Models;
+using Mobile_apps_L1_Model_view.Services;
+
+namespace Mobile_apps_L1_Model_view.ViewModels;
+
+// One line as the page shows it. Product is null when no product has the barcode
+public sealed record StockDocumentLineItem(string Barcode, ProductSummary? Product, int Quantity, OperationDirection Direction)
+    : INotifyPropertyChanged
+{
+    private string? _typed;
+    private string _lookupText = string.Empty;
+
+    public bool IsUnknown => Product is null;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    // For an unknown code: what the open databases say the item is, with their attribution
+    public string LookupText
+    {
+        get => _lookupText;
+        set
+        {
+            _lookupText = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LookupText)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasLookupText)));
+        }
+    }
+
+    public bool HasLookupText => LookupText.Length > 0;
+
+    public bool ExceedsStock => Product is not null && OperationRules.ExceedsStock(Direction, TypedQuantity, Product.Quantity);
+
+    // An invalid line blocks the commit; the sentence in Problem says why
+    public bool IsInvalid => IsUnknown || ExceedsStock;
+
+    public string Name => Product?.Name ?? "Unknown barcode";
+
+    public int OnHand => Product?.Quantity ?? 0;
+
+    public bool IsOutOfStock => Product is not null && Product.Quantity <= 0;
+
+    // An invalid line says "Out of stock" in red already, so it needs no chip as well
+    public bool ShowOutChip => IsOutOfStock && !IsInvalid;
+
+    public int After => Direction == OperationDirection.In ? OnHand + TypedQuantity : OnHand - TypedQuantity;
+
+    // Stock never goes below zero: what is missing is said in words
+    public string StockText => Product is null ? string.Empty
+        : ExceedsStock ? $"on hand {OnHand} → 0, short by {TypedQuantity - OnHand}"
+        : $"on hand {OnHand} → {After}";
+
+    public string Problem => IsUnknown
+        ? $"No product has barcode {Barcode}"
+        : !ExceedsStock ? string.Empty
+        : OnHand <= 0 ? "Out of stock" : $"Only {OnHand} on hand";
+
+    // The line that was just added or increased: its quantity gets the cursor, so typing replaces the number
+    public bool WantsFocus { get; init; }
+
+    // Called while the number is typed (the main button follows it)
+    public Action? Typed { get; set; }
+
+    // For the quantity box: what the person types is applied by SetQuantityCommand, or by the next scan or Review
+    public string QuantityText
+    {
+        get => _typed ?? Quantity.ToString();
+        set
+        {
+            _typed = value;
+            foreach (var name in new[] { nameof(StockText), nameof(Problem), nameof(IsInvalid), nameof(ShowOutChip) })
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            }
+
+            Typed?.Invoke();
+        }
+    }
+
+    // The typed number when it is a usable one, else the line's quantity
+    public int TypedQuantity => int.TryParse(QuantityText, out var typed) && typed > 0 ? typed : Quantity;
+}

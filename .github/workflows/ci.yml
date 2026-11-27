@@ -81,3 +81,40 @@ jobs:
 
       - name: Build for Android
         run: dotnet build Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-android -c Release
+
+  # An installable package for every green run: debug-signed (no keystore, no secret), see docs/RELEASE.md
+  apk:
+    runs-on: windows-latest
+    needs: build-android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: "17"
+
+      - name: Install the MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Publish the APK
+        run: dotnet publish Mobile_apps_L1_Model_view/Mobile_apps_L1_Model_view.csproj -f net10.0-android -c Release -p:AndroidPackageFormat=apk
+
+      - name: Collect the package
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp Mobile_apps_L1_Model_view/bin/Release/net10.0-android/publish/*-Signed.apk artifacts/
+          ls -l artifacts
+          test -n "$(ls artifacts/*.apk)"
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: stockroom-apk
+          path: artifacts/*.apk
+          if-no-files-found: error

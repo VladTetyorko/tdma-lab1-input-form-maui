@@ -145,7 +145,7 @@ descriptive data lives in characteristics.
 | Field | Type | Rules |
 |-------|------|-------|
 | `Name` | `string` | Required, not blank |
-| `Barcode` | `string` | Required, unique; EAN-13 (13 digits, valid check digit) |
+| `Barcode` | `string` | Required, unique; EAN-13 (13 digits, valid check digit). EAN-8, UPC and ISBN-10 input is converted to it ([open-data.md](open-data.md)) |
 | `PhotoPath` | `string?` | Photo of the item (Lab 7): path **relative to the app data folder**, `photos/<barcode>_<yyyyMMdd_HHmmss>.jpg`; `NULL` = no photo. Only the path is stored and synced, the file stays on the device. Never rooted, never `..` (`CHECK` in `0004_device.sql` and `PhotoPaths.IsValidRelative`) |
 
 - **Relations:** has many `ProductCharacteristic`s (its description) and many
@@ -213,15 +213,42 @@ out). The **only** way quantity changes.
 | `Counterparty` | `string?` | Who it was received from / given to. Personal data: **stored AES-encrypted** (base64), plain in the app |
 | `Reason` | `string?` | Why: "delivery", "order #12", "damaged" |
 | `Location` | `GeoPoint?` | Where it was recorded (Lab 7, optional, mainly a driver's drop-off point). Stored as two columns `Latitude` / `Longitude` (`REAL`), both set or both `NULL`; latitude -90..90, longitude -180..180 (`CHECK`). Synced with the operation. Never written to the log |
+| `DocumentId` | `Guid?` | The `StockDocument` the operation belongs to (migration `0005`); empty for a single In/Out. Operations of a document keep `Counterparty` and `Reason` empty: those facts belong to the document (3NF) |
 | `CreatedByUserId` | inherited | Who recorded it |
 | `CreatedAt` | inherited | When it happened |
 
 - **Who can do what:** Storekeeper and Manager record `In` and `Out`; the
-  Driver records `In` only. Everyone sees the history (the Driver only their own).
+  Driver records `In` only. Storekeeper and Manager see every operation; the
+  Driver sees only the ones he recorded (enforced in `OperationFeed` and
+  `ProductCatalog`, not only in the UI).
 - **Immutable:** never edited or deleted. A mistake is fixed by a new
-  operation in the opposite direction, so `UpdatedAt` always equals `CreatedAt`.
+  operation of the difference, so `UpdatedAt` always equals `CreatedAt`.
+  *Correct quantity* writes it as a one-line document with the note
+  `Correction of {Number}`; there is no linking column.
+- **Stock count:** not an entity. Posting it writes ordinary documents with the
+  note `Stock count {date}` (see [`domain-model.md`](domain-model.md)).
 - **Scaling:** a `Location` entity (several warehouses or shelves, not the same
   thing as the optional `GeoPoint` above), a link to a delivery document, a `Transfer` direction.
+
+---
+
+## StockDocument : OwnedEntity
+
+One receipt (`In`) or issue (`Out`) of several products, committed in one transaction with its operations (migration `0005`).
+
+| Property | Type | Rules |
+|----------|------|-------|
+| `Number` | `string` | Unique, `R-yyyyMMdd-0001` or `I-...`; counted per day and direction on this device |
+| `Direction` | `OperationDirection` | Equal to the direction of all its operations (enforced by `StockDocumentService`) |
+| `Counterparty` | `string?` | Supplier or recipient; encrypted like `Operation.Counterparty`; never logged |
+| `Note` | `string?` | Waybill or order number |
+
+```
+User 1 --- * StockDocument 1 --- * Operation * --- 1 Product
+```
+
+- **Who can do what:** the same rules as for operations (the Driver receives only).
+- **Immutable:** never edited or deleted.
 
 ---
 
@@ -253,6 +280,6 @@ added at runtime.
 |------|--------|
 | Several warehouses / shelves | New `Location : OwnedEntity`; `Operation.LocationId`; quantity computed per location |
 | Low-stock alerts | `Product.MinQuantity` |
-| Delivery documents | New `Delivery : OwnedEntity`; `Operation.DeliveryId?` |
+| Delivery documents | Done: `StockDocument` and `Operation.DocumentId` |
 | Edit history for products | Audit table, or `UpdatedByUserId` on `OwnedEntity` |
 | Sync between devices (Lab 4) | Done for the push direction: UUID keys never clash, every write is queued in `SyncQueue`, and the server applies "last write wins" by change time. Pulling other devices' changes is future work |

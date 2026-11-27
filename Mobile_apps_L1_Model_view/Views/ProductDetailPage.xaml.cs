@@ -15,6 +15,15 @@ public partial class ProductDetailPage : ContentPage, IQueryAttributable
     // The Shell hands navigation parameters to the page; the ViewModel (in Core) receives them
     public void ApplyQueryAttributes(IDictionary<string, object> query) => _viewModel.ApplyQueryAttributes(query);
 
+    private void OnPhotoAreaSizeChanged(object? sender, EventArgs e)
+    {
+        var height = Math.Round(PhotoArea.Width * 9 / 16);
+        if (height > 0 && Math.Abs(PhotoArea.HeightRequest - height) > 1)
+        {
+            PhotoArea.HeightRequest = height;
+        }
+    }
+
     // Hardware back button: the same command as the on-screen back arrow and button
     protected override bool OnBackButtonPressed()
     {

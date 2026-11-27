@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:models="clr-namespace:Mobile_apps_L1_Model_view.Models;assembly=StockRoom.Core"
+             xmlns:sheets="clr-namespace:Mobile_apps_L1_Model_view.ViewModels.Sheets;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Sheets.NewCharacteristicContent"
+             x:DataType="sheets:NewCharacteristicViewModel">
+    <VerticalStackLayout Spacing="8">
+        <components:OutlinedField x:Name="NameField" Label="Name" Placeholder="For example Colour" EntryId="NewCharacteristicEntry"
+                                  Text="{Binding Name, Mode=TwoWay}" ReturnCommand="{Binding PrimaryCommand}" />
+        <HorizontalStackLayout Spacing="8">
+            <Button Text="Text" StyleClass="Choice" Command="{Binding SelectTypeCommand}"
+                    CommandParameter="{x:Static models:CharacteristicValueType.Text}" AutomationId="TextTypeButton">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsText}" Value="True">
+                        <Setter Property="Text" Value="✓ Text" />
+                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button Text="Number" StyleClass="Choice" Command="{Binding SelectTypeCommand}"
+                    CommandParameter="{x:Static models:CharacteristicValueType.Number}" AutomationId="NumberTypeButton">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsNumber}" Value="True">
+                        <Setter Property="Text" Value="✓ Number" />
+                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</ContentView>

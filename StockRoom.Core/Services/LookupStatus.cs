@@ -8,6 +8,7 @@ public enum LookupStatus
     // No network, a timeout or a connection error
     Offline,
 
-    // The service answered, but not with usable data (HTTP error, rate limit, malformed JSON)
+    // A service answered, but not with usable data (HTTP error, rate limit, malformed JSON); for the whole chain:
+    // not every database could be asked and none of the others knows the code
     Failed
 }

@@ -1,3 +1,4 @@
+using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.ViewModels;
 
 namespace Mobile_apps_L1_Model_view.Views;
@@ -6,6 +7,9 @@ namespace Mobile_apps_L1_Model_view.Views;
 // (DRY: one behavior instead of OnAppearing/OnDisappearing overrides in every code-behind)
 public sealed class PageLifecycleBehavior : Behavior<Page>
 {
+    // The page a sheet lies on: it was not left, so neither event reaches its ViewModel
+    private Page? _covered;
+
     protected override void OnAttachedTo(Page page)
     {
         base.OnAttachedTo(page);
@@ -20,9 +24,25 @@ public sealed class PageLifecycleBehavior : Behavior<Page>
         base.OnDetachingFrom(page);
     }
 
-    private static void OnAppearing(object? sender, EventArgs e) =>
-        ((sender as Page)?.BindingContext as IPageLifecycleAware)?.OnAppearing();
+    private void OnAppearing(object? sender, EventArgs e)
+    {
+        if (ReferenceEquals(sender, _covered))
+        {
+            _covered = null;
+            return;
+        }
 
-    private static void OnDisappearing(object? sender, EventArgs e) =>
+        ((sender as Page)?.BindingContext as IPageLifecycleAware)?.OnAppearing();
+    }
+
+    private void OnDisappearing(object? sender, EventArgs e)
+    {
+        if (MauiSheetService.IsOpen)
+        {
+            _covered = sender as Page;
+            return;
+        }
+
         ((sender as Page)?.BindingContext as IPageLifecycleAware)?.OnDisappearing();
+    }
 }

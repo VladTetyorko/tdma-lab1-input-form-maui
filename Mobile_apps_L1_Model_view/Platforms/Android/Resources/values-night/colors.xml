@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme: violet accents and the dark page background behind the status bar -->
+    <color name="colorPrimary">#6D4FD1</color>
+    <color name="colorPrimaryDark">#121018</color>
+    <color name="colorAccent">#6D4FD1</color>
+</resources>

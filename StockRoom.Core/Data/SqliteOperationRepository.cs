@@ -32,27 +32,32 @@ public sealed class SqliteOperationRepository(
             "SELECT EXISTS (SELECT 1 FROM Operations WHERE ProductId = ?)", RowFormat.Text(productId)) == 1;
     }
 
+    public async Task<IReadOnlyList<Operation>> GetRecentAsync(int count)
+    {
+        var connection = await _database.GetConnectionAsync();
+        var rows = await connection.QueryAsync<OperationRow>(
+            "SELECT * FROM Operations ORDER BY CreatedAt DESC, rowid DESC LIMIT ?", count);
+
+        var operations = new List<Operation>(rows.Count);
+        foreach (var row in rows)
+        {
+            operations.Add(await ToEntityAsync(row));
+        }
+
+        return operations;
+    }
+
     public Task AddAsync(Operation operation) => InsertAsync(operation);
 
-    protected override async ValueTask<OperationRow> ToRowAsync(Operation operation) => new()
-    {
-        Id = RowFormat.Text(operation.Id),
-        ProductId = RowFormat.Text(operation.ProductId),
-        Direction = RowFormat.Text(operation.Direction),
-        Quantity = operation.Quantity,
-        Counterparty = operation.Counterparty is null ? null : await encryptor.EncryptAsync(operation.Counterparty),
-        Reason = operation.Reason,
-        Latitude = operation.Location?.Latitude,
-        Longitude = operation.Location?.Longitude,
-        CreatedByUserId = RowFormat.Text(operation.CreatedByUserId),
-        CreatedAt = RowFormat.Text(operation.CreatedAt),
-        UpdatedAt = RowFormat.Text(operation.UpdatedAt)
-    };
+    protected override async ValueTask<OperationRow> ToRowAsync(Operation operation) =>
+        OperationRowMapper.ToRow(operation,
+            operation.Counterparty is null ? null : await encryptor.EncryptAsync(operation.Counterparty));
 
     protected override async ValueTask<Operation> ToEntityAsync(OperationRow row) => new()
     {
         Id = RowFormat.ToGuid(row.Id),
         ProductId = RowFormat.ToGuid(row.ProductId),
+        DocumentId = row.DocumentId is null ? null : RowFormat.ToGuid(row.DocumentId),
         Direction = RowFormat.ToEnum<OperationDirection>(row.Direction),
         Quantity = row.Quantity,
         Counterparty = row.Counterparty is null ? null : await DecryptAsync(row),

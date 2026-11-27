@@ -25,9 +25,7 @@ public class RoleRefusalTests
     }
 
     private ProductListViewModel CreateList() => new(
-        _store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Session,
-        _store.AppState, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation, _store.ShakeGesture, _store.Banner,
-        NullLogger<ProductListViewModel>.Instance);
+        _store.Catalog, _store.CharacteristicService, _store.ProductService, _store.CurrentUser, _store.Startup, _store.Alerts, _store.Guard, _store.Navigation, _store.ShakeGesture, NullLogger<ProductListViewModel>.Instance);
 
     [Theory]
     [InlineData(Role.Storekeeper)]
@@ -86,13 +84,9 @@ public class RoleRefusalTests
     public async Task ProductForm_Save_AsNonManager_IsRefused_AndNothingIsAdded(Role role)
     {
         await _store.SignInAsync(role);
-        var form = new ProductFormViewModel(new ProductValidator(_store.Products), _store.ProductService, _store.CurrentUser,
-            _store.Guard, _store.AppState, _store.Navigation, _store.PhotoEditor, NullLogger<ProductFormViewModel>.Instance)
-        {
-            Name = "Drill",
-            Barcode = Barcode
-        };
-
+        var form = _store.ProductForm;
+        form.Name = "Drill";
+        form.Barcode = Barcode;
         await form.SaveCommand.ExecuteAsync(null);
 
         AssertRefused($"Your role ({role}) cannot add products.");
@@ -108,9 +102,9 @@ public class RoleRefusalTests
     {
         await _store.SignInAsync(role);
         var viewModel = new CharacteristicsViewModel(_store.CharacteristicService, _store.Validator, _store.CurrentUser,
-            _store.Guard, _store.Navigation) { NewName = "Color" };
+            _store.Guard, _store.Navigation, _store.Sheets);
 
-        await viewModel.AddCommand.ExecuteAsync(null);
+        await viewModel.NewCommand.ExecuteAsync(null);
 
         AssertRefused($"Your role ({role}) cannot add characteristics.");
         Assert.Equal($"Your role ({role}) cannot add characteristics.", viewModel.StatusMessage);
@@ -169,7 +163,8 @@ public class RoleRefusalTests
         await _store.SignInAsync(role);
         var viewModel = new ProductDetailViewModel(_store.Catalog, _store.CharacteristicService, _store.Validator,
             _store.CurrentUser, _store.Guard, _store.AppState, _store.Navigation, _store.ProductService, _store.PhotoEditor,
-            _store.Maps, _store.Feedback, NullLogger<ProductDetailViewModel>.Instance);
+            _store.Feed, _store.Viewer, _store.Sheets, _store.Confirm, NullLogger<ProductDetailViewModel>.Instance,
+            new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), NullLogger<StockDocumentDraftStore>.Instance), _store.Clock);
         viewModel.ApplyQueryAttributes(new Dictionary<string, object>
         {
             [NavigationKeys.SelectedProduct] = new ProductSummary(product.Id, product.Name, product.Barcode, 0)
@@ -183,30 +178,13 @@ public class RoleRefusalTests
         Assert.Equal("Red", (await _store.Values.GetByProductAsync(product.Id)).Single().Value);
     }
 
-    [Theory]
-    [InlineData(Role.Storekeeper)]
-    [InlineData(Role.Driver)]
-    public async Task Scanner_CreateProduct_AsNonManager_IsRefused_WithoutNavigating(Role role)
-    {
-        await _store.SignInAsync(role);
-        var viewModel = new ScannerViewModel(new FakeBarcodeScanner(), _store.Catalog, _store.CurrentUser, _store.Guard,
-            _store.Navigation, new FakeProductLookup(), _store.ShakeGesture, NullLogger<ScannerViewModel>.Instance) { UnknownBarcode = Barcode };
-
-        await viewModel.CreateProductCommand.ExecuteAsync(null);
-        await viewModel.CreateFromLookupCommand.ExecuteAsync(null);
-
-        Assert.Equal(2, _store.Alerts.Shown.Count);
-        Assert.All(_store.Alerts.Shown, a => Assert.Equal($"Your role ({role}) cannot add products.", a.Message));
-        Assert.Empty(_store.Navigation.RequestedRoutes);
-    }
-
     [Fact]
     public async Task Command_WhenNobodyIsSignedIn_AsksToSignIn()
     {
         var viewModel = new CharacteristicsViewModel(_store.CharacteristicService, _store.Validator, _store.CurrentUser,
-            _store.Guard, _store.Navigation) { NewName = "Color" };
+            _store.Guard, _store.Navigation, _store.Sheets);
 
-        await viewModel.AddCommand.ExecuteAsync(null);
+        await viewModel.NewCommand.ExecuteAsync(null);
 
         AssertRefused("Sign in before you add characteristics.");
     }

@@ -53,6 +53,10 @@ public class SqliteFlowTests : IDisposable
         services.AddSingleton<IShakeDetector>(new FakeShakeDetector());
         services.AddSingleton<IMapLauncher>(new FakeMapLauncher());
         services.AddSingleton<IMainThread>(new FakeMainThread());
+        services.AddSingleton<IKeyboard>(new FakeKeyboard());
+        services.AddSingleton<IConfirmSheet>(new FakeConfirmSheet());
+        services.AddSingleton<ISheetService>(new FakeSheetService());
+        services.AddSingleton<IToastService>(new FakeToastService());
         _app = services.BuildServiceProvider();
         return _app;
     }
@@ -142,7 +146,7 @@ public class SqliteFlowTests : IDisposable
         var restarted = Start();
         var route = await restarted.GetRequiredService<IAppLifecycleService>().RestoreAsync();
 
-        Assert.Equal(Routes.Products, route);
+        Assert.Equal(Routes.Home, route);
         var list = restarted.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
         Assert.Equal(13, list.Products.Count);
@@ -226,6 +230,6 @@ public class SqliteFlowTests : IDisposable
         detail.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = summary });
         await detail.LoadCommand.ExecuteAsync(null);
 
-        Assert.Contains(detail.History, h => h.Counterparty == "Acme Ltd");
+        Assert.Contains(detail.History.SelectMany(d => d.Rows), h => h.Entry.Counterparty == "Acme Ltd");
     }
 }

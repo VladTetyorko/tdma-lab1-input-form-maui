@@ -69,6 +69,12 @@ public sealed class AppScreen(AppSession session)
     {
         if (!IsShown("LoginEntry", TimeSpan.FromSeconds(8)))
         {
+            // Sign out is at the bottom of the drawer, which the menu button of the app bar opens
+            if (!IsShown("SignOutButton", TimeSpan.FromSeconds(2)))
+            {
+                Tap("MenuButton");
+            }
+
             Tap("SignOutButton");
         }
 

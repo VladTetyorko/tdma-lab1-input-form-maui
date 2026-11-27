@@ -40,13 +40,13 @@ public class AppLifecycleServiceTests
     }
 
     [Fact]
-    public async Task RestoreAsync_ValidSession_SignsInAgainAndReturnsProducts()
+    public async Task RestoreAsync_ValidSession_SignsInAgainAndReturnsHome()
     {
         var user = await SaveSessionOfNewUserAsync();
 
         var route = await _lifecycle.RestoreAsync();
 
-        Assert.Equal(Routes.Products, route);
+        Assert.Equal(Routes.Home, route);
         Assert.Equal(user.Id, _currentUser.CurrentUser?.Id);
         Assert.Equal(Role.Storekeeper, _currentUser.CurrentRole);
     }
@@ -197,14 +197,14 @@ public class AppLifecycleServiceTests
     {
         var user = new User { FullName = "Olena Kovalenko", Role = Role.Manager };
         _currentUser.SignIn(user);
-        _navigation.CurrentRoute = Routes.Scanner;
+        _navigation.CurrentRoute = Routes.Search;
 
         _lifecycle.OnDestroying();
 
         var restored = new AppStateService(_preferences);
         restored.Restore();
         Assert.False(_preferences.Values.ContainsKey("state.user"));
-        Assert.Equal(Routes.Scanner, restored.LastRoute);
+        Assert.Equal(Routes.Search, restored.LastRoute);
     }
 
     [Fact]

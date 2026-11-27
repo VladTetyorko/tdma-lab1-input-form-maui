@@ -2,6 +2,7 @@ using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
 using Mobile_apps_L1_Model_view.ViewModels;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.Tests.ViewModels;
 
@@ -12,9 +13,20 @@ public class CharacteristicsViewModelTests
 
     public CharacteristicsViewModelTests()
     {
-        _viewModel = new CharacteristicsViewModel(
-            _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.Navigation);
+        _viewModel = new CharacteristicsViewModel(_store.CharacteristicService, _store.Validator, _store.CurrentUser,
+            _store.Guard, _store.Navigation, _store.Sheets);
     }
+
+    private NewCharacteristicViewModel Sheet() => new(_store.CharacteristicService, _store.Validator);
+
+    // The user fills the sheet and taps its main button
+    private void Fill(string name, CharacteristicValueType type) => _store.Sheets.OnShow = async sheet =>
+    {
+        var form = (NewCharacteristicViewModel)sheet;
+        form.Name = name;
+        form.SelectTypeCommand.Execute(type);
+        await FakeSheetService.AcceptAsync(sheet);
+    };
 
     [Fact]
     public async Task Load_ListsExistingCharacteristics()
@@ -41,91 +53,72 @@ public class CharacteristicsViewModelTests
     }
 
     [Fact]
-    public async Task NewName_ShowsRequiredErrorWhenBlankAndClearsWhenFixed()
+    public void Sheet_ChecksTheNameWhileTyping()
     {
-        _viewModel.NewName = "   ";
-        Assert.Equal("Name is required.", _viewModel.NameError);
+        var sheet = Sheet();
+        Assert.False(sheet.PrimaryCommand.CanExecute(null));
+        Assert.Equal(string.Empty, sheet.Hint);
 
-        _viewModel.NewName = "Color";
-        Assert.Equal(string.Empty, _viewModel.NameError);
+        sheet.Name = "   ";
+        Assert.Equal("Name is required.", sheet.Hint);
+
+        sheet.Name = "Color";
+        Assert.Equal(string.Empty, sheet.Hint);
+        Assert.True(sheet.PrimaryCommand.CanExecute(null));
+        Assert.Equal("Add characteristic", sheet.PrimaryText);
     }
 
     [Fact]
-    public async Task Add_IsDisabledForNonManager()
-    {
-        await _store.SignInAsync(Role.Storekeeper);
-        await _viewModel.LoadCommand.ExecuteAsync(null);
-        _viewModel.NewName = "Color";
-
-        Assert.False(_viewModel.AddCommand.CanExecute(null));
-    }
-
-    [Fact]
-    public async Task Add_IsDisabledForBlankName()
+    public async Task New_AddsTheItemOfTheChosenType()
     {
         await _store.SignInAsync(Role.Manager);
         await _viewModel.LoadCommand.ExecuteAsync(null);
-        _viewModel.NewName = " ";
+        Fill("Weight (kg)", CharacteristicValueType.Number);
 
-        Assert.False(_viewModel.AddCommand.CanExecute(null));
-    }
-
-    [Fact]
-    public async Task Add_Success_AddsTheItemAndClearsTheForm()
-    {
-        await _store.SignInAsync(Role.Manager);
-        await _viewModel.LoadCommand.ExecuteAsync(null);
-        _viewModel.NewName = "Weight (kg)";
-        _viewModel.NewValueType = CharacteristicValueType.Number;
-
-        await _viewModel.AddCommand.ExecuteAsync(null);
+        await _viewModel.NewCommand.ExecuteAsync(null);
 
         var item = Assert.Single(_viewModel.Items);
-        Assert.Equal("Weight (kg)", item.Name);
-        Assert.Equal(CharacteristicValueType.Number, item.ValueType);
-        Assert.Equal(string.Empty, _viewModel.NewName);
-        Assert.Equal(string.Empty, _viewModel.StatusMessage);
+        Assert.Equal(("Weight (kg)", CharacteristicValueType.Number), (item.Name, item.ValueType));
     }
 
     [Fact]
-    public async Task Add_Success_DoesNotShowRequiredErrorOnTheClearedForm()
-    {
-        await _store.SignInAsync(Role.Manager);
-        await _viewModel.LoadCommand.ExecuteAsync(null);
-        _viewModel.NewName = "Color";
-
-        await _viewModel.AddCommand.ExecuteAsync(null);
-
-        Assert.Equal(string.Empty, _viewModel.NameError);
-    }
-
-    [Fact]
-    public async Task Add_Duplicate_ShowsNameErrorAndKeepsTheInput()
+    public async Task Sheet_Duplicate_StaysOpenWithTheError()
     {
         await _store.AddCharacteristicAsync("Color", CharacteristicValueType.Text);
         await _store.SignInAsync(Role.Manager);
-        await _viewModel.LoadCommand.ExecuteAsync(null);
-        _viewModel.NewName = "color";
+        var sheet = Sheet();
+        sheet.Name = "color";
 
-        await _viewModel.AddCommand.ExecuteAsync(null);
+        await sheet.PrimaryCommand.ExecuteAsync(null);
 
-        Assert.Equal("A characteristic with this name already exists.", _viewModel.NameError);
-        Assert.Equal("color", _viewModel.NewName);
-        Assert.Single(_viewModel.Items);
+        Assert.False(sheet.Accepted);
+        Assert.Equal("A characteristic with this name already exists.", sheet.Hint);
+        Assert.Null(sheet.Added);
     }
 
     [Fact]
-    public async Task Add_ServiceFailure_ShowsStatusMessage()
+    public async Task Sheet_ServiceFailure_IsShown()
     {
-        await _store.SignInAsync(Role.Manager);
-        await _viewModel.LoadCommand.ExecuteAsync(null);
-        _viewModel.NewName = "Color";
-        _store.CurrentUser.SignOut();
+        var sheet = Sheet();
+        sheet.Name = "Color";
 
-        await _viewModel.AddCommand.ExecuteAsync(null);
+        await sheet.PrimaryCommand.ExecuteAsync(null);
 
-        Assert.Equal("Sign in before you add characteristics.", _viewModel.StatusMessage);
-        Assert.Empty(_viewModel.Items);
+        Assert.Equal("Sign in before you add characteristics.", sheet.Hint);
+        Assert.Null(sheet.Added);
+    }
+
+    [Theory]
+    [InlineData(Role.Storekeeper)]
+    [InlineData(Role.Driver)]
+    public async Task New_IsRefusedForOtherRoles(Role role)
+    {
+        await _store.SignInAsync(role);
+
+        await _viewModel.NewCommand.ExecuteAsync(null);
+
+        Assert.Empty(_store.Sheets.Shown);
+        Assert.Equal($"Your role ({role}) cannot add characteristics.", _viewModel.StatusMessage);
     }
 
     [Fact]
@@ -133,8 +126,8 @@ public class CharacteristicsViewModelTests
     {
         await _store.SignInAsync(Role.Manager);
         await _viewModel.LoadCommand.ExecuteAsync(null);
-        _viewModel.NewName = "Color";
-        await _viewModel.AddCommand.ExecuteAsync(null);
+        Fill("Color", CharacteristicValueType.Text);
+        await _viewModel.NewCommand.ExecuteAsync(null);
 
         await _viewModel.GoBackCommand.ExecuteAsync(null);
 

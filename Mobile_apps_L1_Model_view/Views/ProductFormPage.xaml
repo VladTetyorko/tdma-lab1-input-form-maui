@@ -1,51 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- Editing a product: barcode, name with a warning for products that exist, photo, and one big action at the
+     bottom. Adding one is ProductWizardPage -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
-             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.ProductFormPage"
              x:DataType="viewModels:ProductFormViewModel"
+             x:Name="ThisPage"
              Title="{Binding PageTitle}">
 
     <ContentPage.Behaviors>
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior Command="{Binding CancelCommand}" />
-    </Shell.BackButtonBehavior>
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
+        <components:AppBar Title="{Binding PageTitle}" BackCommand="{Binding CancelCommand}" />
+        <ScrollView Grid.Row="1">
+            <!-- One column on a phone, photo beside the fields on a wide window (code-behind) -->
+            <Grid x:Name="Columns" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowDefinitions="Auto,Auto"
+                  ColumnSpacing="24" RowSpacing="16" MaximumWidthRequest="1200">
+                <VerticalStackLayout Spacing="8">
+                    <Border HeightRequest="200" IsVisible="{Binding IsCameraActive}" StrokeShape="RoundRectangle 10">
+                        <views:CameraScannerView IsActive="{Binding IsCameraActive}" DetectedCommand="{Binding ScanDetectedCommand}" />
+                    </Border>
+                    <components:CameraStatusBanner Message="{Binding CameraMessage}" ActionText="{Binding CameraActionText}"
+                                                   ActionCommand="{Binding StartScanCommand}" />
 
-    <ScrollView>
-        <VerticalStackLayout Padding="30,20" Spacing="8">
-            <Label Text="Name" />
-            <Entry Text="{Binding Name, Mode=TwoWay}" Placeholder="Product name" AutomationId="ProductNameEntry" />
-            <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" AutomationId="NameErrorLabel" />
+                    <components:OutlinedField x:Name="BarcodeField" Label="Barcode" Placeholder="EAN, UPC or ISBN"
+                                              Keyboard="Numeric" MaxLength="17" EntryId="BarcodeEntry"
+                                              ErrorId="BarcodeErrorLabel" ErrorText="{Binding BarcodeError}"
+                                              Text="{Binding Barcode, Mode=TwoWay}" />
+                    <Label Text="{Binding LookupText}" Style="{StaticResource TextCaption}" AutomationId="LookupLabel" />
 
-            <Label Text="Barcode (EAN-13)" />
-            <Entry Text="{Binding Barcode, Mode=TwoWay}" Placeholder="13 digits" Keyboard="Numeric" MaxLength="13" AutomationId="BarcodeEntry" />
-            <Label Text="{Binding BarcodeError}" Style="{StaticResource ErrorLabel}" AutomationId="BarcodeErrorLabel" />
+                    <components:QuickSearchBox x:Name="NameField" BindingContext="{Binding QuickSearch}" Label="Name"
+                                               Placeholder="Product name" EntryId="ProductNameEntry" ShowSearchIcon="False"
+                                               NoticeText="{Binding BindingContext.DuplicateText, Source={x:Reference ThisPage}}"
+                                               NoticeCommand="{Binding BindingContext.OpenDuplicateCommand, Source={x:Reference ThisPage}}" />
+                    <Label Text="{Binding NameError}" Style="{StaticResource ErrorLabel}" AutomationId="NameErrorLabel" />
+                </VerticalStackLayout>
 
-            <Label Text="Photo" />
-            <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
-                   Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
-            <FlexLayout Wrap="Wrap" IsVisible="{Binding CanManagePhotos}">
-                <Button Text="Take photo" Command="{Binding TakePhotoCommand}" AutomationId="TakePhotoButton"
-                        IsVisible="{Binding Photo.IsCaptureSupported}" Margin="0,0,10,6" />
-                <Button Text="Pick photo" Command="{Binding PickPhotoCommand}" AutomationId="PickPhotoButton"
-                        Margin="0,0,10,6" />
-                <Button Text="Remove photo" Command="{Binding RemovePhotoCommand}" AutomationId="RemovePhotoButton"
-                        IsVisible="{Binding Photo.HasPhoto}" Margin="0,0,10,6" />
-            </FlexLayout>
+                <VerticalStackLayout x:Name="PhotoColumn" Grid.Row="1" Spacing="8">
+                    <Label Text="Photo (optional)" Style="{StaticResource TextCaption}" />
+                    <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
+                           Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
+                    <Button StyleClass="Outlined" Text="Change photo" Command="{Binding ChangePhotoMenuCommand}"
+                            HorizontalOptions="Start" IsVisible="{Binding CanManagePhotos}" AutomationId="AddPhotoButton" />
 
-            <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
+                    <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
+                    <Label Text="{Binding DataSource}" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Grid>
+        </ScrollView>
 
-            <Label Text="{Binding DataSource}" Style="{StaticResource CaptionLabel}" />
-
-            <HorizontalStackLayout Spacing="10">
-                <Button Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveProductButton" />
-                <Button Text="Cancel" Command="{Binding CancelCommand}" AutomationId="CancelProductButton" />
-            </HorizontalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+        <components:BottomActionBar Grid.Row="2" ButtonId="SaveProductButton" Text="{Binding SaveText}"
+                                    Command="{Binding SaveCommand}" Caption="{Binding SaveHint}" />
+    </Grid>
 </ContentPage>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sheets="clr-namespace:Mobile_apps_L1_Model_view.ViewModels.Sheets;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Sheets.ActionContent"
+             x:DataType="sheets:ActionSheetViewModel"
+             x:Name="ThisContent">
+    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Actions}">
+        <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="sheets:SheetAction">
+                <Grid RowDefinitions="Auto,1">
+                    <Grid MinimumHeightRequest="56">
+                        <Label Text="{Binding Text}" Style="{StaticResource TextBodyStrong}" VerticalOptions="Center"
+                               Padding="4,0">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsDestructive}" Value="True">
+                                    <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Button StyleClass="RowOverlay" CommandParameter="{Binding .}"
+                                Command="{Binding BindingContext.ChooseCommand, Source={x:Reference ThisContent}, x:DataType=ContentView}"
+                                SemanticProperties.Description="{Binding Text}" AutomationId="{Binding Id}" />
+                    </Grid>
+                    <BoxView Grid.Row="1" />
+                </Grid>
+            </DataTemplate>
+        </BindableLayout.ItemTemplate>
+    </VerticalStackLayout>
+</ContentView>

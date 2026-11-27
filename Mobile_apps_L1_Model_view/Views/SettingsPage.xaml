@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- Appearance, Scanning, Security, Sync; the Manager's Diagnostics are collapsed behind one row -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
-             x:Class="Mobile_apps_L1_Model_view.Views.SettingsPage"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.SettingsPage"
              x:DataType="viewModels:SettingsViewModel"
              Title="Settings">
 
@@ -12,73 +15,125 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <ScrollView>
-        <VerticalStackLayout Padding="30,20" Spacing="8">
-            <Label Text="Theme" Style="{StaticResource SectionLabel}" />
-            <Label Text="System follows the device setting." Style="{StaticResource CaptionLabel}" />
-            <Picker ItemsSource="{Binding ThemeOptions}"
-                    SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
-
-            <Label Text="Gestures" Style="{StaticResource SectionLabel}" />
-            <HorizontalStackLayout Spacing="10">
-                <Label Text="Shake to scan" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding ShakeToScan, Mode=TwoWay}" IsEnabled="{Binding IsShakeSupported}"
-                        VerticalOptions="Center" AutomationId="ShakeToScanSwitch" />
-            </HorizontalStackLayout>
-            <Label Text="Shake the device on the product list to open the scanner."
-                   Style="{StaticResource CaptionLabel}" />
-            <Label Text="This device has no accelerometer, so shaking is not available here."
-                   Style="{StaticResource CaptionLabel}" IsVisible="{Binding IsShakeUnsupported}" />
-
-            <VerticalStackLayout IsVisible="{Binding IsBiometricSupported}" Spacing="8">
-                <Label Text="Security" Style="{StaticResource SectionLabel}" />
-                <Label Text="With biometric unlock on, the app asks for your fingerprint (or face) after a restart instead of opening straight away. The password always works."
-                       Style="{StaticResource CaptionLabel}" />
-                <HorizontalStackLayout Spacing="10">
-                    <Label Text="Biometric unlock" VerticalOptions="Center" />
-                    <Switch IsToggled="{Binding BiometricUnlock, Mode=TwoWay}" VerticalOptions="Center"
-                            AutomationId="BiometricUnlockSwitch" />
-                </HorizontalStackLayout>
+    <Grid RowDefinitions="Auto,*" SafeAreaEdges="Container">
+        <components:AppBar Title="Settings" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="16" MaximumWidthRequest="720">
+                <Border StyleClass="SectionCard">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Appearance" Style="{StaticResource TextHeading}" />
+                        <!-- Three equal choices; System follows the device. The chosen one is filled, ticked and bold-edged -->
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" AutomationId="ThemePicker">
+                            <Button Text="System" StyleClass="Choice" Command="{Binding SelectThemeCommand}"
+                                    CommandParameter="{x:Static services:ThemeSetting.System}" AutomationId="ThemeSystem">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding IsSystemTheme}" Value="True">
+                                        <Setter Property="Text" Value="✓ System" />
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                                        <Setter Property="BorderWidth" Value="2" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="1" Text="Light" StyleClass="Choice" Command="{Binding SelectThemeCommand}"
+                                    CommandParameter="{x:Static services:ThemeSetting.Light}" AutomationId="ThemeLight">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding IsLightTheme}" Value="True">
+                                        <Setter Property="Text" Value="✓ Light" />
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                                        <Setter Property="BorderWidth" Value="2" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="2" Text="Dark" StyleClass="Choice" Command="{Binding SelectThemeCommand}"
+                                    CommandParameter="{x:Static services:ThemeSetting.Dark}" AutomationId="ThemeDark">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Text" Value="✓ Dark" />
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                                        <Setter Property="BorderWidth" Value="2" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+                <Border StyleClass="SectionCard">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Scanning" Style="{StaticResource TextHeading}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="Scan sound" Style="{StaticResource TextBody}" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" IsToggled="{Binding ScanSound, Mode=TwoWay}" VerticalOptions="Center"
+                                    AutomationId="ScanSoundSwitch" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="Shake to search" Style="{StaticResource TextBody}" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" IsToggled="{Binding ShakeToScan, Mode=TwoWay}" VerticalOptions="Center"
+                                    IsEnabled="{Binding IsShakeSupported}" AutomationId="ShakeToScanSwitch" />
+                        </Grid>
+                        <Label Text="Shake the device on Home or Products to open Search." Style="{StaticResource TextCaption}" />
+                        <Label Text="This device has no accelerometer, so shaking is not available here."
+                               Style="{StaticResource TextCaption}" IsVisible="{Binding IsShakeUnsupported}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Grid IsVisible="{Binding IsBiometricSupported}">
+                    <Border StyleClass="SectionCard">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Security" Style="{StaticResource TextHeading}" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Label Text="Biometric unlock" Style="{StaticResource TextBody}" VerticalOptions="Center" />
+                                <Switch Grid.Column="1" IsToggled="{Binding BiometricUnlock, Mode=TwoWay}" VerticalOptions="Center"
+                                        AutomationId="BiometricUnlockSwitch" />
+                            </Grid>
+                            <Label Text="After a restart the app asks for your fingerprint or face. The password always works."
+                                   Style="{StaticResource TextCaption}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+                <Border StyleClass="SectionCard">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Synchronisation" Style="{StaticResource TextHeading}" />
+                        <Label Text="{Binding NetworkText, StringFormat='Network: {0}'}" />
+                        <Label Text="{Binding PendingCount, StringFormat='Waiting to be sent: {0}'}"
+                               Style="{StaticResource TextBodyStrong}" />
+                        <Button StyleClass="Outlined" Text="Sync now" Command="{Binding SyncNowCommand}" AutomationId="SyncNowButton" />
+                        <Label Text="{Binding SyncText}" Style="{StaticResource TextCaption}" />
+                    </VerticalStackLayout>
+                </Border>
+                <VerticalStackLayout IsVisible="{Binding ShowDiagnostics}" Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto" MinimumHeightRequest="48" Padding="4,0">
+                        <Label Text="Diagnostics" Style="{StaticResource TextHeading}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{StaticResource IconChevronRight}" Style="{StaticResource IconGlyph}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsDiagnosticsOpen}" Value="True">
+                                    <Setter Property="Text" Value="{StaticResource IconChevronDown}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Button Grid.ColumnSpan="2" StyleClass="RowOverlay" Command="{Binding ToggleDiagnosticsCommand}"
+                                SemanticProperties.Description="Diagnostics" AutomationId="DiagnosticsRow" />
+                    </Grid>
+                    <Border StyleClass="SectionCard" IsVisible="{Binding IsDiagnosticsOpen}">
+                        <VerticalStackLayout Spacing="8">
+                            <Button StyleClass="Outlined" Text="Open logs" Command="{Binding OpenLogsCommand}" AutomationId="OpenLogsButton" />
+                            <Button StyleClass="Outlined" Text="Write test log entries" Command="{Binding WriteTestEntriesCommand}" AutomationId="WriteTestEntriesButton" />
+                            <Button StyleClass="Outlined" Text="Throw in background task" Command="{Binding ThrowInBackgroundTaskCommand}" AutomationId="ThrowInBackgroundButton" />
+                            <Button StyleClass="Outlined" Text="Send test crash" Command="{Binding SendTestCrashCommand}" AutomationId="SendTestCrashButton" IsEnabled="{Binding CanSendTestCrash}" />
+                            <Label Text="{Binding DiagnosticsText}" Style="{StaticResource TextCaption}" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Label Text="Simulate offline" Style="{StaticResource TextBody}" VerticalOptions="Center" />
+                                <Switch Grid.Column="1" IsToggled="{Binding SimulateOffline, Mode=TwoWay}" VerticalOptions="Center"
+                                        AutomationId="SimulateOfflineSwitch" />
+                            </Grid>
+                            <Button StyleClass="Outlined" Text="Share database" Command="{Binding ShareDatabaseCommand}" AutomationId="ShareDatabaseButton" />
+                            <Label Text="{Binding ExportText}" Style="{StaticResource TextCaption}" />
+                            <components:OutlinedField Label="Open a link (deep link test)" Placeholder="stockroom://product/{barcode}"
+                                                      EntryId="LinkEntry" Text="{Binding LinkText, Mode=TwoWay}"
+                                                      ReturnCommand="{Binding OpenLinkCommand}" />
+                            <Button StyleClass="Outlined" Text="Open link" Command="{Binding OpenLinkCommand}" AutomationId="OpenLinkButton" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
             </VerticalStackLayout>
-
-            <Label Text="Synchronisation" Style="{StaticResource SectionLabel}" />
-            <Label Text="Changes are saved on this device first and sent to the server when a network is available."
-                   Style="{StaticResource CaptionLabel}" />
-            <Label Text="{Binding NetworkText, StringFormat='Network: {0}'}" />
-            <Label Text="{Binding PendingCount, StringFormat='Waiting to be sent: {0}'}" FontAttributes="Bold" />
-            <HorizontalStackLayout Spacing="10">
-                <Label Text="Simulate offline" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding SimulateOffline, Mode=TwoWay}" VerticalOptions="Center" />
-            </HorizontalStackLayout>
-            <Button Text="Sync now" Command="{Binding SyncNowCommand}" HorizontalOptions="Start" />
-            <Label Text="{Binding SyncText}" Style="{StaticResource CaptionLabel}" />
-
-            <Label Text="Database" Style="{StaticResource SectionLabel}" />
-            <Label Text="Share the SQLite file (stockroom.db3) to open it on a PC. Counterparty names are encrypted in it."
-                   Style="{StaticResource CaptionLabel}" />
-            <Button Text="Share database" Command="{Binding ShareDatabaseCommand}" HorizontalOptions="Start" />
-            <Label Text="{Binding ExportText}" Style="{StaticResource CaptionLabel}" />
-
-            <VerticalStackLayout IsVisible="{Binding ShowDiagnostics}" Spacing="8">
-                <Label Text="Diagnostics" Style="{StaticResource SectionLabel}" />
-                <Label Text="Prove that logging and crash reporting work. Each button leaves a trace in the log."
-                       Style="{StaticResource CaptionLabel}" />
-                <Button Text="Open logs" Command="{Binding OpenLogsCommand}" HorizontalOptions="Start"
-                        AutomationId="OpenLogsButton" />
-                <Button Text="Write test log entries" Command="{Binding WriteTestEntriesCommand}" HorizontalOptions="Start"
-                        AutomationId="WriteTestEntriesButton" />
-                <Button Text="Throw in background task" Command="{Binding ThrowInBackgroundTaskCommand}" HorizontalOptions="Start"
-                        AutomationId="ThrowInBackgroundButton" />
-                <Button Text="Send test crash" Command="{Binding SendTestCrashCommand}" HorizontalOptions="Start"
-                        IsEnabled="{Binding CanSendTestCrash}" AutomationId="SendTestCrashButton" />
-                <Label Text="{Binding DiagnosticsText}" Style="{StaticResource CaptionLabel}" />
-            </VerticalStackLayout>
-
-            <Label Text="Open a link" Style="{StaticResource SectionLabel}" />
-            <Label Text="Try a deep link without another app, e.g. stockroom://product/3017620422003"
-                   Style="{StaticResource CaptionLabel}" />
-            <Entry Text="{Binding LinkText, Mode=TwoWay}" Placeholder="stockroom://product/{barcode}" />
-            <Button Text="Open" Command="{Binding OpenLinkCommand}" HorizontalOptions="Start" />
-        </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 </ContentPage>

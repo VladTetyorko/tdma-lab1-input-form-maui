@@ -19,7 +19,7 @@ public class PageLifecycleAwareTests : IDisposable
     [InlineData(typeof(ProductDetailViewModel))]
     [InlineData(typeof(CharacteristicsViewModel))]
     [InlineData(typeof(OperationViewModel))]
-    [InlineData(typeof(ScannerViewModel))]
+    [InlineData(typeof(SearchViewModel))]
     public void PageViewModel_ImplementsIPageLifecycleAware(Type viewModel)
     {
         Assert.True(typeof(IPageLifecycleAware).IsAssignableFrom(viewModel));
@@ -50,13 +50,13 @@ public class PageLifecycleAwareTests : IDisposable
     }
 
     [Fact]
-    public async Task ScannerPage_OnAppearing_StartsTheCamera()
+    public async Task SearchPage_OnAppearing_StartsTheCamera()
     {
-        var scanner = _provider.GetRequiredService<ScannerViewModel>();
+        var scanner = _provider.GetRequiredService<SearchViewModel>();
 
         ((IPageLifecycleAware)scanner).OnAppearing();
 
-        Assert.True(scanner.IsCameraActive);
+        await Eventually.WaitAsync(() => scanner.IsCameraActive);
         ((IPageLifecycleAware)scanner).OnDisappearing();
         Assert.False(scanner.IsCameraActive);
     }

@@ -38,18 +38,18 @@ public class StartupNavigatorTests
     public async Task ProductFormWithDraft_ResumesTheForm()
     {
         await _store.SignInAsync(Role.Manager);
-        Resume(Routes.ProductForm, state => state.SetDraft(new ProductFormDraft("Saw", _drillBarcode)));
+        Resume(Routes.NewProduct, state => state.SetDraft(new ProductFormDraft("Saw", _drillBarcode)));
 
         await _store.Startup.RunAsync();
 
-        Assert.Equal(Routes.ProductForm, Assert.Single(_store.Navigation.RequestedRoutes));
+        Assert.Equal(Routes.NewProduct, Assert.Single(_store.Navigation.RequestedRoutes));
     }
 
     [Fact]
     public async Task ProductFormWithoutDraft_DoesNotResume()
     {
         await _store.SignInAsync(Role.Manager);
-        Resume(Routes.ProductForm);
+        Resume(Routes.NewProduct);
 
         await _store.Startup.RunAsync();
 
@@ -122,18 +122,31 @@ public class StartupNavigatorTests
     public async Task DraftOfAnotherType_DoesNotResumeTheRoute()
     {
         await _store.SignInAsync(Role.Manager);
-        Resume(Routes.ProductForm, state => state.SetDraft(OperationDraftFor(_drillBarcode)));
+        Resume(Routes.NewProduct, state => state.SetDraft(OperationDraftFor(_drillBarcode)));
 
         await _store.Startup.RunAsync();
 
         Assert.Empty(_store.Navigation.RequestedRoutes);
     }
 
+    [Theory]
+    [InlineData(Routes.Receive)]
+    [InlineData(Routes.Issue)]
+    public async Task ReceiveOrIssueWasOpen_ReopensIt(string route)
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        Resume(route);
+
+        await _store.Startup.RunAsync();
+
+        Assert.Equal(route, Assert.Single(_store.Navigation.RequestedRoutes));
+    }
+
     [Fact]
     public async Task ResumeRouteIsUsedOnlyOnce()
     {
         await _store.SignInAsync(Role.Manager);
-        Resume(Routes.ProductForm, state => state.SetDraft(new ProductFormDraft("Saw", _drillBarcode)));
+        Resume(Routes.NewProduct, state => state.SetDraft(new ProductFormDraft("Saw", _drillBarcode)));
 
         await _store.Startup.RunAsync();
         await _store.Startup.RunAsync();

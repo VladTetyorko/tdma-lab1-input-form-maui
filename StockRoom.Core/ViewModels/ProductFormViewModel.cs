@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Services;
+using Mobile_apps_L1_Model_view.Services.Lookup;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.ViewModels;
 
@@ -9,36 +11,135 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 // or from the scanner with an unknown barcode (prefilled).
 // A new product's typed text is kept as a draft in IAppStateService until it is saved or cancelled;
 // editing keeps no draft
-public partial class ProductFormViewModel(
-    IProductValidator validator,
-    IProductService productService,
-    ICurrentUserService currentUser,
-    IPermissionGuard guard,
-    IAppStateService appState,
-    INavigationService navigation,
-    ProductPhotoEditor photo,
-    ILogger<ProductFormViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
+public partial class ProductFormViewModel : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
+    private readonly IProductValidator validator;
+    private readonly IProductService productService;
+    private readonly ICurrentUserService currentUser;
+    private readonly IPermissionGuard guard;
+    private readonly IAppStateService appState;
+    private readonly INavigationService navigation;
+    private readonly IBarcodeScanner scanner;
+    private readonly LatestLookup lookup;
+    private readonly ILogger<ProductFormViewModel> logger;
+    private readonly IConfirmSheet confirm;
+    private readonly ISheetService? sheets;
     private bool _opened;
     private bool _prefilled;
+
+    // A suggestion the user tapped under the name
+    private ProductSummary? _picked;
 
     // The product being edited; null when adding
     private ProductSummary? _editing;
 
+    public ProductFormViewModel(
+        IProductValidator validator,
+        IProductService productService,
+        ICurrentUserService currentUser,
+        IPermissionGuard guard,
+        IAppStateService appState,
+        INavigationService navigation,
+        ProductPhotoEditor photo,
+        IBarcodeScanner scanner,
+        IProductLookup lookup,
+        QuickSearchViewModel quickSearch,
+        IConfirmSheet confirm,
+        ILogger<ProductFormViewModel> logger,
+        ISheetService? sheets = null)
+    {
+        this.sheets = sheets;
+        this.confirm = confirm;
+        this.validator = validator;
+        this.productService = productService;
+        this.currentUser = currentUser;
+        this.guard = guard;
+        this.appState = appState;
+        this.navigation = navigation;
+        this.scanner = scanner;
+        this.lookup = new LatestLookup(lookup);
+        this.logger = logger;
+        Photo = photo;
+        QuickSearch = quickSearch;
+        quickSearch.IsSelectMode = true;
+        quickSearch.PropertyChanged += (_, e) =>
+        {
+            // Typing in the name field arrives here
+            if (e.PropertyName == nameof(QuickSearchViewModel.Query) && Name != quickSearch.Query)
+            {
+                Name = quickSearch.Query;
+            }
+        };
+        quickSearch.Picked += (_, product) =>
+        {
+            _picked = product;
+            UpdateDuplicate();
+        };
+    }
+
     public string PageTitle => _editing is null ? "New product" : "Edit product";
 
+    // The main button of the page
+    public string SaveText => _editing is null ? "Add product" : "Save changes";
+
+    // Why it is disabled, or empty
+    public string SaveHint => CanSave() ? string.Empty : "Enter a name and a valid barcode first";
+
+    // What an open database last said about the barcode, when one knew it
+    public LookupResult? Found { get; private set; }
+
+    // Runs after a new product was added, before the page goes back; may add to what is sent back (the wizard's values)
+    public Func<ProductSummary, Task<ProductSummary>>? Saved { get; set; }
+
+    // The name field with its suggestions of products that already exist
+    public QuickSearchViewModel QuickSearch { get; }
+
     // The photo of the product (staged until Save, see ProductPhotoEditor)
-    public ProductPhotoEditor Photo { get; } = photo;
+    public ProductPhotoEditor Photo { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CameraMessage))]
+    [NotifyPropertyChangedFor(nameof(CameraActionText))]
+    [NotifyPropertyChangedFor(nameof(IsCameraActive))]
+    [NotifyPropertyChangedFor(nameof(CanStartScan))]
+    public partial CameraState CameraState { get; set; }
+
+    // Set by a phone page while a field has the focus
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCameraActive))]
+    public partial bool IsTyping { get; set; }
+
+    public bool IsCameraActive => CameraState == CameraState.Active && !IsTyping;
+
+    public bool CanStartScan => scanner.IsCameraSupported && CameraState == CameraState.Off;
+
+    public string CameraMessage => CameraMessages.For(CameraState);
+
+    public string CameraActionText => CameraMessages.ActionFor(CameraState);
+
+    // What the open databases said about the barcode
+    [ObservableProperty]
+    public partial string LookupText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDuplicate))]
+    public partial string DuplicateText { get; set; } = string.Empty;
+
+    public bool HasDuplicate => DuplicateText.Length > 0;
+
+    private ProductSummary? Duplicate { get; set; }
 
     // Photo buttons are for the Manager (the form is too, but the check is made here as well)
     public bool CanManagePhotos => currentUser.CurrentUser is { } user && RolePermissions.CanManagePhotos(user.Role);
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyPropertyChangedFor(nameof(SaveHint))]
     public partial string Name { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyPropertyChangedFor(nameof(SaveHint))]
     public partial string Barcode { get; set; } = string.Empty;
 
     // Empty string = no error (keeps XAML bindings simple)
@@ -58,13 +159,33 @@ public partial class ProductFormViewModel(
     partial void OnNameChanged(string value)
     {
         NameError = validator.ValidateName(value) ?? string.Empty;
+        _picked = null;
+
+        // Set by the app (a draft, a lookup), not typed: no drop-down for it
+        if (QuickSearch.Query != value)
+        {
+            QuickSearch.Query = value;
+            QuickSearch.CloseCommand.Execute(null);
+        }
+
+        UpdateDuplicate();
         SaveDraft();
     }
 
     partial void OnBarcodeChanged(string value)
     {
-        BarcodeError = validator.ValidateBarcodeFormat(value) ?? string.Empty;
+        // A shorter form (EAN-8, UPC, ISBN-10) is no error: it is rewritten when confirmed (NormalizeBarcode)
+        BarcodeError = validator.ValidateBarcodeFormat(BarcodeNormalizer.ToEan13(value) ?? value) ?? string.Empty;
+        LookupText = string.Empty;
+        if (Found is not null)
+        {
+            Found = null;
+            DataSource = string.Empty;
+        }
+
+        UpdateDuplicate();
         SaveDraft();
+        LookupCommand.Execute(null);
     }
 
     // The scanner passes the unknown barcode it could not find; the list passes the product to edit
@@ -73,7 +194,9 @@ public partial class ProductFormViewModel(
         if (query.TryGetValue(NavigationKeys.SelectedProduct, out var selected) && selected is ProductSummary product)
         {
             _editing = product;
+            QuickSearch.ExcludedProductId = product.Id;
             OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(SaveText));
             Name = product.Name;
             Barcode = product.Barcode;
             Photo.Load(product.PhotoPath);
@@ -97,28 +220,161 @@ public partial class ProductFormViewModel(
         }
     }
 
-    // Restores the draft once, the first time the page appears (not after returning from another page)
-    public void OnAppearing()
+    public void OnAppearing() => AppearCommand.Execute(null);
+
+    public void OnDisappearing()
     {
-        if (_opened)
+        scanner.Failed -= OnCameraFailed;
+        CameraState = CameraState.Off;
+        IsTyping = false;
+    }
+
+    // Restores the draft once, the first time the page appears (not after returning from another page), reads the
+    // catalog for the duplicate warning and starts the camera while there is no barcode yet
+    [RelayCommand]
+    private async Task AppearAsync()
+    {
+        if (!_opened)
+        {
+            _opened = true;
+            if (!_prefilled && _editing is null && appState.GetDraft<ProductFormDraft>() is { } draft)
+            {
+                Name = draft.Name;
+                Barcode = draft.Barcode;
+                Photo.Restore(draft.PhotoPath);
+            }
+        }
+
+        await QuickSearch.LoadCommand.ExecuteAsync(null);
+        UpdateDuplicate();
+        if (_editing is null && Barcode.Length == 0)
+        {
+            await StartCameraAsync();
+        }
+    }
+
+    // The "Scan barcode" and "Allow camera" buttons
+    [RelayCommand]
+    private Task StartScanAsync() => StartCameraAsync();
+
+    // The camera reports the same code again and again: the first valid read closes it
+    [RelayCommand]
+    private void ScanDetected(string? text)
+    {
+        if (CameraState != CameraState.Active)
         {
             return;
         }
 
-        _opened = true;
-        if (_prefilled || _editing is not null || appState.GetDraft<ProductFormDraft>() is not { } draft)
+        var parsed = ScanPayloadParser.Parse(text);
+        if (!parsed.IsSuccess)
+        {
+            StatusMessage = parsed.Error!;
+            return;
+        }
+
+        CameraState = CameraState.Off;
+        StatusMessage = string.Empty;
+        Barcode = parsed.Value!;
+    }
+
+    // Asks the open databases about a new barcode and fills the name if it is still empty. Offline or unknown only
+    // shows a message. A barcode that is already in the catalog is not asked about. Only the full 13 digits are asked,
+    // so nothing is sent while a longer code is still being typed
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task LookupAsync()
+    {
+        var barcode = Barcode;
+        if (_editing is not null
+            || currentUser.CurrentUser is not { } user || !RolePermissions.CanManageProducts(user.Role)
+            || validator.ValidateBarcodeFormat(barcode) is not null
+            || QuickSearch.Products.Any(product => product.Barcode == barcode))
         {
             return;
         }
 
-        Name = draft.Name;
-        Barcode = draft.Barcode;
-        Photo.Restore(draft.PhotoPath);
+        LookupText = LookupMessages.Searching;
+
+        // Null: the user went on while the answer was on its way
+        if (await lookup.FindAsync(barcode) is not { } result || Barcode != barcode)
+        {
+            return;
+        }
+
+        if (!result.IsFound)
+        {
+            LookupText = LookupMessages.Failure(result.Status, barcode);
+            logger.LogWarning("Lookup of barcode {Barcode} gave {Status}", barcode, result.Status);
+            return;
+        }
+
+        Found = result;
+        if (Name.Length == 0)
+        {
+            Name = result.Name;
+        }
+
+        DataSource = result.Attribution;
+        LookupText = LookupMessages.Found(result);
+    }
+
+    // The code as it is stored: 13 digits. Called when the typed code is confirmed
+    public void NormalizeBarcode()
+    {
+        if (BarcodeNormalizer.ToEan13(Barcode) is { } canonical)
+        {
+            Barcode = canonical;
+        }
+    }
+
+    [RelayCommand]
+    private Task OpenDuplicateAsync() =>
+        Duplicate is null
+            ? Task.CompletedTask
+            : navigation.GoToAsync(Routes.ProductDetail,
+                new Dictionary<string, object> { [NavigationKeys.SelectedProduct] = Duplicate });
+
+    private async Task StartCameraAsync()
+    {
+        if (!scanner.IsCameraSupported)
+        {
+            CameraState = CameraState.Unsupported;
+        }
+        else if (await scanner.RequestCameraAccessAsync())
+        {
+            scanner.Failed -= OnCameraFailed;
+            scanner.Failed += OnCameraFailed;
+            CameraState = CameraState.Active;
+        }
+        else
+        {
+            CameraState = CameraState.Denied;
+            logger.LogWarning("Camera access was denied, the barcode must be typed");
+        }
+    }
+
+    private void OnCameraFailed(object? sender, EventArgs e)
+    {
+        CameraState = CameraState.Failed;
+        logger.LogWarning("The camera could not start, the barcode must be typed");
+    }
+
+    // The product the user tapped, or one with exactly this barcode or name (never the one being edited)
+    private void UpdateDuplicate()
+    {
+        var name = Name.Trim();
+        var barcode = Barcode.Trim();
+        Duplicate = _picked
+                    ?? QuickSearch.Products.FirstOrDefault(product => product.Id != _editing?.Id
+                        && (product.Barcode == barcode
+                            || string.Equals(product.Name, name, StringComparison.OrdinalIgnoreCase)));
+        DuplicateText = Duplicate is null ? string.Empty : $"Already in the catalog: {Duplicate.Name} ({Duplicate.Barcode})";
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
+        NormalizeBarcode();
         if (await guard.CheckAsync(RolePermissions.CanManageProducts, _editing is null ? "add products" : "edit products") is { } refusal)
         {
             StatusMessage = refusal;
@@ -158,9 +414,34 @@ public partial class ProductFormViewModel(
         var summary = _editing is null
             ? new ProductSummary(product.Id, product.Name, product.Barcode, 0) { PhotoPath = product.PhotoPath }
             : _editing with { Name = product.Name, Barcode = product.Barcode, PhotoPath = product.PhotoPath };
+        if (_editing is null && Saved is not null)
+        {
+            summary = await Saved(summary);
+        }
+
         await navigation.GoToAsync(Routes.Back, new Dictionary<string, object>
         {
             [NavigationKeys.UpdatedProduct] = summary
+        });
+    }
+
+    // "Change photo" of the edit form: Take / Pick / Remove in a menu
+    [RelayCommand]
+    private async Task ChangePhotoMenuAsync()
+    {
+        if (sheets is null)
+        {
+            return;
+        }
+
+        var menu = PhotoMenu.For(Photo);
+        await sheets.ShowAsync(menu);
+        await (menu.Chosen switch
+        {
+            PhotoMenu.Take => TakePhotoAsync(),
+            PhotoMenu.Pick => PickPhotoAsync(),
+            PhotoMenu.Remove => RemovePhotoAsync(),
+            _ => Task.CompletedTask
         });
     }
 
@@ -180,6 +461,7 @@ public partial class ProductFormViewModel(
     // The photo file is named after the barcode, so the barcode must be valid first
     private async Task ChangePhotoAsync(Func<string, Task<string>> change)
     {
+        NormalizeBarcode();
         if (validator.ValidateBarcodeFormat(Barcode) is not null)
         {
             StatusMessage = "Enter a valid barcode first: the photo file is named after it.";
@@ -191,23 +473,39 @@ public partial class ProductFormViewModel(
         SaveDraft();
     }
 
+    // Typed input is not thrown away without asking
+    private bool HasUnsavedInput => _editing is null
+        ? Name.Trim().Length > 0 || Barcode.Trim().Length > 0 || Photo.Path is not null
+        : Name != _editing.Name || Barcode != _editing.Barcode || Photo.IsChanged;
+
     [RelayCommand]
-    private Task CancelAsync()
+    private async Task CancelAsync()
     {
+        if (HasUnsavedInput && !await confirm.AskAsync(new ConfirmRequest(
+                _editing is null ? "Discard the new product?" : "Discard the changes?",
+                "What you entered here is not saved.", "Discard", "Keep editing")
+            {
+                IsDestructive = true
+            }))
+        {
+            return;
+        }
+
+        lookup.Cancel();
         Photo.Discard();
         if (_editing is null)
         {
             appState.ClearDraft<ProductFormDraft>();
         }
 
-        return navigation.GoToAsync(Routes.Back);
+        await navigation.GoToAsync(Routes.Back);
     }
 
     private bool CanSave() =>
         currentUser.CurrentUser is { } user
         && RolePermissions.CanManageProducts(user.Role)
         && validator.ValidateName(Name) is null
-        && validator.ValidateBarcodeFormat(Barcode) is null;
+        && validator.ValidateBarcodeFormat(BarcodeNormalizer.ToEan13(Barcode) ?? Barcode) is null;
 
     private void SaveDraft()
     {

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:sheets="clr-namespace:Mobile_apps_L1_Model_view.ViewModels.Sheets;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Sheets.OperationContent"
+             x:DataType="sheets:OperationSheetViewModel">
+    <VerticalStackLayout>
+        <VerticalStackLayout Spacing="4" IsVisible="{Binding IsSummary}">
+            <Label Text="{Binding ByText}" Style="{StaticResource TextBody}" />
+            <Label Text="{Binding DocumentText}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasDocumentText}"
+                   AutomationId="OperationDocumentText" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasLocation}">
+                <Label Text="{Binding LocationText}" Style="{StaticResource TextCaption}" VerticalOptions="Center"
+                       AutomationId="HistoryLocationLabel" />
+                <Button Grid.Column="1" Text="Show on map" StyleClass="Compact,Outlined" Command="{Binding ShowOnMapCommand}"
+                        AutomationId="OpenInMapsButton" />
+            </Grid>
+        </VerticalStackLayout>
+        <VerticalStackLayout Spacing="8" IsVisible="{Binding IsCorrecting}">
+            <components:OutlinedField x:Name="RightField" Label="It should have been" Keyboard="Numeric" MaxLength="5"
+                                      ShowClear="False" EntryId="CorrectQuantityEntry"
+                                      Text="{Binding RightQuantity, Mode=TwoWay}" ReturnCommand="{Binding PrimaryCommand}" />
+            <Label Text="{Binding Preview}" Style="{StaticResource TextBody}" AutomationId="CorrectionPreview" />
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+</ContentView>

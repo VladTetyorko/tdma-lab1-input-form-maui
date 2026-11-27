@@ -19,10 +19,31 @@ public class StockRoomFlowTests : IDisposable
         services.AddSingleton<INavigationService>(_navigation);
         services.AddSingleton<IPreferencesStore>(new FakePreferencesStore());
         services.AddSingleton<IAlertService>(new FakeAlertService());
+        services.AddSingleton<IScanFeedback>(new FakeScanFeedback());
+        services.AddSingleton<IToastService>(new FakeToastService());
         _provider = services.BuildServiceProvider();
     }
 
     public void Dispose() => _provider.Dispose();
+
+    [Fact]
+    public async Task Receive_ATypoSuggestsButNeverAdds_UntilItIsTapped()
+    {
+        await SignInAsync(Role.Manager);
+        var receive = _provider.GetRequiredService<StockDocumentViewModel>();
+        await receive.AppearCommand.ExecuteAsync(null);
+
+        receive.QuickSearch.Query = "nutela";
+        receive.QuickSearch.SubmitCommand.Execute(null);
+        Assert.Empty(receive.Lines);
+        var suggestion = receive.QuickSearch.Suggestions.First(row => row.Suggestion.Title == "Nutella 400 g");
+        Assert.True(suggestion.Suggestion.IsFuzzy);
+
+        receive.QuickSearch.PickCommand.Execute(suggestion);
+        await Eventually.WaitAsync(() => receive.Lines.Count == 1);
+
+        Assert.Equal("Nutella 400 g", receive.Lines[0].Name);
+    }
 
     [Fact]
     public async Task Manager_AddsProduct_AndListShowsItWithZeroQuantity()
@@ -33,7 +54,7 @@ public class StockRoomFlowTests : IDisposable
         await list.LoadCommand.ExecuteAsync(null);
         Assert.True(list.CanAddProduct);
         await list.AddProductCommand.ExecuteAsync(null);
-        Assert.Equal(Routes.ProductForm, _navigation.RequestedRoutes.Last());
+        Assert.Equal(Routes.NewProduct, _navigation.RequestedRoutes.Last());
 
         var form = _provider.GetRequiredService<ProductFormViewModel>();
         form.Name = "Cordless Saw";
@@ -106,6 +127,7 @@ public class StockRoomFlowTests : IDisposable
         var weight = detail.Characteristics.Single(c => c.Name == "Weight (kg)");
         Assert.Equal("0.4", weight.Value);
 
+        detail.ToggleEditCommand.Execute(null);
         weight.Value = "9.5";
         Assert.True(detail.SaveCommand.CanExecute(null));
         await detail.SaveCommand.ExecuteAsync(null);
@@ -137,9 +159,14 @@ public class StockRoomFlowTests : IDisposable
 
         var characteristics = _provider.GetRequiredService<CharacteristicsViewModel>();
         await characteristics.LoadCommand.ExecuteAsync(null);
-        characteristics.NewName = "Shelf";
-        characteristics.NewValueType = CharacteristicValueType.Number;
-        await characteristics.AddCommand.ExecuteAsync(null);
+        _provider.GetRequiredService<FakeSheetService>().OnShow = async sheet =>
+        {
+            var form = (Mobile_apps_L1_Model_view.ViewModels.Sheets.NewCharacteristicViewModel)sheet;
+            form.Name = "Shelf";
+            form.ValueType = CharacteristicValueType.Number;
+            await FakeSheetService.AcceptAsync(sheet);
+        };
+        await characteristics.NewCommand.ExecuteAsync(null);
         await characteristics.GoBackCommand.ExecuteAsync(null);
 
         Assert.Equal(Routes.Back, _navigation.RequestedRoutes.Last());
@@ -180,8 +207,8 @@ public class StockRoomFlowTests : IDisposable
         // The detail page reloads its data when it appears again
         await detail.LoadCommand.ExecuteAsync(null);
         Assert.Equal(34, detail.Quantity);
-        Assert.Equal(OperationDirection.Out, detail.History[0].Direction);
-        Assert.Equal(2, detail.History[0].Quantity);
+        Assert.Equal(OperationDirection.Out, detail.History[0].Rows[0].Entry.Direction);
+        Assert.Equal(2, detail.History[0].Rows[0].Entry.Quantity);
     }
 
     [Fact]
@@ -209,6 +236,25 @@ public class StockRoomFlowTests : IDisposable
 
     // Shell hands the parameters of the last navigation to the page that was opened
     private IDictionary<string, object> LastParameters() => _navigation.RequestedParameters.Last()!;
+
+    [Fact]
+    public async Task Storekeeper_SearchesForNutella_AndOnlyNutellaProductsAreListed()
+    {
+        await SignInAsync(Role.Storekeeper);
+        var list = _provider.GetRequiredService<ProductListViewModel>();
+        await list.LoadCommand.ExecuteAsync(null);
+        Assert.True(list.Products.Count > 2);
+
+        list.SearchText = "nutella";
+
+        Assert.NotEmpty(list.Products);
+        Assert.All(list.Products, p => Assert.Contains("nutella", p.Name, StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(list.Products, p => p.Name == "Nutella 400 g");
+
+        list.SearchText = "nutella 400";
+        var only = Assert.Single(list.Products);
+        Assert.Equal(36, only.Quantity);
+    }
 
     private async Task SignInAsync(Role role)
     {

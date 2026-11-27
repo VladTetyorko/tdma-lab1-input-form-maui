@@ -3,8 +3,9 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
-             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services"
-             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.MapPage"
              x:DataType="viewModels:MapViewModel"
              Title="Operations map">
@@ -13,36 +14,42 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20,10" RowSpacing="8">
+    <Grid RowDefinitions="Auto,*">
+    <components:AppBar Title="Operations map" />
+    <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}" RowSpacing="8">
         <Label Grid.Row="0"
-               Text="Operations recorded with a location. Tap Open in maps to see a place in your maps app."
-               Style="{StaticResource CaptionLabel}" />
+               Text="Operations recorded with a location. Tap one to see the place in your maps app."
+               Style="{StaticResource CaptionLabel}" IsVisible="{Binding HasPins}" />
 
         <!-- Android and iOS only: hidden where there is no Map control (Windows) -->
         <views:PinMapView Grid.Row="1" HeightRequest="260" ItemsSource="{Binding Pins}"
                           IsVisible="{Binding HasPins}" AutomationId="OperationsMap" />
 
-        <Label Grid.Row="2" Text="No operation has a location yet. Attach one when you record an In or Out."
-               Style="{StaticResource CaptionLabel}" IsVisible="{Binding HasNoPins}" AutomationId="NoPinsLabel" />
+        <components:EmptyState Grid.Row="2" Glyph="{StaticResource IconMap}" Title="No places yet"
+                               Message="No operation has a location yet. Attach one when you record an In or Out."
+                               IsVisible="{Binding HasNoPins}" VerticalOptions="Center" AutomationId="NoPinsLabel" />
 
         <CollectionView Grid.Row="2" ItemsSource="{Binding Pins}" IsVisible="{Binding HasPins}"
                         AutomationId="PinList">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="services:LocatedOperation">
-                    <Grid ColumnDefinitions="*,Auto" Padding="0,6" ColumnSpacing="10">
-                        <VerticalStackLayout Grid.Column="0">
-                            <Label Text="{Binding Label}" FontAttributes="Bold" />
-                            <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
+                    <Grid RowDefinitions="Auto,1">
+                        <VerticalStackLayout Padding="0,8" MinimumHeightRequest="56">
+                            <Label Text="{Binding Label}" Style="{StaticResource TextBodyStrong}" />
+                            <Label Text="{Binding Details}" Style="{StaticResource TextCaption}" />
                         </VerticalStackLayout>
-                        <Button Grid.Column="1" Text="Open in maps" StyleClass="Compact"
-                                AutomationId="OpenInMapsButton"
+                        <!-- The row is the button -->
+                        <Button StyleClass="RowOverlay" AutomationId="OpenInMapsButton"
+                                SemanticProperties.Description="{Binding Label, StringFormat='Open in maps: {0}'}"
                                 Command="{Binding OpenInMapsCommand, Source={RelativeSource AncestorType={x:Type viewModels:MapViewModel}}}"
                                 CommandParameter="{Binding .}" />
+                        <BoxView Grid.Row="1" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
         <Label Grid.Row="3" Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+    </Grid>
     </Grid>
 </ContentPage>

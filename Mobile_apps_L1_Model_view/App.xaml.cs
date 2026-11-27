@@ -9,10 +9,18 @@ public partial class App : Application
 {
     private readonly IAppLifecycleService _lifecycle;
 
-    public App(IAppLifecycleService lifecycle)
+    private readonly IServiceProvider _services;
+
+    public App(IAppLifecycleService lifecycle, IServiceProvider services)
     {
         _lifecycle = lifecycle;
+        _services = services;
         InitializeComponent();
+#if ANDROID
+        // The window shrinks when the keyboard opens, so the bottom action bar stays above it
+        Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.SetWindowSoftInputModeAdjust(this,
+            Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.WindowSoftInputModeAdjust.Resize);
+#endif
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -36,7 +44,7 @@ public partial class App : Application
         try
         {
             var startRoute = await _lifecycle.RestoreAsync();
-            window.Page = new AppShell(startRoute);
+            window.Page = new AppShell(_services, startRoute);
         }
         catch (Exception ex)
         {

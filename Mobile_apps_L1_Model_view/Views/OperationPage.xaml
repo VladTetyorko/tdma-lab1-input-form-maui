@@ -1,60 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- One operation with a reason or a location (the product's ⋮ menu): product, In or Out, units, the optional facts and
+     one action named after its result. Back (the arrow) cancels -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
-             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
              x:Class="Mobile_apps_L1_Model_view.Views.OperationPage"
              x:DataType="viewModels:OperationViewModel"
              Title="Record operation">
 
     <ContentPage.Behaviors>
         <views:PageLifecycleBehavior />
-        <views:FocusOnAppearingBehavior Target="{x:Reference QuantityEntry}" />
     </ContentPage.Behaviors>
 
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior Command="{Binding GoBackCommand}" />
-    </Shell.BackButtonBehavior>
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
+        <components:AppBar Title="Record operation" BackCommand="{Binding GoBackCommand}" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="12" MaximumWidthRequest="720">
+                <components:ProductRow ProductName="{Binding ProductName}" Code="{Binding Barcode}" Margin="-12,0">
+                    <components:ProductRow.Right>
+                        <Label Text="{Binding QuantityOnHand}" Style="{StaticResource TextNumeric}" />
+                    </components:ProductRow.Right>
+                </components:ProductRow>
 
-    <ScrollView>
-        <VerticalStackLayout Padding="30,20" Spacing="8">
-            <Label Text="{Binding ProductName}" Style="{StaticResource Headline}" />
-            <Label Text="{Binding QuantityOnHand, StringFormat='On hand: {0} pcs'}"
-                   Style="{StaticResource CaptionLabel}" />
+                <HorizontalStackLayout Spacing="8">
+                    <Button Text="In" StyleClass="Choice" MinimumWidthRequest="96" Command="{Binding SelectInCommand}"
+                            AutomationId="DirectionIn">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsIn}" Value="True">
+                                <Setter Property="Text" Value="✓ In" />
+                                <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                                <Setter Property="BorderWidth" Value="2" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button Text="Out" StyleClass="Choice" MinimumWidthRequest="96" Command="{Binding SelectOutCommand}"
+                            IsVisible="{Binding CanOut}" AutomationId="DirectionOut">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsOut}" Value="True">
+                                <Setter Property="Text" Value="✓ Out" />
+                                <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                                <Setter Property="BorderWidth" Value="2" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </HorizontalStackLayout>
 
-            <Label Text="Direction" />
-            <Picker ItemsSource="{Binding AvailableDirections}"
-                    SelectedItem="{Binding SelectedDirection, Mode=TwoWay}" AutomationId="DirectionPicker" />
+                <components:OutlinedField x:Name="QuantityField" Label="Units" Keyboard="Numeric" MaxLength="5" ShowClear="False"
+                                          EntryId="QuantityEntry" Text="{Binding Quantity, Mode=TwoWay}"
+                                          ReturnCommand="{Binding SaveCommand}" />
+                <components:OutlinedField Label="Supplier or recipient (optional)" EntryId="CounterpartyEntry"
+                                          Text="{Binding Counterparty, Mode=TwoWay}" />
+                <components:OutlinedField Label="Reason (optional)" EntryId="ReasonEntry" Text="{Binding Reason, Mode=TwoWay}" />
 
-            <Label Text="Units" />
-            <Entry x:Name="QuantityEntry" Text="{Binding Quantity, Mode=TwoWay}" Keyboard="Numeric" AutomationId="QuantityEntry"
-                   ReturnCommand="{Binding SaveCommand}" />
-            <Stepper Minimum="1" Maximum="10000" Increment="1" Value="{Binding Quantity, Mode=TwoWay}" />
-
-            <Label Text="Counterparty (optional)" />
-            <Entry Text="{Binding Counterparty, Mode=TwoWay}" Placeholder="Supplier or customer" AutomationId="CounterpartyEntry" />
-
-            <Label Text="Reason (optional)" />
-            <Entry Text="{Binding Reason, Mode=TwoWay}" Placeholder="Why" AutomationId="ReasonEntry" />
-
-            <Label Text="Location (optional)" />
-            <HorizontalStackLayout Spacing="10">
-                <Button Text="Attach my location" Command="{Binding AttachLocationCommand}"
-                        AutomationId="AttachLocationButton" />
-                <Button Text="Clear location" Command="{Binding ClearLocationCommand}"
-                        IsVisible="{Binding HasLocation}" AutomationId="ClearLocationButton" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Label Text="{Binding LocationText}" Style="{StaticResource TextCaption}" VerticalOptions="Center"
+                           AutomationId="LocationLabel" />
+                    <Grid Grid.Column="1">
+                        <Button StyleClass="Outlined" Text="Attach my location" Command="{Binding AttachLocationCommand}"
+                                AutomationId="AttachLocationButton" />
+                        <Button StyleClass="Outlined" Text="Clear location" Command="{Binding ClearLocationCommand}"
+                                IsVisible="{Binding HasLocation}" AutomationId="ClearLocationButton"
+                                BackgroundColor="{DynamicResource Background}" />
+                    </Grid>
+                </Grid>
                 <ActivityIndicator IsRunning="{Binding IsLocating}" IsVisible="{Binding IsLocating}" />
-            </HorizontalStackLayout>
-            <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}" AutomationId="LocationLabel" />
-            <Label Text="{Binding LocationMessage}" Style="{StaticResource ErrorLabel}" />
-
-            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabel}" AutomationId="ErrorLabel" />
-
-            <HorizontalStackLayout Spacing="10">
-                <Button Text="Save" Command="{Binding SaveCommand}" AutomationId="SaveOperationButton" />
-                <Button Text="Cancel" Command="{Binding GoBackCommand}" AutomationId="CancelOperationButton" />
-            </HorizontalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+                <Label Text="{Binding LocationMessage}" Style="{StaticResource ErrorLabel}" />
+                <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabel}" AutomationId="ErrorLabel" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <components:BottomActionBar Grid.Row="2" ButtonId="SaveOperationButton" Text="{Binding SaveText}"
+                                    Command="{Binding SaveCommand}" />
+    </Grid>
 </ContentPage>

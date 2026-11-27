@@ -1,8 +1,10 @@
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Sentry;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Views;
+using Mobile_apps_L1_Model_view.Views.Components;
 using Serilog;
 #if ANDROID || IOS
 using Microsoft.Maui.Controls.Maps;
@@ -18,18 +20,22 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("FluentSystemIcons-Regular.ttf", "FluentIcons");
             });
+
+        BorderlessEntryMapping.Apply();
 
 #if ANDROID || IOS
         builder.UseBarcodeReader();
         builder.UseMauiMaps();
         builder.Services.AddSingleton<IBarcodeScanner, CameraBarcodeScanner>();
 #else
-        // No camera scanning here (Windows): the scanner page offers manual entry
+        // No camera scanning here (Windows): the pages offer manual entry
         builder.Services.AddSingleton<IBarcodeScanner, ManualBarcodeScanner>();
 #endif
 
@@ -55,17 +61,30 @@ public static class MauiProgram
         builder.Services.AddSingleton<IShakeDetector, MauiShakeDetector>();
         builder.Services.AddSingleton<IMapLauncher, MauiMapLauncher>();
         builder.Services.AddSingleton<IMainThread, MauiMainThread>();
-        builder.Services.AddSingleton<IAlertService, ShellAlertService>();
+        builder.Services.AddSingleton<IToastService, MauiToastService>();
+        builder.Services.AddSingleton<IVibration>(Vibration.Default);
+        builder.Services.AddSingleton<ITonePlayer, MauiTonePlayer>();
+        builder.Services.AddSingleton<ISemanticScreenReader>(SemanticScreenReader.Default);
+        builder.Services.AddSingleton<IScanFeedback, MauiScanFeedback>();
+        builder.Services.AddSingleton<ISheetService, MauiSheetService>();
+        builder.Services.AddSingleton<IKeyboard, MauiKeyboard>();
         builder.Services.AddSingleton<IThemeApplier, MauiThemeApplier>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
+        builder.Services.AddSingleton<INavigationDrawer, ShellNavigationDrawer>();
         builder.Services.AddTransient<LoginPage>();
+        builder.Services.AddTransient<HomePage>();
+        builder.Services.AddTransient<ReceivePage>();
+        builder.Services.AddTransient<IssuePage>();
         builder.Services.AddTransient<ProductsPage>();
         builder.Services.AddTransient<ProductFormPage>();
+        builder.Services.AddTransient<ProductWizardPage>();
         builder.Services.AddTransient<ProductDetailPage>();
         builder.Services.AddTransient<CharacteristicsPage>();
         builder.Services.AddTransient<OperationPage>();
         builder.Services.AddTransient<SettingsPage>();
-        builder.Services.AddTransient<ScannerPage>();
+        builder.Services.AddTransient<SearchPage>();
+        builder.Services.AddTransient<StockCountPage>();
+        builder.Services.AddTransient<ActivityPage>();
         builder.Services.AddTransient<LogsPage>();
         builder.Services.AddTransient<MapPage>();
 
@@ -102,7 +121,7 @@ public static class MauiProgram
     }
 
     // The local stub server stays the default; a configured https server (Sync:BaseUrl) replaces it. Its HttpClient is the
-    // only one with certificate pinning: Open Food Facts and everything else keep the normal handler
+    // only one with certificate pinning: the open databases and everything else keep the normal handler
     private static void ConfigureSync(MauiAppBuilder builder, string? settingsFile)
     {
         var sync = SyncSettings.Resolve(settingsFile);

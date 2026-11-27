@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Lines (read only), then the optional facts of the document: who, and a note behind a disclosure row -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             xmlns:sheets="clr-namespace:Mobile_apps_L1_Model_view.ViewModels.Sheets;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Sheets.DocumentReviewContent"
+             x:DataType="sheets:DocumentReviewViewModel"
+             x:Name="ThisContent">
+    <VerticalStackLayout Spacing="8">
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="viewModels:StockDocumentLineItem">
+                    <components:ProductRow ProductName="{Binding Name}" Code="{Binding StockText}" Margin="-12,0">
+                        <components:ProductRow.Right>
+                            <Label Text="{Binding Quantity}" Style="{StaticResource TextNumeric}" />
+                        </components:ProductRow.Right>
+                    </components:ProductRow>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+        <Label Text="{Binding MoreText}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasMore}" />
+        <BoxView HeightRequest="1" />
+
+        <Label Text="{Binding NameLabel}" Style="{StaticResource TextOverline}" />
+        <FlexLayout Wrap="Wrap" IsVisible="{Binding HasNames}">
+            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Names}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="sheets:NameChip">
+                        <Button Text="{Binding Name}" StyleClass="Choice" Margin="0,0,8,0" MaximumWidthRequest="150"
+                                LineBreakMode="TailTruncation" CommandParameter="{Binding .}" AutomationId="NameChip"
+                                Command="{Binding BindingContext.PickNameCommand, Source={x:Reference ThisContent}, x:DataType=ContentView}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoft}" />
+                                    <Setter Property="BorderColor" Value="{DynamicResource PrimaryText}" />
+                                    <Setter Property="BorderWidth" Value="2" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </HorizontalStackLayout>
+            <Button Text="+ New" StyleClass="Choice" Command="{Binding NewNameCommand}" AutomationId="NewNameChip" />
+        </FlexLayout>
+        <components:OutlinedField Placeholder="{Binding NamePlaceholder}" EntryId="CounterpartyEntry"
+                                  IsVisible="{Binding IsTypingName}" Text="{Binding Counterparty, Mode=TwoWay}" />
+
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
+            <Label Text="Note" Style="{StaticResource TextBodyStrong}" VerticalOptions="Center" />
+            <Label Grid.Column="1" Text="{Binding NoteSummary}" Style="{StaticResource TextCaption}" VerticalOptions="Center"
+                   HorizontalTextAlignment="End" MaxLines="1" LineBreakMode="TailTruncation" />
+            <Label Grid.Column="2" Text="{StaticResource IconChevronRight}" Style="{StaticResource IconGlyph}" />
+            <Button Grid.ColumnSpan="3" StyleClass="RowOverlay" Command="{Binding ToggleNoteCommand}"
+                    SemanticProperties.Description="Note" AutomationId="NoteRow" />
+        </Grid>
+        <components:OutlinedField Placeholder="Waybill or order number (optional)" EntryId="NoteEntry"
+                                  IsVisible="{Binding IsNoteOpen}" Text="{Binding Note, Mode=TwoWay}" />
+    </VerticalStackLayout>
+</ContentView>

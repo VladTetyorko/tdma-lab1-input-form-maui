@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Add a product in three steps (design revision 4, 5.8). Each step fits one screen and has one action named after
+     the next step -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.ProductWizardPage"
+             x:DataType="viewModels:ProductWizardViewModel"
+             x:Name="ThisPage"
+             Title="New product">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
+
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
+        <components:AppBar Title="New product" BackCommand="{Binding BackCommand}" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="12" MaximumWidthRequest="720">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="{Binding StepText}" Style="{StaticResource TextBodyStrong}" AutomationId="WizardStep" />
+                    <Label Grid.Column="1" Text="{Binding Dots}" Style="{StaticResource TextBody}"
+                           TextColor="{DynamicResource PrimaryText}" SemanticProperties.Description="{Binding StepText}" />
+                </Grid>
+
+                <!-- Step 1: the code, camera first -->
+                <VerticalStackLayout IsVisible="{Binding IsCodeStep}" Spacing="8">
+                    <Border HeightRequest="220" IsVisible="{Binding Form.IsCameraActive}" StrokeShape="RoundRectangle 10">
+                        <views:CameraScannerView IsActive="{Binding Form.IsCameraActive}"
+                                                 DetectedCommand="{Binding Form.ScanDetectedCommand}" />
+                    </Border>
+                    <components:CameraStatusBanner Message="{Binding Form.CameraMessage}" ActionText="{Binding Form.CameraActionText}"
+                                                   ActionCommand="{Binding Form.StartScanCommand}" />
+                    <components:OutlinedField x:Name="BarcodeField" Label="Barcode" Placeholder="EAN, UPC or ISBN"
+                                              Keyboard="Numeric" MaxLength="17" EntryId="BarcodeEntry"
+                                              Text="{Binding Form.Barcode, Mode=TwoWay}" ReturnCommand="{Binding NextCommand}" />
+                    <Button Text="Open the existing product" StyleClass="Outlined" HorizontalOptions="Start"
+                            IsVisible="{Binding Form.HasDuplicate}" Command="{Binding Form.OpenDuplicateCommand}"
+                            AutomationId="OpenDuplicateButton" />
+                </VerticalStackLayout>
+
+                <!-- Step 2: name and photo -->
+                <VerticalStackLayout IsVisible="{Binding IsNameStep}" Spacing="8">
+                    <Label Text="{Binding Form.Barcode}" Style="{StaticResource TextCaption}" />
+                    <components:OutlinedField x:Name="NameField" Label="Name" Placeholder="Product name" EntryId="ProductNameEntry"
+                                              Text="{Binding Form.Name, Mode=TwoWay}" ReturnCommand="{Binding NextCommand}" />
+                    <Label Text="{Binding Form.LookupText}" Style="{StaticResource TextCaption}" AutomationId="LookupLabel" />
+                    <Label Text="{Binding Form.DataSource}" Style="{StaticResource TextCaption}" />
+                    <Label Text="{Binding Form.DuplicateText}" Style="{StaticResource TextBody}"
+                           TextColor="{DynamicResource Warning}" IsVisible="{Binding Form.HasDuplicate}"
+                           AutomationId="DuplicateLabel" />
+                    <Image Source="{Binding Form.Photo.ResolvedPath}" IsVisible="{Binding Form.Photo.HasPhoto}"
+                           Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
+                    <Button Text="Add photo" StyleClass="Outlined" HorizontalOptions="Start" Command="{Binding PhotoCommand}"
+                            IsVisible="{Binding Form.CanManagePhotos}" AutomationId="AddPhotoButton" />
+                </VerticalStackLayout>
+
+                <!-- Step 3: what we sort by; all optional -->
+                <VerticalStackLayout IsVisible="{Binding IsDetailsStep}" Spacing="8">
+                    <Label Text="Only what we sort by. All of it may stay empty." Style="{StaticResource TextCaption}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Details}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:CharacteristicEditItem">
+                                <components:OutlinedField Label="{Binding Name}" Placeholder="{Binding Placeholder}"
+                                                          Text="{Binding Value, Mode=TwoWay}" ErrorText="{Binding Error}" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Button Text="+ New characteristic" StyleClass="Outlined" HorizontalOptions="Start"
+                            Command="{Binding NewCharacteristicCommand}" AutomationId="WizardNewCharacteristicButton" />
+                </VerticalStackLayout>
+
+                <Label Text="{Binding Form.StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <components:BottomActionBar Grid.Row="2" ButtonId="SaveProductButton" Text="{Binding NextText}"
+                                    Command="{Binding NextCommand}" Caption="{Binding Hint}" />
+    </Grid>
+</ContentPage>

@@ -132,7 +132,7 @@ public partial class LoginViewModel(
             }
         }
 
-        await navigation.GoToAsync(Routes.Absolute(Routes.Products));
+        await navigation.GoToAsync(Routes.Absolute(Routes.Home));
     }
 
     private async Task<User?> LoadSavedUserAsync()

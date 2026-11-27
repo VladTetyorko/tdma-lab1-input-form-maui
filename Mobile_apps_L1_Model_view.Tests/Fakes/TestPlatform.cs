@@ -37,6 +37,17 @@ public static class TestPlatform
         services.AddSingleton<IShakeDetector>(provider => provider.GetRequiredService<FakeShakeDetector>());
         services.AddSingleton<FakeMapLauncher>();
         services.AddSingleton<IMapLauncher>(provider => provider.GetRequiredService<FakeMapLauncher>());
+        services.AddSingleton<FakeAppDataPath>();
+        services.AddSingleton<IAppDataPathProvider>(provider => provider.GetRequiredService<FakeAppDataPath>());
+        services.AddSingleton<IBarcodeScanner, FakeBarcodeScanner>();
+        services.AddSingleton<FakeConfirmSheet>();
+        services.AddSingleton<IConfirmSheet>(provider => provider.GetRequiredService<FakeConfirmSheet>());
+        services.AddSingleton<FakeSheetService>();
+        services.AddSingleton<ISheetService>(provider => provider.GetRequiredService<FakeSheetService>());
+        services.AddSingleton<FakeToastService>();
+        services.AddSingleton<IToastService>(provider => provider.GetRequiredService<FakeToastService>());
+        services.AddSingleton<FakeKeyboard>();
+        services.AddSingleton<IKeyboard>(provider => provider.GetRequiredService<FakeKeyboard>());
         services.AddSingleton<FakeMainThread>();
         services.AddSingleton<IMainThread>(provider => provider.GetRequiredService<FakeMainThread>());
         services.AddSingleton<FakeHttpMessageHandler>();

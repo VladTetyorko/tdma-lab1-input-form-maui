@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Order: identify the product (camera, or typing), lines and quantities, one big action that opens the review.
+     Discard is destructive, so it sits in the ⋮ menu, away from the main action -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.StockDocumentPage"
+             x:DataType="viewModels:StockDocumentViewModel"
+             x:Name="ThisPage"
+             Title="{Binding Title}">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
+
+    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container, Container, Container, All">
+        <components:AppBar Title="{Binding Title}" BackCommand="{Binding GoBackCommand}" ActionGlyph="{StaticResource IconMore}"
+                           ActionDescription="More actions" ActionCommand="{Binding OpenMenuCommand}"
+                           ActionId="DocumentMenuButton" IsActionShown="{Binding HasLines}" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="1200">
+                <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
+                <components:SuccessBanner Message="{Binding SuccessText}" />
+                <Label Text="{Binding SummaryText}" Style="{StaticResource TextCaption}" IsVisible="{Binding HasSummary}"
+                       AutomationId="DocumentSummary" />
+
+                <!-- Continuous scanning: repeated reads of one code are ignored by the ViewModel -->
+                <Border HeightRequest="220" IsVisible="{Binding IsCameraActive}" StrokeShape="RoundRectangle 10"
+                        MaximumWidthRequest="720">
+                    <views:CameraScannerView IsActive="{Binding IsCameraActive}" DetectedCommand="{Binding ScanDetectedCommand}" />
+                </Border>
+                <components:CameraStatusBanner Message="{Binding CameraMessage}" ActionText="{Binding CameraActionText}"
+                                               ActionCommand="{Binding RetryCameraCommand}" />
+
+                <components:QuickSearchBox x:Name="Search" BindingContext="{Binding QuickSearch}"
+                                           Placeholder="Type a name or barcode" />
+
+                <FlexLayout Wrap="Wrap" AlignItems="Center">
+                    <Label Text="{Binding StatusMessage}" Style="{StaticResource TextBodyStrong}" FlexLayout.Grow="1"
+                           IsVisible="{Binding HasStatus}" AutomationId="DocumentStatus" />
+                    <!-- Desktop only: a phone offers Undo in the snackbar -->
+                    <Grid IsVisible="{OnIdiom Default=True, Phone=False}">
+                        <Button Text="{Binding UndoText}" StyleClass="Ghost" Command="{Binding UndoCommand}"
+                                IsVisible="{Binding CanUndo}" AutomationId="UndoRemoveButton" />
+                    </Grid>
+                </FlexLayout>
+
+                <components:EmptyState Glyph="{StaticResource IconBox}" Title="Draft is empty"
+                                       Message="Scan a barcode or type a name." IsVisible="{Binding IsEmpty}" />
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Lines}" AutomationId="DocumentLines">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:StockDocumentLineItem">
+                            <Grid RowDefinitions="Auto,Auto,Auto,1">
+                                <components:ProductRow ProductName="{Binding Name}" Code="{Binding Barcode}" Margin="-12,0"
+                                                       IsOutOfStock="{Binding ShowOutChip}" Note="{Binding StockText}"
+                                                       Problem="{Binding Problem}">
+                                    <components:ProductRow.Right>
+                                        <HorizontalStackLayout>
+                                            <Border StrokeShape="RoundRectangle 24" HeightRequest="{StaticResource StepperHeight}"
+                                                    Stroke="{DynamicResource BorderStrongBrush}" VerticalOptions="Center">
+                                                <HorizontalStackLayout>
+                                                    <Button Text="{StaticResource IconSubtract}" StyleClass="Icon"
+                                                            SemanticProperties.Description="{Binding Name, StringFormat='One less {0}'}"
+                                                            Command="{Binding BindingContext.DecrementCommand, Source={x:Reference ThisPage}}"
+                                                            CommandParameter="{Binding .}" AutomationId="DecrementLineButton" />
+                                                    <components:BorderlessEntry Text="{Binding QuantityText, Mode=TwoWay}" Keyboard="Numeric"
+                                                           WidthRequest="52" MaxLength="5" HorizontalTextAlignment="Center" VerticalOptions="Center"
+                                                           VerticalTextAlignment="Center"
+                                                           SemanticProperties.Description="{Binding Name, StringFormat='Quantity of {0}'}"
+                                                           ReturnCommand="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}"
+                                                           ReturnCommandParameter="{Binding .}"
+                                                           AutomationId="{Binding Barcode, StringFormat='LineQuantity_{0}'}">
+                                                        <components:BorderlessEntry.Behaviors>
+                                                            <views:UnfocusCommandBehavior Command="{Binding BindingContext.SetQuantityCommand, Source={x:Reference ThisPage}}" />
+                                                            <views:FocusAndSelectBehavior />
+                                                        </components:BorderlessEntry.Behaviors>
+                                                    </components:BorderlessEntry>
+                                                    <Button Text="{StaticResource IconAdd}" StyleClass="Icon"
+                                                            SemanticProperties.Description="{Binding Name, StringFormat='One more {0}'}"
+                                                            Command="{Binding BindingContext.IncrementCommand, Source={x:Reference ThisPage}}"
+                                                            CommandParameter="{Binding .}" AutomationId="IncrementLineButton" />
+                                                </HorizontalStackLayout>
+                                            </Border>
+                                            <Button Text="{StaticResource IconDismiss}" Style="{StaticResource AppBarButton}"
+                                                    WidthRequest="40" TextColor="{DynamicResource TextSecondary}" FontSize="20"
+                                                    SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}"
+                                                    Command="{Binding BindingContext.RemoveLineCommand, Source={x:Reference ThisPage}}"
+                                                    CommandParameter="{Binding .}" AutomationId="RemoveLineButton" />
+                                        </HorizontalStackLayout>
+                                    </components:ProductRow.Right>
+                                </components:ProductRow>
+                                <Label Grid.Row="1" Text="{Binding LookupText}" Style="{StaticResource TextCaption}"
+                                       IsVisible="{Binding HasLookupText}" Margin="0,0,0,4" AutomationId="LineLookup" />
+                                <Button Grid.Row="2" Text="Create product" StyleClass="Compact,Outlined" HorizontalOptions="Start"
+                                        Margin="0,0,0,8" IsVisible="{Binding IsUnknown}" CommandParameter="{Binding .}"
+                                        Command="{Binding BindingContext.CreateProductCommand, Source={x:Reference ThisPage}}"
+                                        AutomationId="CreateProductButton" />
+                                <BoxView Grid.Row="3" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <components:BottomActionBar Grid.Row="2" ButtonId="CommitDocumentButton" Text="{Binding CommitText}"
+                                    Command="{Binding CommitCommand}" Caption="{Binding CommitHint}" />
+    </Grid>
+</ContentPage>

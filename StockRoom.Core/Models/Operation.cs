@@ -4,6 +4,11 @@ namespace Mobile_apps_L1_Model_view.Models;
 public class Operation : OwnedEntity
 {
     public Guid ProductId { get; init; }
+
+    // The batch document this operation belongs to (null for a single In/Out). Counterparty and Reason of such
+    // an operation stay empty: those facts belong to the document
+    public Guid? DocumentId { get; init; }
+
     public OperationDirection Direction { get; init; }
     public int Quantity { get; init; }
     public string? Counterparty { get; init; }

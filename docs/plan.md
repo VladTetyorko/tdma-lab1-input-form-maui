@@ -2,7 +2,7 @@
 
 Each lab is one branch and one pull request, built on the previous one. Every
 lab ends with: all tests green, Windows and Android builds green, its step
-document written, decisions added to the README decision log.
+document written, decisions added to the [decision log](decision-log.md).
 
 ## Lab 1 — Warehouse domain, MVVM and validation (`lab1` → `master`)
 
@@ -238,6 +238,8 @@ then leftover abstractions, then tests, then CI. Questions 1–6 in
 of a green run, run Appium.
 
 ## Lab 9 — Final module (`lab9` → `lab8`, tag `v1.0`)
+
+Status: **done** (see `docs/steps/09-final.md`; the tag `v1.0` is the owner's).
 
 Variant 8, **Spare-parts warehouse** (Part, Receipt, Issue → our Product and
 Operation In / Out; roles storekeeper / administrator → our Storekeeper and

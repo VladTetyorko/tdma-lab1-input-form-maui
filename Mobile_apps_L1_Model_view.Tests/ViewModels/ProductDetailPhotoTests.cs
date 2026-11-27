@@ -3,6 +3,7 @@ using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Tests.Fakes;
 using Mobile_apps_L1_Model_view.ViewModels;
+using Mobile_apps_L1_Model_view.ViewModels.Sheets;
 
 namespace Mobile_apps_L1_Model_view.Tests.ViewModels;
 
@@ -15,8 +16,8 @@ public class ProductDetailPhotoTests
 
     private ProductDetailViewModel CreateViewModel() => new(
         _store.Catalog, _store.CharacteristicService, _store.Validator, _store.CurrentUser, _store.Guard, _store.AppState,
-        _store.Navigation, _store.ProductService, _store.PhotoEditor, _store.Maps, _store.Feedback,
-        _store.Logger<ProductDetailViewModel>());
+        _store.Navigation, _store.ProductService, _store.PhotoEditor, _store.Feed, _store.Viewer, _store.Sheets,
+        _store.Confirm, _store.Logger<ProductDetailViewModel>(), new StockDocumentDraftStore(_store.AppState, new AesFieldEncryptor(_store.Secrets), _store.Logger<StockDocumentDraftStore>()), _store.Clock);
 
     private async Task<(ProductDetailViewModel ViewModel, Product Product)> OpenAsync(Role role, string? photoPath = null)
     {
@@ -156,7 +157,8 @@ public class ProductDetailPhotoTests
         await _store.Stock.RecordAsync(product.Id, OperationDirection.In, 4, location: new GeoPoint(50.45, 30.52));
         await viewModel.LoadCommand.ExecuteAsync(null);
 
-        await viewModel.OpenLocationCommand.ExecuteAsync(viewModel.History.Single());
+        ShowOnMap();
+        await viewModel.OpenHistoryRowCommand.ExecuteAsync(viewModel.History.Single().Rows.Single());
 
         var (location, label) = Assert.Single(_store.Maps.Opened);
         Assert.Equal(new GeoPoint(50.45, 30.52), location);
@@ -172,7 +174,8 @@ public class ProductDetailPhotoTests
         await viewModel.LoadCommand.ExecuteAsync(null);
         _store.Maps.Result = DeviceStatus.NotSupported;
 
-        await viewModel.OpenLocationCommand.ExecuteAsync(viewModel.History.Single());
+        ShowOnMap();
+        await viewModel.OpenHistoryRowCommand.ExecuteAsync(viewModel.History.Single().Rows.Single());
 
         Assert.Equal("No maps app is available on this device.", viewModel.StatusMessage);
         Assert.Contains(_store.Logs, l => l.Level == LogLevel.Warning && l.Category == nameof(DeviceFeedback));
@@ -185,8 +188,16 @@ public class ProductDetailPhotoTests
         await _store.Stock.RecordAsync(product.Id, OperationDirection.In, 4);
         await viewModel.LoadCommand.ExecuteAsync(null);
 
-        await viewModel.OpenLocationCommand.ExecuteAsync(viewModel.History.Single());
+        ShowOnMap();
+        await viewModel.OpenHistoryRowCommand.ExecuteAsync(viewModel.History.Single().Rows.Single());
 
         Assert.Empty(_store.Maps.Opened);
     }
+
+    // The user taps "Show on map" in the sheet of the operation
+    private void ShowOnMap() => _store.Sheets.OnShow = sheet =>
+    {
+        ((OperationSheetViewModel)sheet).ShowOnMapCommand.Execute(null);
+        return Task.CompletedTask;
+    };
 }

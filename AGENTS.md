@@ -1,6 +1,6 @@
 # AGENTS.md — rules for anyone (human or AI agent) working on StockRoom
 
-Read this file, [`README.md`](README.md), [`docs/plan.md`](docs/plan.md) and
+Read this file, [`docs/README.md`](docs/README.md) (the index), [`docs/plan.md`](docs/plan.md) and
 [`docs/domain/`](docs/domain) before changing anything. These rules are not optional.
 
 ## 1. Product scope — keep it simple
@@ -13,10 +13,14 @@ Read this file, [`README.md`](README.md), [`docs/plan.md`](docs/plan.md) and
   scan plus a quantity records many units.
 - No dashboards, approvals, prices, several warehouses or real authentication
   unless the plan says so. Anything outside scope needs a written decision.
+- Approved in design revision 4: a simple **stock count** (Manager only, the quantity in the database is shown while
+  counting, the differences are posted as compensating operations after a confirmation).
 - Scanning accepts 1-D barcodes **and QR codes**. A QR code may carry a plain
   barcode or a StockRoom deep link (`stockroom://product/{barcode}`).
-- Unknown barcodes can be looked up in the **Open Food Facts** open database
-  (ODbL; keep the attribution) to prefill a new product. Seed data uses real
+- Unknown barcodes can be looked up in open databases (Open Library for books,
+  the Open Food / Beauty / Pet Food / Products Facts family; see
+  [`docs/domain/open-data.md`](docs/domain/open-data.md), keep the attribution)
+  to prefill a new product. Seed data uses real
   barcodes from that database, not invented ones.
 - Authentication is **local and minimal**: fixed accounts, a login and a
   password, no registration, no password recovery, no server accounts.
@@ -127,7 +131,7 @@ unchanged, `Mobile_apps_L1_Model_view.*`). The MAUI app keeps `Views/`, `Convert
    after each slice, not only at the end.
 6. **Commit** after each green slice: `[Lab N] <what>`. Refactoring in its own commit (§3).
 7. **Build both targets** (Windows, Android) before the last commit.
-8. **Document**: step document, README step log and decision log, answers to
+8. **Document**: step document, [`docs/step-log.md`](docs/step-log.md) and [`docs/decision-log.md`](docs/decision-log.md), answers to
    the lab's control questions, `docs/domain` if the model changed.
 9. **Open the PR** (`labN` → previous lab). The PR text lists the lab tasks with
    ✔/✘ and what the owner must verify by hand.
@@ -169,9 +173,9 @@ than a few lines.
 - Each lab has a step document `docs/steps/0N-*.md` (template:
   `docs/steps/_template.md`): before / what the lab asks / our interpretation /
   decisions / changes / answers to the lab's control questions.
-- Every architectural decision is also added to the **Decision log** in `README.md`
+- Every architectural decision is also added to the **Decision log** in [`docs/decision-log.md`](docs/decision-log.md)
   (one line: decision, why).
-- Update the step log in `README.md` when a lab is done.
+- Update the step log in [`docs/step-log.md`](docs/step-log.md) when a lab is done.
 - Never commit `bin/`, `obj/`, the lab PDFs (`docks/`), or personal report files.
 
 ## 6. Language

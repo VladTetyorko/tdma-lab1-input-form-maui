@@ -20,6 +20,7 @@ public sealed partial class ConnectivityBannerViewModel(
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsOffline))]
     [NotifyPropertyChangedFor(nameof(IsNotOffline))]
+    [NotifyPropertyChangedFor(nameof(NeedsAttention))]
     public partial ConnectivityState State { get; set; } = ConnectivityState.Synced;
 
     [ObservableProperty]
@@ -29,6 +30,9 @@ public sealed partial class ConnectivityBannerViewModel(
     public bool IsOffline => State == ConnectivityState.Offline;
 
     public bool IsNotOffline => !IsOffline;
+
+    // Anything but "all synced": pages show the chip only then
+    public bool NeedsAttention => State != ConnectivityState.Synced;
 
     public void Attach()
     {
@@ -62,6 +66,19 @@ public sealed partial class ConnectivityBannerViewModel(
     // Reads the current state: offline, syncing, or the length of the queue
     [RelayCommand]
     private async Task RefreshAsync()
+    {
+        // Runs from events, with nobody awaiting it: a queue that cannot be read must not end the app
+        try
+        {
+            await ReadStateAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "The sync state could not be read");
+        }
+    }
+
+    private async Task ReadStateAsync()
     {
         if (!sync.IsOnline)
         {

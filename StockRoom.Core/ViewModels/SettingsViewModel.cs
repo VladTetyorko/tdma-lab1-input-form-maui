@@ -16,6 +16,7 @@ public partial class SettingsViewModel(
     IBiometricAuthenticator biometrics,
     IShakeSettings shakeSettings,
     IShakeDetector shakeDetector,
+    IScanSoundSettings soundSettings,
     INavigationService navigation,
     ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
@@ -23,6 +24,22 @@ public partial class SettingsViewModel(
 
     [ObservableProperty]
     public partial ThemeSetting SelectedTheme { get; set; } = themeService.Current;
+
+    public bool IsSystemTheme => SelectedTheme == ThemeSetting.System;
+
+    public bool IsLightTheme => SelectedTheme == ThemeSetting.Light;
+
+    public bool IsDarkTheme => SelectedTheme == ThemeSetting.Dark;
+
+    [RelayCommand]
+    private void SelectTheme(ThemeSetting theme) => SelectedTheme = theme;
+
+    // Diagnostics are collapsed until asked for
+    [ObservableProperty]
+    public partial bool IsDiagnosticsOpen { get; set; }
+
+    [RelayCommand]
+    private void ToggleDiagnostics() => IsDiagnosticsOpen = ShowDiagnostics && !IsDiagnosticsOpen;
 
     // A stockroom:// link typed by hand: the way to try deep links where no other app can send one (Windows)
     [ObservableProperty]
@@ -57,6 +74,10 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial bool ShakeToScan { get; set; } = shakeSettings.IsEnabled;
 
+    // "Scan sound": a beep for an accepted scan, another for a refused one. On by default
+    [ObservableProperty]
+    public partial bool ScanSound { get; set; } = soundSettings.IsEnabled;
+
     // The switch is disabled, with a note, on a device without an accelerometer (a Windows PC)
     public bool IsShakeSupported => shakeDetector.IsSupported;
 
@@ -74,6 +95,9 @@ public partial class SettingsViewModel(
     partial void OnSelectedThemeChanged(ThemeSetting value)
     {
         themeService.Set(value);
+        OnPropertyChanged(nameof(IsSystemTheme));
+        OnPropertyChanged(nameof(IsLightTheme));
+        OnPropertyChanged(nameof(IsDarkTheme));
         logger.LogInformation("Theme set to {Theme}", value);
     }
 
@@ -87,6 +111,12 @@ public partial class SettingsViewModel(
     {
         shakeSettings.IsEnabled = value;
         logger.LogInformation("Shake to scan switched {State}", value ? "on" : "off");
+    }
+
+    partial void OnScanSoundChanged(bool value)
+    {
+        soundSettings.IsEnabled = value;
+        logger.LogInformation("Scan sound switched {State}", value ? "on" : "off");
     }
 
     partial void OnSimulateOfflineChanged(bool value)

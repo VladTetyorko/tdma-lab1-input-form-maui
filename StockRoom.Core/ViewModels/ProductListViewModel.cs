@@ -12,35 +12,68 @@ public partial class ProductListViewModel(
     ICharacteristicService characteristics,
     IProductService productService,
     ICurrentUserService currentUser,
-    ISessionStore session,
-    IAppStateService appState,
     IStartupNavigator startup,
     IAlertService alerts,
     IPermissionGuard guard,
     INavigationService navigation,
     IShakeGesture shake,
-    ConnectivityBannerViewModel connectivity,
-    ILogger<ProductListViewModel> logger) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
+    ILogger<ProductListViewModel> logger,
+    StockChanges? stockChanges = null) : ObservableObject, INavigationParameterReceiver, IPageLifecycleAware
 {
     private List<ProductSummary> _all = [];
+    private Dictionary<Guid, Services.Search.MatchResult> _matches = [];
     private Guid? _loadedForUserId;
     private bool _sortOptionsStale;
     private bool _productsStale;
+    private int _stockVersion;
+    private bool _loaded;
 
-    // Offline / syncing / waiting changes, shown above the list
-    public ConnectivityBannerViewModel Connectivity { get; } = connectivity;
-
-    // What the list shows: _all, sorted
+    // What the list shows: _all, filtered by SearchText, then sorted
     public ObservableCollection<ProductSummary> Products { get; } = [];
 
     // Only ever grows (characteristics are never deleted), so the picker keeps its selection
     public ObservableCollection<SortOption> SortOptions { get; } = [SortOption.ByName, SortOption.ByQuantity];
+
+    // The table: the stretching name column, the other headers and the rows in header order
+    [ObservableProperty]
+    public partial TableColumn NameColumn { get; set; } = ProductTable.NameColumn(SortOption.ByName, false);
+
+    public ObservableCollection<TableColumn> Columns { get; } = [];
+
+    public ObservableCollection<ProductTableRow> Rows { get; } = [];
+
+    // The width below which the table scrolls sideways instead of squeezing its columns
+    [ObservableProperty]
+    public partial double TableMinimumWidth { get; set; } = ProductTable.MinimumWidth([], false);
 
     [ObservableProperty]
     public partial SortOption? SelectedSortOption { get; set; } = SortOption.ByName;
 
     [ObservableProperty]
     public partial bool SortDescending { get; set; }
+
+    // Not persisted: a search is a quick look, not a draft (the list starts unfiltered after a restart)
+    [ObservableProperty]
+    public partial string SearchText { get; set; } = string.Empty;
+
+    // Shown instead of the list when there is nothing in it: no match, or no product at all
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmptyShown))]
+    public partial string EmptyText { get; set; } = string.Empty;
+
+    // What to do about it
+    [ObservableProperty]
+    public partial string EmptyHint { get; set; } = string.Empty;
+
+    // "Clear search" when the search is the reason, else empty
+    [ObservableProperty]
+    public partial string EmptyActionText { get; set; } = string.Empty;
+
+    public bool IsEmptyShown => EmptyText.Length > 0;
+
+    // Pull to refresh
+    [ObservableProperty]
+    public partial bool IsRefreshing { get; set; }
 
     [ObservableProperty]
     public partial string CurrentUserName { get; set; } = string.Empty;
@@ -67,18 +100,35 @@ public partial class ProductListViewModel(
 
     partial void OnSortDescendingChanged(bool value) => ApplySort();
 
-    // The shake sensor and the banner listen only while the page is visible. Shake opens the scanner ("quick scan")
+    partial void OnSearchTextChanged(string value) => ApplySort();
+
+    partial void OnCanManageProductsChanged(bool value) =>
+        TableMinimumWidth = ProductTable.MinimumWidth([.. Columns], value);
+
+    // A tap on a column header: the same column flips the direction, another one starts ascending
+    [RelayCommand]
+    private void SortByColumn(TableColumn? column)
+    {
+        if (column?.Sort is not { } clicked || SelectedSortOption is null)
+        {
+            return;
+        }
+
+        var (sort, descending) = ProductTable.Toggle(SelectedSortOption, SortDescending, clicked);
+        SortDescending = descending;
+        SelectedSortOption = sort;
+    }
+
+    // The shake sensor listens only while the page is visible. Shake opens Search ("quick scan")
     public void OnAppearing()
     {
         EnsureLoadedCommand.Execute(null);
-        shake.Start(() => navigation.GoToAsync(Routes.Scanner));
-        Connectivity.Attach();
+        shake.Start(() => navigation.GoToAsync(Routes.Search));
     }
 
     public void OnDisappearing()
     {
         shake.Stop();
-        Connectivity.Detach();
     }
 
     // Called by the page every time it appears: loads once per signed-in user.
@@ -86,7 +136,8 @@ public partial class ProductListViewModel(
     [RelayCommand]
     private async Task EnsureLoadedAsync()
     {
-        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id && !_productsStale)
+        if (_loadedForUserId is not null && _loadedForUserId == currentUser.CurrentUser?.Id && !_productsStale
+            && _stockVersion == (stockChanges?.Version ?? 0))
         {
             if (_sortOptionsStale)
             {
@@ -112,13 +163,37 @@ public partial class ProductListViewModel(
         CanManageProducts = CanAddProduct;
         StatusMessage = string.Empty;
 
+        _stockVersion = stockChanges?.Version ?? 0;
         _all = [.. await catalog.GetSummariesAsync()];
+        _loaded = true;
         await SyncSortOptionsAsync();
         _loadedForUserId = user?.Id;
         _productsStale = false;
         ApplySort();
         logger.LogInformation("Product list loaded: {Count} products for user {UserId}", _all.Count, user?.Id);
     }
+
+    [RelayCommand]
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            // The list keeps what it showed
+            logger.LogWarning(ex, "The product list could not be refreshed");
+            StatusMessage = "The products could not be read. Try again.";
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ClearSearch() => SearchText = string.Empty;
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
@@ -135,6 +210,13 @@ public partial class ProductListViewModel(
             }
 
             ApplySort();
+        }
+
+        if (query.ContainsKey(NavigationKeys.SortByQuantity))
+        {
+            SearchText = string.Empty;
+            SortDescending = false;
+            SelectedSortOption = SortOption.ByQuantity;
         }
 
         if (query.ContainsKey(NavigationKeys.ProductsChanged))
@@ -163,7 +245,7 @@ public partial class ProductListViewModel(
             return;
         }
 
-        await navigation.GoToAsync(Routes.ProductForm);
+        await navigation.GoToAsync(Routes.NewProduct);
     }
 
     [RelayCommand(CanExecute = nameof(CanManageProducts))]
@@ -223,29 +305,7 @@ public partial class ProductListViewModel(
     private Task OpenSettingsAsync() => navigation.GoToAsync(Routes.Settings);
 
     [RelayCommand]
-    private Task ScanAsync() => navigation.GoToAsync(Routes.Scanner);
-
-    [RelayCommand]
     private Task OpenMapAsync() => navigation.GoToAsync(Routes.Map);
-
-    [RelayCommand]
-    private async Task SignOutAsync()
-    {
-        logger.LogInformation("User {UserId} signed out", currentUser.CurrentUser?.Id);
-        currentUser.SignOut();
-        try
-        {
-            await session.ClearAsync();
-        }
-        catch (Exception ex)
-        {
-            // Signing out must work even when secure storage does not: the user is signed out in memory anyway
-            logger.LogWarning(ex, "The saved session could not be removed");
-        }
-
-        appState.Clear();
-        await navigation.GoToAsync(Routes.Absolute(Routes.Login));
-    }
 
     // The role check (the alert and the warning log are the guard's); the reason also goes to the status line
     private async Task<bool> RefusedAsync(string action)
@@ -270,6 +330,7 @@ public partial class ProductListViewModel(
         }
 
         _sortOptionsStale = false;
+        ApplySort();
     }
 
     private void ApplySort()
@@ -280,9 +341,55 @@ public partial class ProductListViewModel(
         }
 
         Products.Clear();
-        foreach (var product in ProductSorter.Sort(_all, SelectedSortOption, SortDescending))
+        var matches = ProductSearch.Filter(_all, SearchText);
+        _matches = matches.ToDictionary(match => match.Product.Id);
+        foreach (var product in ProductSorter.Sort(matches.Select(match => match.Product), SelectedSortOption,
+                     SortDescending))
         {
             Products.Add(product);
+        }
+
+        ApplyTable(SelectedSortOption);
+
+        ApplyEmptyState();
+    }
+
+    private void ApplyEmptyState()
+    {
+        var noMatch = Products.Count == 0 && _all.Count > 0;
+        var noProducts = _loaded && _all.Count == 0;
+        EmptyText = noMatch ? $"No products match \"{SearchText.Trim()}\"."
+            : noProducts ? "No products yet."
+            : string.Empty;
+        EmptyHint = !noProducts ? string.Empty
+            : currentUser.CurrentUser is { } user && RolePermissions.CanManageProducts(user.Role)
+                ? "Add the first product."
+                : "A manager adds them.";
+        EmptyActionText = noMatch ? "Clear search" : string.Empty;
+    }
+
+    private void ApplyTable(SortOption sorted)
+    {
+        NameColumn = ProductTable.NameColumn(sorted, SortDescending);
+        var columns = ProductTable.Columns([.. SortOptions], sorted, SortDescending);
+
+        // Headers are replaced only when they change, so tapping or typing does not rebuild them for nothing
+        if (!Columns.SequenceEqual(columns))
+        {
+            Columns.Clear();
+            foreach (var column in columns)
+            {
+                Columns.Add(column);
+            }
+        }
+
+        TableMinimumWidth = ProductTable.MinimumWidth([.. Columns], CanManageProducts);
+
+        Rows.Clear();
+        foreach (var product in Products)
+        {
+            var match = _matches[product.Id];
+            Rows.Add(ProductTable.Row(product, columns) with { NameRanges = match.NameRanges, IsSimilar = match.IsFuzzy });
         }
     }
 }

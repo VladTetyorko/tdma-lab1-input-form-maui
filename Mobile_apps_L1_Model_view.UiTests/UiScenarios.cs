@@ -16,11 +16,13 @@ public class UiScenarios : IDisposable
     public void Dispose() => _session.Dispose();
 
     [Fact]
-    public void Login_WithTheDemoManager_ShowsTheProductList()
+    public void Login_WithTheDemoManager_ShowsHome_AndTheProductList()
     {
         _screen.SignInAsManager();
 
-        Assert.True(_screen.IsShown("ProductsCollection"), "The product list should be visible after signing in.");
+        Assert.True(_screen.IsShown("NavReceive"), "Home should be visible after signing in.");
+        _screen.Tap("NavProducts");
+        Assert.True(_screen.IsShown("ProductsCollection"), "The product list should open from Home.");
         Assert.True(_screen.IsShown("AddProductButton"), "The Manager may add products.");
     }
 
@@ -31,14 +33,16 @@ public class UiScenarios : IDisposable
         var name = $"AAA UI test {DateTime.UtcNow:HHmmss}";
         var barcode = NewValidBarcode();
         _screen.SignInAsManager();
-        Assert.True(_screen.IsShown("ProductsCollection"));
 
+        _screen.Tap("NavProducts");
         _screen.Tap("AddProductButton");
-        _screen.Type("ProductNameEntry", name);
         _screen.Type("BarcodeEntry", barcode);
-        _screen.Tap("SaveProductButton");
+        _screen.Tap("SaveProductButton"); // Next: name and photo
+        _screen.Type("ProductNameEntry", name);
+        _screen.Tap("SaveProductButton"); // Next: details
+        _screen.Tap("SaveProductButton"); // Add product
 
-        Assert.True(_screen.IsShown("ProductsCollection"), "Save returns to the list.");
+        Assert.True(_screen.IsShown("ProductsCollection"), "The wizard returns to where it was started.");
         Assert.True(_screen.IsTextShown(name), $"The new product '{name}' should be in the list.");
     }
 

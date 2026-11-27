@@ -12,6 +12,9 @@ public interface ICurrentUserService
 
     bool IsInRole(Role role);
 
+    // Raised after SignIn and SignOut, for things that live longer than a page (header, menu)
+    event EventHandler? Changed;
+
     void SignIn(User user);
 
     void SignOut();

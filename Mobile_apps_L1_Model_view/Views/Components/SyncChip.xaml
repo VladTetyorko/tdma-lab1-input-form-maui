@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<components:SessionView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                        xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+                        xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+                        xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
+                        x:Class="Mobile_apps_L1_Model_view.Views.Components.SyncChip"
+                        x:DataType="viewModels:SessionStatusViewModel">
+    <Border StyleClass="ChipNeutral" AutomationId="SyncChip">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding OpenSyncCommand}" />
+        </Border.GestureRecognizers>
+        <Border.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding Connectivity.State}" Value="{x:Static services:ConnectivityState.Offline}">
+                <Setter Property="Background" Value="{DynamicResource WarningSoftBrush}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding Connectivity.State}" Value="{x:Static services:ConnectivityState.Pending}">
+                <Setter Property="Background" Value="{DynamicResource WarningSoftBrush}" />
+            </DataTrigger>
+        </Border.Triggers>
+        <!-- The text always says the state: colour is only an addition -->
+        <Label Text="{Binding Connectivity.Text}" Style="{StaticResource ChipNeutralText}" />
+    </Border>
+</components:SessionView>

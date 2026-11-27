@@ -29,12 +29,10 @@ public class ProductListViewModelMoqTests
 
         // The real guard over mocked user and alerts: the refusal path is part of what these tests check
         var guard = new PermissionGuard(_currentUser.Object, _alerts.Object, NullLogger<PermissionGuard>.Instance);
-        var banner = new ConnectivityBannerViewModel(Mock.Of<ISyncService>(), Mock.Of<IOfflineSimulator>(),
-            Mock.Of<IConnectivityMonitor>(), NullLogger<ConnectivityBannerViewModel>.Instance);
 
         _viewModel = new ProductListViewModel(_catalog.Object, characteristics.Object, _productService.Object,
-            _currentUser.Object, Mock.Of<ISessionStore>(), Mock.Of<IAppStateService>(), Mock.Of<IStartupNavigator>(),
-            _alerts.Object, guard, _navigation.Object, Mock.Of<IShakeGesture>(), banner,
+            _currentUser.Object, Mock.Of<IStartupNavigator>(),
+            _alerts.Object, guard, _navigation.Object, Mock.Of<IShakeGesture>(),
             NullLogger<ProductListViewModel>.Instance);
     }
 

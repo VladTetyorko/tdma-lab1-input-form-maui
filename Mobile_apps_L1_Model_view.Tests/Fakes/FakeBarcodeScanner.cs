@@ -12,6 +12,10 @@ public sealed class FakeBarcodeScanner : IBarcodeScanner
 
     public int AccessRequests { get; private set; }
 
+    public event EventHandler? Failed;
+
+    public void ReportStartFailure() => Failed?.Invoke(this, EventArgs.Empty);
+
     public Task<bool> RequestCameraAccessAsync()
     {
         AccessRequests++;

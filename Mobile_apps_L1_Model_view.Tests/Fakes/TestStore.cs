@@ -33,6 +33,8 @@ public sealed class TestStore
     public SessionStore Session { get; }
     public OperationDraftStore Drafts { get; }
     public FakeAlertService Alerts { get; } = new();
+    public FakeKeyboard Keyboard { get; } = new();
+    public FakeConfirmSheet Confirm { get; } = new();
     public DeepLinkHandler DeepLinks { get; }
     public StartupNavigator Startup { get; }
 
@@ -78,9 +80,39 @@ public sealed class TestStore
 
     public IPermissionGuard Guard => new PermissionGuard(CurrentUser, Alerts, Logger<PermissionGuard>());
 
+    public FakeBarcodeScanner Scanner { get; } = new();
+
+    public FakeProductLookup Lookup { get; } = new();
+
+    public QuickSearchViewModel QuickSearch =>
+        new(Catalog, CharacteristicService, CurrentUser, Guard, Navigation, Keyboard, Logger<QuickSearchViewModel>());
+
+    public ProductFormViewModel ProductForm => new(new ProductValidator(Products), ProductService, CurrentUser, Guard,
+        AppState, Navigation, PhotoEditor, Scanner, Lookup, QuickSearch, Confirm, Logger<ProductFormViewModel>());
+
     public IDiagnosticsService Diagnostics => new DiagnosticsService(CurrentUser, CrashReporter, Logger<DiagnosticsService>());
 
-    public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock);
+    public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock, CurrentUser);
+
+    // One document repository, so the feed sees the documents a test commits
+    private InMemoryStockDocumentRepository? _documents;
+
+    public InMemoryStockDocumentRepository Documents => _documents ??= new InMemoryStockDocumentRepository(Operations);
+
+    public IOperationFeed Feed =>
+        new OperationFeed(Operations, Products, Users, Documents, CurrentUser, Logger<OperationFeed>());
+
+    public FakeSheetService Sheets { get; } = new();
+
+    public OperationCorrector Corrector => new(Operations, Documents,
+        new StockDocumentService(Documents, Products, Stock, CurrentUser, Clock, new StockChanges(),
+            Logger<StockDocumentService>()),
+        Stock, CurrentUser, Logger<OperationCorrector>());
+
+    public FakeToastService Toasts { get; } = new();
+
+    public OperationViewer Viewer => new(Sheets, Navigation, Catalog, Maps, Feedback, Corrector, CurrentUser, Toasts, Clock,
+        Logger<OperationViewer>());
 
     // Adds the user to the user repository (for history names) and signs them in
     public async Task<User> SignInAsync(Role role, string fullName = "Test User")
