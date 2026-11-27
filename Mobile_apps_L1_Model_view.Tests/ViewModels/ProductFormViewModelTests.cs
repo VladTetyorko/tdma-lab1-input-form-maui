@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 using Mobile_apps_L1_Model_view.Services;
@@ -24,8 +25,10 @@ public class ProductFormViewModelTests
     private ProductFormViewModel CreateViewModel(AppStateService appState)
     {
         var validator = new ProductValidator(_products);
-        var service = new ProductService(_products, new InMemoryOperationRepository(), validator, _currentUser, new FakeClock());
-        return new ProductFormViewModel(validator, service, _currentUser, appState, _navigation);
+        var service = new ProductService(_products, new InMemoryOperationRepository(), validator, _currentUser, new FakeClock(),
+            NullLogger<ProductService>.Instance);
+        return new ProductFormViewModel(validator, service, _currentUser, appState, _navigation,
+            NullLogger<ProductFormViewModel>.Instance);
     }
 
     [Fact]
@@ -208,6 +211,25 @@ public class ProductFormViewModelTests
 
         Assert.Equal(string.Empty, viewModel.Name);
         Assert.Equal("4820001000016", viewModel.Barcode);
+    }
+
+    [Fact]
+    public void ApplyQueryAttributes_FromTheLookup_PrefillsNameBarcodeAndAttribution()
+    {
+        _appState.SetDraft(new ProductFormDraft("Old draft", ValidBarcode));
+        var viewModel = CreateViewModel(_appState);
+        viewModel.ApplyQueryAttributes(new Dictionary<string, object>
+        {
+            [NavigationKeys.Barcode] = "3017620422003",
+            [NavigationKeys.ProductName] = "Nutella",
+            [NavigationKeys.DataSource] = "Data: Open Food Facts (ODbL)"
+        });
+
+        viewModel.OnAppearing();
+
+        Assert.Equal("Nutella", viewModel.Name);
+        Assert.Equal("3017620422003", viewModel.Barcode);
+        Assert.Equal("Data: Open Food Facts (ODbL)", viewModel.DataSource);
     }
 
     [Fact]

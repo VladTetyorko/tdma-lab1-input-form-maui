@@ -10,6 +10,7 @@
 
     <ContentPage.Behaviors>
         <views:PageLifecycleBehavior />
+        <views:FocusOnAppearingBehavior Target="{x:Reference QuantityEntry}" />
     </ContentPage.Behaviors>
 
     <Shell.BackButtonBehavior>
@@ -26,7 +27,9 @@
             <Picker ItemsSource="{Binding AvailableDirections}"
                     SelectedItem="{Binding SelectedDirection, Mode=TwoWay}" />
 
-            <Label Text="{Binding Quantity, StringFormat='Units: {0}'}" />
+            <Label Text="Units" />
+            <Entry x:Name="QuantityEntry" Text="{Binding Quantity, Mode=TwoWay}" Keyboard="Numeric"
+                   ReturnCommand="{Binding SaveCommand}" />
             <Stepper Minimum="1" Maximum="10000" Increment="1" Value="{Binding Quantity, Mode=TwoWay}" />
 
             <Label Text="Counterparty (optional)" />

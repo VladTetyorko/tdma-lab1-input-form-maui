@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Data.Migrations;
 using Mobile_apps_L1_Model_view.Services;
@@ -14,6 +15,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddLogging();
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<UnhandledExceptionLogger>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IAppStateService, AppStateService>();
         services.AddSingleton<IOperationDraftStore, OperationDraftStore>();
@@ -49,6 +51,17 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IStockService, StockService>();
         services.AddSingleton<IProductCatalog, ProductCatalog>();
 
+        // Logging tools: the log folder is a platform service (ILogPathProvider), the crash reporter is chosen by the host
+        services.AddSingleton<ILogReader, LogReader>();
+        services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
+
+        // Open product data: one HttpClient (5 s timeout, generic User-Agent) over a replaceable handler,
+        // so tests register a fake HttpMessageHandler instead of touching the network
+        services.AddSingleton<HttpMessageHandler>(_ => new HttpClientHandler());
+        services.AddSingleton<IProductLookup>(provider => new OpenFoodFactsLookup(
+            OpenFoodFactsLookup.CreateClient(provider.GetRequiredService<HttpMessageHandler>()),
+            provider.GetRequiredService<ILogger<OpenFoodFactsLookup>>()));
+
         services.AddTransient<LoginViewModel>();
         services.AddTransient<ProductListViewModel>();
         services.AddTransient<ProductFormViewModel>();
@@ -57,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<OperationViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<ScannerViewModel>();
+        services.AddTransient<LogsViewModel>();
 
         return services;
     }

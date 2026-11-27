@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data.Rows;
 using Mobile_apps_L1_Model_view.Models;
 using SQLite;
@@ -6,11 +7,14 @@ namespace Mobile_apps_L1_Model_view.Data;
 
 // Shared SQLite plumbing for the repositories: queries, and writes that also record the change in
 // SyncQueue (through SyncJournal, in the same transaction). Subclasses only convert entity <-> row.
-public abstract class SqliteRepository<TEntity, TRow>(IDatabase database, SyncJournal journal)
+public abstract class SqliteRepository<TEntity, TRow>(IDatabase database, SyncJournal journal, ILogger logger)
     where TEntity : Entity
     where TRow : Row, new()
 {
     private static readonly string Table = RowTables.NameOf<TRow>();
+
+    // The repository's own logger, for subclasses
+    protected ILogger Logger { get; } = logger;
 
     protected abstract ValueTask<TRow> ToRowAsync(TEntity entity);
 
@@ -77,7 +81,17 @@ public abstract class SqliteRepository<TEntity, TRow>(IDatabase database, SyncJo
     protected async Task InTransactionAsync(Action<SQLiteConnection> work)
     {
         var connection = await database.GetConnectionAsync();
-        await connection.RunInTransactionAsync(work);
+        try
+        {
+            await connection.RunInTransactionAsync(work);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Write to {Table} failed and was rolled back", Table);
+            throw;
+        }
+
+        Logger.LogDebug("Write to {Table} committed", Table);
     }
 
     // Deletes any row (also of another table) and queues the deletion

@@ -1,10 +1,11 @@
+﻿using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data.Rows;
 using Mobile_apps_L1_Model_view.Models;
 
 namespace Mobile_apps_L1_Model_view.Data;
 
-public sealed class SqliteCharacteristicRepository(IDatabase database, SyncJournal journal)
-    : SqliteRepository<Characteristic, CharacteristicRow>(database, journal), ICharacteristicRepository
+public sealed class SqliteCharacteristicRepository(IDatabase database, SyncJournal journal, ILogger<SqliteCharacteristicRepository> logger)
+    : SqliteRepository<Characteristic, CharacteristicRow>(database, journal, logger), ICharacteristicRepository
 {
     public Task<IReadOnlyList<Characteristic>> GetAllAsync() => QueryAsync();
 

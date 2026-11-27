@@ -15,6 +15,16 @@ public class RolePermissionsTests
     }
 
     [Theory]
+    [InlineData(Role.Manager, true)]
+    [InlineData(Role.Storekeeper, false)]
+    [InlineData(Role.Driver, false)]
+    public void CanViewLogs_AndCanUseDiagnostics_OnlyManager(Role role, bool expected)
+    {
+        Assert.Equal(expected, RolePermissions.CanViewLogs(role));
+        Assert.Equal(expected, RolePermissions.CanUseDiagnostics(role));
+    }
+
+    [Theory]
     [InlineData(Role.Storekeeper, OperationDirection.In, true)]
     [InlineData(Role.Storekeeper, OperationDirection.Out, true)]
     [InlineData(Role.Manager, OperationDirection.In, true)]

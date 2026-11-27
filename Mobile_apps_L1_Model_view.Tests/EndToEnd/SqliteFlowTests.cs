@@ -13,7 +13,7 @@ namespace Mobile_apps_L1_Model_view.Tests.EndToEnd;
 // file, secrets and preferences, which is what a restart of the device does
 public class SqliteFlowTests : IDisposable
 {
-    private const string DrillBarcode = "482000100001";
+    private const string DrillBarcode = "3017620422003";
 
     private readonly TempDatabasePath _files = new();
     private readonly FakeSecretStore _secrets = new();
@@ -38,6 +38,7 @@ public class SqliteFlowTests : IDisposable
         var services = new ServiceCollection().AddStockRoomCore();
         services.AddSingleton<IDatabasePathProvider>(_files);
         services.AddSingleton<ISecretStore>(_secrets);
+        services.AddSingleton<ICrashReporter, NullCrashReporter>();
         services.AddSingleton<IConnectivityMonitor>(_network);
         services.AddSingleton<IFileSharer>(_sharer);
         services.AddSingleton<IPreferencesStore>(_preferences);
@@ -66,7 +67,7 @@ public class SqliteFlowTests : IDisposable
     }
 
     private async Task<Product> DrillAsync() =>
-        (await App.GetRequiredService<IProductRepository>().GetByBarcodeAsync(Ean13.WithCheckDigit(DrillBarcode)))!;
+        (await App.GetRequiredService<IProductRepository>().GetByBarcodeAsync(DrillBarcode))!;
 
     [Fact]
     public async Task OfflineChange_IsQueuedAndQuantityDropsLocally_ThenSentWhenOnlineAgain()
@@ -75,8 +76,14 @@ public class SqliteFlowTests : IDisposable
         var sync = app.GetRequiredService<ISyncService>();
         var server = app.GetRequiredService<StubSyncApi>();
         var queue = app.GetRequiredService<ISyncQueue>();
+        var startupSync = false;
+        sync.Completed += (_, _) => startupSync = true;
         await app.GetRequiredService<IAppLifecycleService>().RestoreAsync();
         var settings = app.GetRequiredService<SettingsViewModel>();
+
+        // Restoring starts a first sync in the background. It must be over before a change is queued, or the
+        // "back online" request is answered with Busy by a run that has already read an empty queue
+        await Eventually.WaitAsync(() => startupSync);
 
         settings.SimulateOffline = true;
         Assert.False(sync.IsOnline);
@@ -89,7 +96,7 @@ public class SqliteFlowTests : IDisposable
 
         var list = app.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        Assert.Equal(19, Assert.Single(list.Products, p => p.Id == drill.Id).Quantity);
+        Assert.Equal(34, Assert.Single(list.Products, p => p.Id == drill.Id).Quantity);
         Assert.Equal(1, await sync.GetPendingCountAsync());
         var queued = Assert.Single(await queue.GetPendingAsync());
         Assert.Equal(("Operations", SyncOperation.Insert), (queued.EntityType, queued.Operation));
@@ -134,7 +141,7 @@ public class SqliteFlowTests : IDisposable
         Assert.Equal(Routes.Products, route);
         var list = restarted.GetRequiredService<ProductListViewModel>();
         await list.LoadCommand.ExecuteAsync(null);
-        Assert.Equal(11, list.Products.Count);
+        Assert.Equal(13, list.Products.Count);
         Assert.Single(list.Products, p => p.Name == "Persisted Drill");
         Assert.Equal(3, (await restarted.GetRequiredService<IUserRepository>().GetAllAsync()).Count);
         Assert.Equal(4, (await restarted.GetRequiredService<ICharacteristicRepository>().GetAllAsync()).Count);
@@ -175,7 +182,7 @@ public class SqliteFlowTests : IDisposable
         Assert.Single(_alerts.Confirmations);
 
         // A product with history is refused, with the reason, and nothing is asked
-        var drill = Assert.Single(list.Products, p => p.Name == "Cordless Drill 18V");
+        var drill = Assert.Single(list.Products, p => p.Name == "Nutella 400 g");
         Assert.False(drill.CanDelete);
         await list.DeleteProductCommand.ExecuteAsync(drill);
 

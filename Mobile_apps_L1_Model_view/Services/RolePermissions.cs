@@ -7,6 +7,11 @@ public static class RolePermissions
 {
     public static bool CanManageProducts(Role role) => role == Role.Manager;
 
+    // The in-app log viewer and the diagnostics tools in Settings
+    public static bool CanViewLogs(Role role) => role == Role.Manager;
+
+    public static bool CanUseDiagnostics(Role role) => role == Role.Manager;
+
     public static bool CanRecord(Role role, OperationDirection direction) =>
         direction == OperationDirection.In || role != Role.Driver;
 }

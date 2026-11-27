@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Services;
@@ -9,7 +10,10 @@ public partial class SettingsViewModel(
     IDeepLinkHandler deepLinks,
     ISyncService sync,
     IOfflineSimulator offline,
-    IDatabaseExporter exporter) : ObservableObject, IPageLifecycleAware
+    IDatabaseExporter exporter,
+    IDiagnosticsService diagnostics,
+    INavigationService navigation,
+    ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
     public IReadOnlyList<ThemeSetting> ThemeOptions { get; } = Enum.GetValues<ThemeSetting>();
 
@@ -37,11 +41,25 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial string ExportText { get; set; } = string.Empty;
 
-    partial void OnSelectedThemeChanged(ThemeSetting value) => themeService.Set(value);
+    // The Diagnostics section is for the Manager (also refused by IDiagnosticsService)
+    public bool ShowDiagnostics => diagnostics.IsAvailable;
+
+    // "Send test crash" needs a configured crash service
+    public bool CanSendTestCrash => diagnostics.CanSendTestCrash;
+
+    [ObservableProperty]
+    public partial string DiagnosticsText { get; set; } = string.Empty;
+
+    partial void OnSelectedThemeChanged(ThemeSetting value)
+    {
+        themeService.Set(value);
+        logger.LogInformation("Theme set to {Theme}", value);
+    }
 
     partial void OnSimulateOfflineChanged(bool value)
     {
         offline.IsOffline = value;
+        logger.LogInformation("Simulated offline mode switched {State}", value ? "on" : "off");
         NetworkText = DescribeNetwork();
     }
 
@@ -49,6 +67,8 @@ public partial class SettingsViewModel(
     {
         sync.Completed += OnSyncCompleted;
         NetworkText = DescribeNetwork();
+        OnPropertyChanged(nameof(ShowDiagnostics));
+        OnPropertyChanged(nameof(CanSendTestCrash));
         RefreshPendingCommand.Execute(null);
     }
 
@@ -71,8 +91,21 @@ public partial class SettingsViewModel(
         catch (Exception ex)
         {
             ExportText = $"The database could not be shared: {ex.Message}";
+            logger.LogWarning("The database export was not shared, the user was told");
         }
     }
+
+    [RelayCommand]
+    private Task OpenLogsAsync() => navigation.GoToAsync(Routes.Logs);
+
+    [RelayCommand]
+    private void WriteTestEntries() => DiagnosticsText = Describe(diagnostics.WriteTestEntries());
+
+    [RelayCommand]
+    private async Task ThrowInBackgroundTaskAsync() => DiagnosticsText = Describe(await diagnostics.ThrowInBackgroundTaskAsync());
+
+    [RelayCommand(CanExecute = nameof(CanSendTestCrash))]
+    private void SendTestCrash() => DiagnosticsText = Describe(diagnostics.SendTestCrash());
 
     [RelayCommand]
     private Task OpenLinkAsync() => deepLinks.HandleAsync(LinkText);
@@ -90,6 +123,8 @@ public partial class SettingsViewModel(
             _ => "A sync is already running."
         };
     }
+
+    private static string Describe(Result<string> result) => result.IsSuccess ? result.Value! : result.Error!;
 
     private string DescribeNetwork() => sync.IsOnline ? "Online" : "Offline";
 }

@@ -23,7 +23,7 @@ public sealed class AppLifecycleService(
         if (state.SignedInUserId is { } userId && await users.GetByIdAsync(userId) is { } user)
         {
             currentUser.SignIn(user);
-            logger.LogInformation("Restored the session of {User}, last page {Route}", user.FullName, state.LastRoute);
+            logger.LogInformation("Restored the session of user {UserId}, last page {Route}", user.Id, state.LastRoute);
             return Routes.Products;
         }
 

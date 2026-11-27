@@ -29,7 +29,7 @@
 
             <Label Text="Barcode" Style="{StaticResource SectionLabel}" />
             <Entry Text="{Binding ManualBarcode, Mode=TwoWay}"
-                   Placeholder="EAN-13"
+                   Placeholder="EAN-13 or UPC-A"
                    Keyboard="Numeric"
                    ReturnCommand="{Binding LookUpCommand}" />
             <Button Text="Find product" Command="{Binding LookUpCommand}" HorizontalOptions="Start" />
@@ -39,9 +39,14 @@
             <HorizontalStackLayout Spacing="10">
                 <Button Text="Add this product" Command="{Binding CreateProductCommand}"
                         IsVisible="{Binding CanCreateProduct}" />
+                <Button Text="Create from Open Food Facts" Command="{Binding CreateFromLookupCommand}"
+                        IsVisible="{Binding CanCreateProduct}" />
                 <Button Text="Scan again" Command="{Binding ScanAgainCommand}"
                         IsVisible="{Binding CanScanAgain}" />
             </HorizontalStackLayout>
+
+            <Label Text="{Binding LookupAttribution}" Style="{StaticResource CaptionLabel}"
+                   IsVisible="{Binding CanCreateProduct}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

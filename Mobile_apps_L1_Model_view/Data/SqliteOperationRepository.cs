@@ -12,7 +12,7 @@ public sealed class SqliteOperationRepository(
     SyncJournal journal,
     IFieldEncryptor encryptor,
     ILogger<SqliteOperationRepository> logger)
-    : SqliteRepository<Operation, OperationRow>(database, journal), IOperationRepository
+    : SqliteRepository<Operation, OperationRow>(database, journal, logger), IOperationRepository
 {
     // Shown instead of the counterparty when it cannot be decrypted (wrong or missing key), so one
     // unreadable value does not break the whole history
@@ -68,7 +68,7 @@ public sealed class SqliteOperationRepository(
         }
         catch (EncryptionException ex)
         {
-            logger.LogWarning(ex, "Counterparty of operation {Operation} cannot be decrypted", row.Id);
+            Logger.LogWarning(ex, "Counterparty of operation {Operation} cannot be decrypted", row.Id);
             return UnreadableCounterparty;
         }
     }

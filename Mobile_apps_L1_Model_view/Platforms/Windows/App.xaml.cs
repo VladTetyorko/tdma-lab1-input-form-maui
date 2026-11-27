@@ -21,10 +21,19 @@ public partial class App : MauiWinUIApplication
         this.InitializeComponent();
     }
 
-    protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+    protected override MauiApp CreateMauiApp()
+    {
+        var app = MauiProgram.CreateMauiApp();
+
+        // Exceptions from the WinUI UI thread: same logger as the AppDomain and Task handlers
+        var handler = app.Services.GetRequiredService<UnhandledExceptionLogger>();
+        UnhandledException += (_, e) =>
+            handler.OnPlatformUnhandled(e.Exception, "Microsoft.UI.Xaml.Application.UnhandledException");
+        return app;
+    }
 
     // The unpackaged app has no protocol activation, so a link arrives as a command-line argument:
-    //   Mobile_apps_L1_Model_view.exe stockroom://product/4820001000016
+    //   Mobile_apps_L1_Model_view.exe stockroom://product/3017620422003
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         base.OnLaunched(args);

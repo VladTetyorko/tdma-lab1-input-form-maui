@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
+using Sentry;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Services;
 using Mobile_apps_L1_Model_view.Views;
+using Serilog;
 #if ANDROID || IOS
 using ZXing.Net.Maui.Controls;
 #endif
@@ -30,6 +32,7 @@ public static class MauiProgram
 #endif
 
         builder.Services.AddStockRoomCore();
+        builder.Services.AddSingleton<ILogPathProvider, MauiLogPathProvider>();
         builder.Services.AddSingleton<IPreferencesStore, MauiPreferencesStore>();
         builder.Services.AddSingleton<IDatabasePathProvider, MauiDatabasePathProvider>();
         builder.Services.AddSingleton<ISecretStore, MauiSecretStore>();
@@ -46,11 +49,76 @@ public static class MauiProgram
         builder.Services.AddTransient<OperationPage>();
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<ScannerPage>();
+        builder.Services.AddTransient<LogsPage>();
 
+        ConfigureLogging(builder);
+        ConfigureCrashReporting(builder);
+
+        var app = builder.Build();
+        app.Services.GetRequiredService<UnhandledExceptionLogger>().Attach();
+        return app;
+    }
+
+    // The only place that decides between Sentry and the null reporter: a DSN exists or it does not
+    private static void ConfigureCrashReporting(MauiAppBuilder builder)
+    {
+        var dsn = SentryDsn.Resolve(Environment.GetEnvironmentVariable(SentryDsn.EnvironmentVariable), ReadSettingsFile());
+        if (dsn is null)
+        {
+            builder.Services.AddSingleton<ICrashReporter, NullCrashReporter>();
+            return;
+        }
+
+        // The plain Sentry SDK, not Sentry.Maui: Sentry.Maui needs WinRT.Runtime 2.3.1 on Windows, the app ships 2.2.0
+        // and fails to start. Only handled and unhandled exceptions are sent; log lines are not
+        SentrySdk.Init(options =>
+        {
+            options.Dsn = dsn;
+            options.SendDefaultPii = false;
+            options.AttachStacktrace = true;
+            options.AutoSessionTracking = false;
+        });
+        builder.Services.AddSingleton<ICrashReporter, SentryCrashReporter>();
+    }
+
+    // appsettings.local.json is an untracked app asset (see README); missing = null
+    private static string? ReadSettingsFile()
+    {
+        try
+        {
+            using var stream = FileSystem.OpenAppPackageFileAsync(SentryDsn.SettingsFileName).GetAwaiter().GetResult();
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    // The only place that knows Serilog: everything else logs through ILogger<T>
+    private static void ConfigureLogging(MauiAppBuilder builder)
+    {
+        var logDirectory = new MauiLogPathProvider().LogDirectory;
+        var configuration = new LoggerConfiguration()
+#if DEBUG
+            .MinimumLevel.Debug()
+            .WriteTo.Console(outputTemplate: LogFormat.OutputTemplate)
+#else
+            .MinimumLevel.Information()
+#endif
+            .Enrich.FromLogContext()
+            .WriteTo.File(
+                Path.Combine(logDirectory, LogFormat.FileNamePattern),
+                outputTemplate: LogFormat.OutputTemplate,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: LogFormat.RetainedFiles,
+                shared: true);
+
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog(configuration.CreateLogger(), dispose: true);
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-
-        return builder.Build();
     }
 }

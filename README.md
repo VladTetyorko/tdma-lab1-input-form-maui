@@ -33,7 +33,8 @@ available. The counterparty of an operation (personal data) is stored
 have no operations).
 
 Details: [`docs/domain/domain-model.md`](docs/domain/domain-model.md) (overview, roles)
-and [`docs/domain/entities.md`](docs/domain/entities.md) (every entity, its fields and relations).
+and [`docs/domain/entities.md`](docs/domain/entities.md) (every entity, its fields and relations);
+[`docs/domain/open-data.md`](docs/domain/open-data.md) (Open Food Facts seed and lookup, ODbL attribution).
 
 ## Why a warehouse
 
@@ -89,6 +90,13 @@ Template: [`docs/steps/_template.md`](docs/steps/_template.md).
 | 02 | 2 | [Shell navigation, parameters, characteristics, sorting, In/Out page](docs/steps/02-navigation.md) | done (310 tests) |
 | 03 | 3 | [App and page lifecycle, saved state, theme, deep links, barcode scanner](docs/steps/03-lifecycle.md) | done (469 tests) |
 | 04 | 4 | [SQLite, repositories, CRUD, migrations, sync queue, encryption](docs/steps/04-sqlite.md) | done (634 tests) |
+| — | — | [Plan for labs 5–9 and the catalog step](docs/plan.md) | in review |
+| 05a | — | [Catalog: real Open Food Facts seed, QR scanning, product lookup, quick flow](docs/steps/05a-catalog.md) | in review |
+| 05 | 5 | [Logging, global error handling, log viewer, crash reporter](docs/steps/05-logging.md) | done (775 tests) |
+| 06 | 6 | Login, password hashing, token, roles, biometrics, certificate pinning | planned |
+| 07 | 7 | Permissions, photo, location, map, shake, network indicator | planned |
+| 08 | 8 | Core library, Moq tests, CI, UI tests | planned |
+| 09 | 9 | Final module: search, access matrix, APK, v1.0 | planned |
 
 ## Decision log
 
@@ -140,6 +148,16 @@ Every architectural decision, newest last. Details are in the step documents.
 | 42 | 4 | "Share database": checkpoint WAL, copy the file, `Share.RequestAsync` behind `IFileSharer` | A complete file the user can open on a PC |
 | 43 | 4 | In-memory repositories moved to the test project | Dead code in the app otherwise; still fast test doubles |
 | 44 | 4 | The counterparty in the persisted operation draft is encrypted with `IFieldEncryptor` by `OperationDraftStore`; `IAppStateService` stays generic; undecryptable counterparty is dropped on restore | One encryption mechanism (DRY); personal data is never in `Preferences` in clear text; a lost key must not crash the form |
+| 45 | catalog | The seed `0002_seed.sql` is edited in place (12 real Open Food Facts products, `Brand` replaces `Color`); a dev database is deleted | The app is pre-release, so a new migration would only keep dead demo data; no user data exists yet |
+| 46 | catalog | `ScanPayloadParser` turns any scan (EAN-13, UPC-A, `stockroom://product/{barcode}`) into one barcode; the camera reads 1-D codes and QR; manual entry uses the same parser | One place for input rules (DRY); QR codes can carry a deep link |
+| 47 | catalog | `IProductLookup` / `OpenFoodFactsLookup`: online only, never cached, one `HttpClient` (5 s, generic User-Agent), no pinning; failure becomes an `Offline`/`Failed` result | Third-party data is optional help, not a dependency; pinning is for our own server only |
+| 48 | catalog | "Create from Open Food Facts" is offered to Managers only (`RolePermissions.CanManageProducts`); the form is prefilled with name and barcode | Creating products is a Manager task; characteristic prefill (brand, category) is a next step |
+| 49 | 5 | Serilog is configured only in `MauiProgram` and bridged into `ILogger<T>`; the output template and file name live in `LogFormat` (Services), used by the writer, `LogReader` and the tests | The log viewer parses the file, so the format is one contract; a template change fails `LoggingFlowTests` |
+| 50 | 5 | Levels by meaning: success `Information`, role denied / rejected input / offline `Warning`, handled failure `Error` with the exception, repository write `Debug`; sync logs one line per run; counterparty and secrets are never logged (a test records every log of an operation and searches for it) | Useful file, no flood, privacy rule enforced by a test |
+| 51 | 5 | `UnhandledExceptionLogger` (idempotent `Attach`) handles `AppDomain.UnhandledException` (Critical) and `TaskScheduler.UnobservedTaskException` (Error, observed); Android and WinUI hooks only forward to it | Everything testable in one class; platform code stays a few lines |
+| 52 | 5 | `ICrashReporter` with `SentryCrashReporter` (plain Sentry SDK; Sentry.Maui crashed the Windows app at start) when a DSN exists (env var or untracked `appsettings.local.json`), else `NullCrashReporter`; `SendDefaultPii = false`, log lines not forwarded; no analytics | App Center is retired and Crashlytics has no MAUI binding; fresh clones run without a secret; scope stays at crash reporting |
+| 53 | 5 | In-app log viewer (`ILogReader`, `LogsViewModel`, `LogsPage`): newest first, level filter, max 200, `FileShare.ReadWrite`; Manager only, hidden in the UI and refused by the ViewModel with a `Warning` | Logs show internals; two layers per AGENTS 2a |
+| 54 | 5 | Settings "Diagnostics" section behind `IDiagnosticsService` (test entries, unobserved task + `GC.Collect`, test crash only with a DSN); the service also refuses non-Managers | Failures can be demonstrated and verified without code changes; logic is testable |
 
 ## Architecture
 
@@ -307,6 +325,23 @@ graph TD
     IDeepLinkHandler --> IAlertService
     IDeepLinkHandler --> INavigationService
 ```
+
+## Logging
+
+Serilog writes `logs/stockroom-YYYYMMDD.log` in the app data folder (daily, 7 files kept) with the fixed format
+`{Timestamp:o} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}` (`LogFormat`). Code logs through
+`ILogger<T>` only; rules (levels, templates, never log personal data) are in [`AGENTS.md`](AGENTS.md) section 2a.
+A Manager reads the log in the app: **Settings -> Diagnostics -> Open logs** (level filter, newest first), and can
+generate test entries, an unobserved background exception and a test crash from the same section.
+
+Crash reporting uses Sentry when a DSN is configured; without one a null reporter is used and nothing is sent.
+Create the untracked file `Mobile_apps_L1_Model_view/appsettings.local.json` (it is git-ignored) and rebuild:
+
+```json
+{ "Sentry": { "Dsn": "https://<key>@<org>.ingest.sentry.io/<project>" } }
+```
+
+or set the environment variable `STOCKROOM_SENTRY_DSN` (desktop only). Details: [`docs/steps/05-logging.md`](docs/steps/05-logging.md).
 
 ## Repository layout
 

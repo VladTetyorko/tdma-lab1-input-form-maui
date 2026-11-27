@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,7 +16,8 @@ public partial class ProductDetailViewModel(
     ICharacteristicValidator validator,
     ICurrentUserService currentUser,
     IAppStateService appState,
-    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    INavigationService navigation,
+    ILogger<ProductDetailViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private ProductSummary? _product;
 
@@ -71,6 +73,7 @@ public partial class ProductDetailViewModel(
         if (details is null)
         {
             StatusMessage = "This product no longer exists.";
+            logger.LogWarning("Product {ProductId} no longer exists", _product.Id);
             return;
         }
 
@@ -92,6 +95,7 @@ public partial class ProductDetailViewModel(
 
         StatusMessage = string.Empty;
         SaveCommand.NotifyCanExecuteChanged();
+        logger.LogDebug("Product {ProductId} details loaded: {Count} operations in the history", _product.Id, History.Count);
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
@@ -102,9 +106,11 @@ public partial class ProductDetailViewModel(
         if (!result.IsSuccess)
         {
             StatusMessage = result.Error!;
+            logger.LogWarning("Characteristic values of product {ProductId} were not saved: {Reason}", _product.Id, result.Error);
             return;
         }
 
+        logger.LogDebug("Characteristic values of product {ProductId} saved, {Changes} changed", _product.Id, result.Value);
         appState.ClearDraft<ProductDetailDraft>();
         await ReturnToListAsync();
     }

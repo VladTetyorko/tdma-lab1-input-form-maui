@@ -182,7 +182,14 @@ public class SyncServiceTests : IDisposable
     {
         var offline = _provider.GetRequiredService<IOfflineSimulator>();
         var sync = Sync;
+
+        // Start() runs a first sync in the background; it must be over before the test queues a change, or the
+        // "back online" request would be answered with Busy by that first run, which has already read an empty queue
+        var firstRun = false;
+        sync.Completed += (_, _) => firstRun = true;
         sync.Start();
+        await Eventually.WaitAsync(() => firstRun);
+
         offline.IsOffline = true;
         await AddProductAsync();
         Assert.Empty(Server.Records);

@@ -18,8 +18,11 @@ public class SettingsViewModelTests
     public SettingsViewModelTests()
     {
         _theme = new ThemeService(_store.Preferences, _applier);
-        _viewModel = new SettingsViewModel(_theme, _store.DeepLinks, _sync, _offline, _exporter);
+        _viewModel = CreateViewModel();
     }
+
+    private SettingsViewModel CreateViewModel() => new(_theme, _store.DeepLinks, _sync, _offline, _exporter,
+        _store.Diagnostics, _store.Navigation, _store.Logger<SettingsViewModel>());
 
     [Fact]
     public void ThemeOptions_ListsSystemLightAndDark()
@@ -32,7 +35,7 @@ public class SettingsViewModelTests
     {
         _theme.Set(ThemeSetting.Dark);
 
-        var viewModel = new SettingsViewModel(_theme, _store.DeepLinks, _sync, _offline, _exporter);
+        var viewModel = CreateViewModel();
 
         Assert.Equal(ThemeSetting.Dark, viewModel.SelectedTheme);
     }
@@ -167,5 +170,78 @@ public class SettingsViewModelTests
         await _viewModel.RefreshPendingCommand.ExecuteAsync(null);
 
         Assert.Equal(5, _viewModel.PendingCount);
+    }
+
+    [Fact]
+    public async Task ShowDiagnostics_OnlyForTheManager()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+        Assert.False(_viewModel.ShowDiagnostics);
+
+        await _store.SignInAsync(Role.Manager);
+        Assert.True(_viewModel.ShowDiagnostics);
+    }
+
+    [Fact]
+    public async Task WriteTestEntries_ReportsWhatItDid()
+    {
+        await _store.SignInAsync(Role.Manager);
+
+        _viewModel.WriteTestEntriesCommand.Execute(null);
+
+        Assert.Contains("one test entry per level", _viewModel.DiagnosticsText);
+    }
+
+    [Fact]
+    public async Task WriteTestEntries_AsAStorekeeper_ShowsTheRefusal()
+    {
+        await _store.SignInAsync(Role.Storekeeper);
+
+        _viewModel.WriteTestEntriesCommand.Execute(null);
+
+        Assert.Equal("Only a Manager can use the diagnostics.", _viewModel.DiagnosticsText);
+    }
+
+    [Fact]
+    public async Task ThrowInBackgroundTask_ReportsWhatItDid()
+    {
+        await _store.SignInAsync(Role.Manager);
+
+        await _viewModel.ThrowInBackgroundTaskCommand.ExecuteAsync(null);
+
+        Assert.Contains("background task", _viewModel.DiagnosticsText);
+    }
+
+    [Fact]
+    public async Task SendTestCrash_IsEnabledOnlyWithACrashService()
+    {
+        await _store.SignInAsync(Role.Manager);
+        Assert.True(_viewModel.SendTestCrashCommand.CanExecute(null));
+
+        _store.CrashReporter.IsEnabled = false;
+        _viewModel.OnAppearing();
+
+        Assert.False(_viewModel.CanSendTestCrash);
+    }
+
+    [Fact]
+    public async Task SendTestCrash_ReportsToTheCrashService()
+    {
+        await _store.SignInAsync(Role.Manager);
+
+        _viewModel.SendTestCrashCommand.Execute(null);
+
+        Assert.Single(_store.CrashReporter.Reports);
+        Assert.Contains("test crash", _viewModel.DiagnosticsText);
+    }
+
+    [Fact]
+    public async Task OpenLogs_NavigatesToTheLogViewer()
+    {
+        await _store.SignInAsync(Role.Manager);
+
+        await _viewModel.OpenLogsCommand.ExecuteAsync(null);
+
+        Assert.Equal([Routes.Logs], _store.Navigation.RequestedRoutes);
     }
 }

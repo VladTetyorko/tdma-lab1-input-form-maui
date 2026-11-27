@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,7 +11,8 @@ namespace Mobile_apps_L1_Model_view.ViewModels;
 public partial class LoginViewModel(
     IUserRepository users,
     ICurrentUserService currentUser,
-    INavigationService navigation) : ObservableObject, IPageLifecycleAware
+    INavigationService navigation,
+    ILogger<LoginViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
     public ObservableCollection<User> Users { get; } = [];
 
@@ -36,6 +38,7 @@ public partial class LoginViewModel(
     private async Task SignInAsync()
     {
         currentUser.SignIn(SelectedUser!);
+        logger.LogInformation("User {UserId} signed in as {Role}", SelectedUser!.Id, SelectedUser.Role);
         await navigation.GoToAsync(Routes.Absolute(Routes.Products));
     }
 

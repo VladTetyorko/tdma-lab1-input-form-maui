@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
@@ -17,7 +18,11 @@ public sealed class TestStore
         Startup = new StartupNavigator(AppState, DeepLinks, Catalog, Navigation);
     }
 
+    // Everything the services and ViewModels built on this store log, in order
+    public List<LogRecord> Logs { get; } = [];
+
     public FakeClock Clock { get; } = new();
+    public FakeCrashReporter CrashReporter { get; } = new();
     public CurrentUserService CurrentUser { get; } = new();
     public FakeNavigationService Navigation { get; } = new();
     public FakePreferencesStore Preferences { get; } = new();
@@ -34,16 +39,21 @@ public sealed class TestStore
     public InMemoryProductCharacteristicRepository Values { get; } = new();
     public InMemoryOperationRepository Operations { get; } = new();
 
+    public ILogger<T> Logger<T>() => new CapturingLogger<T>(Logs);
+
     // The services are stateless wrappers over the repositories above, so building them on access is cheap
-    public IStockService Stock => new StockService(Operations, Products, CurrentUser, Clock);
+    public IStockService Stock => new StockService(Operations, Products, CurrentUser, Clock, Logger<StockService>());
 
     public IProductService ProductService =>
-        new ProductService(Products, Operations, new ProductValidator(Products), CurrentUser, Clock);
+        new ProductService(Products, Operations, new ProductValidator(Products), CurrentUser, Clock, Logger<ProductService>());
 
     public ICharacteristicValidator Validator => new CharacteristicValidator(Characteristics);
 
     public ICharacteristicService CharacteristicService =>
-        new CharacteristicService(Characteristics, Values, Products, Validator, CurrentUser, Clock);
+        new CharacteristicService(Characteristics, Values, Products, Validator, CurrentUser, Clock,
+            Logger<CharacteristicService>());
+
+    public IDiagnosticsService Diagnostics => new DiagnosticsService(CurrentUser, CrashReporter, Logger<DiagnosticsService>());
 
     public IProductCatalog Catalog => new ProductCatalog(Products, Characteristics, Values, Operations, Users, Stock);
 

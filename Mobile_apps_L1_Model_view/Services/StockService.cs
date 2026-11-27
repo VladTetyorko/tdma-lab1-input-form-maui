@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Mobile_apps_L1_Model_view.Data;
 using Mobile_apps_L1_Model_view.Models;
 
@@ -7,7 +8,8 @@ public sealed class StockService(
     IOperationRepository operations,
     IProductRepository products,
     ICurrentUserService currentUser,
-    IClock clock) : IStockService
+    IClock clock,
+    ILogger<StockService> logger) : IStockService
 {
     public async Task<int> GetQuantityOnHandAsync(Guid productId) =>
         Sum(await operations.GetByProductAsync(productId));
@@ -23,26 +25,32 @@ public sealed class StockService(
         var user = currentUser.CurrentUser;
         if (user is null)
         {
+            logger.LogWarning("Operation on product {ProductId} refused: nobody is signed in", productId);
             return Result<Operation>.Failure("Sign in before recording operations.");
         }
 
         if (!RolePermissions.CanRecord(user.Role, direction))
         {
+            logger.LogWarning("Role {Role} (user {UserId}) denied recording {Direction} on product {ProductId}",
+                user.Role, user.Id, direction, productId);
             return Result<Operation>.Failure($"Your role ({user.Role}) cannot record {direction} operations.");
         }
 
         if (quantity <= 0)
         {
+            logger.LogWarning("Operation on product {ProductId} rejected: quantity {Quantity} is not positive", productId, quantity);
             return Result<Operation>.Failure("Quantity must be greater than zero.");
         }
 
         if (await products.GetByIdAsync(productId) is null)
         {
+            logger.LogWarning("Operation rejected: product {ProductId} not found", productId);
             return Result<Operation>.Failure("Product not found.");
         }
 
         if (direction == OperationDirection.Out && quantity > await GetQuantityOnHandAsync(productId))
         {
+            logger.LogWarning("Out of {Quantity} units of product {ProductId} rejected: not enough on hand", quantity, productId);
             return Result<Operation>.Failure("Not enough units on hand.");
         }
 
@@ -65,10 +73,13 @@ public sealed class StockService(
         }
         catch (EncryptionException ex)
         {
-            // The counterparty is personal data and is never stored unprotected
+            // The counterparty is personal data and is never stored unprotected (and never logged)
+            logger.LogError(ex, "Operation on product {ProductId} was not saved: the field could not be encrypted", productId);
             return Result<Operation>.Failure($"The operation was not saved. {ex.Message}");
         }
 
+        logger.LogInformation("Recorded {Direction} of {Quantity} units of product {ProductId} as operation {OperationId} by user {UserId}",
+            direction, quantity, productId, operation.Id, user.Id);
         return Result<Operation>.Success(operation);
     }
 

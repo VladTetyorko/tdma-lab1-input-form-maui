@@ -19,6 +19,8 @@ public class SeedMigrationTests : IDisposable
     private IProductCharacteristicRepository _values => _provider.GetRequiredService<IProductCharacteristicRepository>();
     private IOperationRepository _operations => _provider.GetRequiredService<IOperationRepository>();
 
+    private const string NutellaBarcode = "3017620422003";
+
     public void Dispose() => _provider.Dispose();
 
     [Fact]
@@ -38,20 +40,28 @@ public class SeedMigrationTests : IDisposable
     }
 
     [Fact]
-    public async Task Seed_CreatesTenProductsWithValidAndUniqueBarcodes()
+    public async Task Seed_CreatesTwelveRealProductsWithValidAndUniqueBarcodes()
     {
         var products = await _products.GetAllAsync();
-        Assert.Equal(10, products.Count);
+        Assert.Equal(12, products.Count);
         Assert.All(products, p => Assert.True(Ean13.IsValid(p.Barcode), $"Invalid barcode for {p.Name}"));
-        Assert.Equal(10, products.Select(p => p.Barcode).Distinct().Count());
+        Assert.Equal(12, products.Select(p => p.Barcode).Distinct().Count());
+        Assert.DoesNotContain(products, p => p.Barcode.StartsWith("4820001"));
     }
 
     [Fact]
-    public async Task Seed_GivesEveryProductCharacteristicValues()
+    public async Task Seed_EveryProductHasBrandCategoryAndOneSize()
     {
+        var characteristics = (await _characteristics.GetAllAsync()).ToDictionary(c => c.Id, c => c.Name);
         foreach (var product in await _products.GetAllAsync())
         {
-            Assert.Equal(4, (await _values.GetByProductAsync(product.Id)).Count);
+            var values = await _values.GetByProductAsync(product.Id);
+            Assert.All(values, v => Assert.True(characteristics.ContainsKey(v.CharacteristicId)));
+            var names = values.Select(v => characteristics[v.CharacteristicId]).ToList();
+            Assert.Contains("Brand", names);
+            Assert.Contains("Category", names);
+            Assert.Single(names, n => n is "Weight (kg)" or "Volume (l)");
+            Assert.Equal(names.Count, names.Distinct().Count());
         }
     }
 
@@ -70,11 +80,11 @@ public class SeedMigrationTests : IDisposable
     [Fact]
     public async Task Seed_SeedsStockForProductsWithMovements()
     {
-        var drill = await _products.GetByBarcodeAsync(Ean13.WithCheckDigit("482000100001"));
-        Assert.NotNull(drill);
-        var drillOperations = await _operations.GetByProductAsync(drill.Id);
-        var onHand = drillOperations.Sum(o => o.Direction == OperationDirection.In ? o.Quantity : -o.Quantity);
-        Assert.Equal(21, onHand);
+        var nutella = await _products.GetByBarcodeAsync(NutellaBarcode);
+        Assert.NotNull(nutella);
+        var operations = await _operations.GetByProductAsync(nutella.Id);
+        var onHand = operations.Sum(o => o.Direction == OperationDirection.In ? o.Quantity : -o.Quantity);
+        Assert.Equal(36, onHand);
     }
 
     [Fact]
@@ -92,27 +102,30 @@ public class SeedMigrationTests : IDisposable
 
         var paths = _provider.GetRequiredService<IDatabasePathProvider>();
         var reopened = new SqliteDatabase(paths, _provider.GetRequiredService<MigrationRunner>());
-        var products = new SqliteProductRepository(reopened, _provider.GetRequiredService<SyncJournal>());
+        var products = new SqliteProductRepository(reopened, _provider.GetRequiredService<SyncJournal>(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SqliteProductRepository>.Instance);
 
         Assert.Equal(before, (await products.GetAllAsync()).Count);
         reopened.Dispose();
     }
 
-    // The demo stock of the lab 3 DataSeeder (received, shipped): on hand = received - shipped
+    // Demo stock: on hand = received - shipped. One product is at zero (Prince), one has no movements, one is low
     [Theory]
-    [InlineData("482000100001", 21)]
-    [InlineData("482000100002", 28)]
-    [InlineData("482000100003", 85)]
-    [InlineData("482000100004", 24)]
-    [InlineData("482000100005", 13)]
-    [InlineData("482000100006", 120)]
-    [InlineData("482000100007", 0)]
-    [InlineData("482000100008", 90)]
-    [InlineData("482000100009", 42)]
-    [InlineData("482000100010", 0)]
-    public async Task Seed_QuantityOnHandMatchesTheDemoStock(string barcodeBase, int expected)
+    [InlineData("3017620422003", 36)]
+    [InlineData("4008400402222", 28)]
+    [InlineData("5449000000996", 144)]
+    [InlineData("5449000011527", 84)]
+    [InlineData("8076809513326", 18)]
+    [InlineData("7622210449283", 0)]
+    [InlineData("3168930010265", 8)]
+    [InlineData("8000500310427", 42)]
+    [InlineData("5000159461122", 120)]
+    [InlineData("3033490004743", 42)]
+    [InlineData("9002490100070", 56)]
+    [InlineData("5000157024671", 0)]
+    public async Task Seed_QuantityOnHandMatchesTheDemoStock(string barcode, int expected)
     {
-        var product = await _products.GetByBarcodeAsync(Ean13.WithCheckDigit(barcodeBase));
+        var product = await _products.GetByBarcodeAsync(barcode);
         Assert.NotNull(product);
 
         var stock = await _provider.GetRequiredService<IStockService>().GetQuantityOnHandAsync(product.Id);
@@ -123,7 +136,7 @@ public class SeedMigrationTests : IDisposable
     [Fact]
     public async Task Seed_ProductWithoutMovements_HasNoOperations()
     {
-        var product = await _products.GetByBarcodeAsync(Ean13.WithCheckDigit("482000100010"));
+        var product = await _products.GetByBarcodeAsync("5000157024671");
 
         Assert.False(await _provider.GetRequiredService<IOperationRepository>().AnyForProductAsync(product!.Id));
     }

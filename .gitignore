@@ -52,3 +52,6 @@ artifacts/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local settings with secrets (Sentry DSN)
+appsettings.local.json

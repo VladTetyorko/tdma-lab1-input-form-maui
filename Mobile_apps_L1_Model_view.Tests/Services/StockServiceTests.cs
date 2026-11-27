@@ -11,11 +11,12 @@ public class StockServiceTests
     private readonly InMemoryProductRepository _products = new();
     private readonly CurrentUserService _currentUser = new();
     private readonly FakeClock _clock = new();
+    private readonly List<LogRecord> _logs = [];
     private readonly StockService _service;
 
     public StockServiceTests()
     {
-        _service = new StockService(_operations, _products, _currentUser, _clock);
+        _service = new StockService(_operations, _products, _currentUser, _clock, new CapturingLogger<StockService>(_logs));
     }
 
     [Fact]

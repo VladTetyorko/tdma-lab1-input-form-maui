@@ -37,8 +37,23 @@
             <Button Text="Share database" Command="{Binding ShareDatabaseCommand}" HorizontalOptions="Start" />
             <Label Text="{Binding ExportText}" Style="{StaticResource CaptionLabel}" />
 
+            <VerticalStackLayout IsVisible="{Binding ShowDiagnostics}" Spacing="8">
+                <Label Text="Diagnostics" Style="{StaticResource SectionLabel}" />
+                <Label Text="Prove that logging and crash reporting work. Each button leaves a trace in the log."
+                       Style="{StaticResource CaptionLabel}" />
+                <Button Text="Open logs" Command="{Binding OpenLogsCommand}" HorizontalOptions="Start"
+                        AutomationId="OpenLogsButton" />
+                <Button Text="Write test log entries" Command="{Binding WriteTestEntriesCommand}" HorizontalOptions="Start"
+                        AutomationId="WriteTestEntriesButton" />
+                <Button Text="Throw in background task" Command="{Binding ThrowInBackgroundTaskCommand}" HorizontalOptions="Start"
+                        AutomationId="ThrowInBackgroundButton" />
+                <Button Text="Send test crash" Command="{Binding SendTestCrashCommand}" HorizontalOptions="Start"
+                        IsEnabled="{Binding CanSendTestCrash}" AutomationId="SendTestCrashButton" />
+                <Label Text="{Binding DiagnosticsText}" Style="{StaticResource CaptionLabel}" />
+            </VerticalStackLayout>
+
             <Label Text="Open a link" Style="{StaticResource SectionLabel}" />
-            <Label Text="Try a deep link without another app, e.g. stockroom://product/4820001000016"
+            <Label Text="Try a deep link without another app, e.g. stockroom://product/3017620422003"
                    Style="{StaticResource CaptionLabel}" />
             <Entry Text="{Binding LinkText, Mode=TwoWay}" Placeholder="stockroom://product/{barcode}" />
             <Button Text="Open" Command="{Binding OpenLinkCommand}" HorizontalOptions="Start" />

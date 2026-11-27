@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mobile_apps_L1_Model_view.Services;
@@ -13,7 +14,8 @@ public partial class ProductFormViewModel(
     IProductService productService,
     ICurrentUserService currentUser,
     IAppStateService appState,
-    INavigationService navigation) : ObservableObject, IQueryAttributable, IPageLifecycleAware
+    INavigationService navigation,
+    ILogger<ProductFormViewModel> logger) : ObservableObject, IQueryAttributable, IPageLifecycleAware
 {
     private bool _opened;
     private bool _prefilled;
@@ -40,6 +42,10 @@ public partial class ProductFormViewModel(
 
     [ObservableProperty]
     public partial string StatusMessage { get; set; } = string.Empty;
+
+    // Attribution for prefilled open data (empty when the user typed everything)
+    [ObservableProperty]
+    public partial string DataSource { get; set; } = string.Empty;
 
     partial void OnNameChanged(string value)
     {
@@ -68,6 +74,17 @@ public partial class ProductFormViewModel(
         {
             _prefilled = true;
             Barcode = barcode;
+        }
+
+        if (query.TryGetValue(NavigationKeys.ProductName, out var name) && name is string productName)
+        {
+            _prefilled = true;
+            Name = productName;
+        }
+
+        if (query.TryGetValue(NavigationKeys.DataSource, out var source) && source is string dataSource)
+        {
+            DataSource = dataSource;
         }
     }
 
@@ -98,6 +115,7 @@ public partial class ProductFormViewModel(
         if (barcodeError is not null)
         {
             BarcodeError = barcodeError;
+            logger.LogWarning("Product form rejected barcode {Barcode}: {Reason}", Barcode, barcodeError);
             return;
         }
 
@@ -107,9 +125,11 @@ public partial class ProductFormViewModel(
         if (!result.IsSuccess)
         {
             StatusMessage = result.Error!;
+            logger.LogWarning("Product form was not saved: {Reason}", result.Error);
             return;
         }
 
+        logger.LogDebug("Product form saved product {ProductId} ({Mode})", result.Value!.Id, _editing is null ? "add" : "edit");
         if (_editing is null)
         {
             appState.ClearDraft<ProductFormDraft>();
