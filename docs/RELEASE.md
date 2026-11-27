@@ -14,7 +14,7 @@ not a Google Play build: Play needs a release keystore, which is deliberately **
    with its per-machine debug key.
 
 The Android Release settings that make this work (no trimming, no AOT, no marshal methods) are in
-`Mobile_apps_L1_Model_view.csproj`; why is in decision 84 of the README.
+`Mobile_apps_L1_Model_view.csproj`; why is in decision 84 of the [decision log](decision-log.md).
 
 ## Cutting v1.0 (owner)
 
@@ -73,7 +73,7 @@ access; the build needs the `maui-android` workload, JDK 17 and the Android SDK.
 - [ ] CI is green on the commit to be tagged.
 - [ ] The smoke checklist in `docs/steps/09-final.md` (section 13) was run on a device or emulator with the downloaded APK.
 - [ ] No `appsettings.local.json`, keystore, Sentry DSN or Maps key is committed (`git status`, `git log -p` for the words `Dsn` and `API_KEY`).
-- [ ] README step log and decision log are up to date.
+- [ ] [Step log](step-log.md) and [decision log](decision-log.md) are up to date.
 
 ## Not done on purpose
 

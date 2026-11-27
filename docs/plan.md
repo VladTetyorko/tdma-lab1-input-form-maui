@@ -2,7 +2,7 @@
 
 Each lab is one branch and one pull request, built on the previous one. Every
 lab ends with: all tests green, Windows and Android builds green, its step
-document written, decisions added to the README decision log.
+document written, decisions added to the [decision log](decision-log.md).
 
 ## Lab 1 — Warehouse domain, MVVM and validation (`lab1` → `master`)
 

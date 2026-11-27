@@ -39,7 +39,7 @@ separate decision.
 Authentication is local and minimal (Lab 6): each of the three seeded users has a
 login and a password; the database keeps only a salted PBKDF2 hash. There is no
 registration, password recovery or server account. The demo logins are in the
-README ("Demo accounts"). A signed token in secure storage keeps the user signed
+[root README](../../README.md). A signed token in secure storage keeps the user signed
 in for 30 days; biometrics can unlock that token. Every row above is enforced
 twice: the UI hides what the role cannot do, and the command and the service
 refuse it with a message.

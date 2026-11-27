@@ -1,6 +1,6 @@
 # AGENTS.md — rules for anyone (human or AI agent) working on StockRoom
 
-Read this file, [`README.md`](README.md), [`docs/plan.md`](docs/plan.md) and
+Read this file, [`docs/README.md`](docs/README.md) (the index), [`docs/plan.md`](docs/plan.md) and
 [`docs/domain/`](docs/domain) before changing anything. These rules are not optional.
 
 ## 1. Product scope — keep it simple
@@ -131,7 +131,7 @@ unchanged, `Mobile_apps_L1_Model_view.*`). The MAUI app keeps `Views/`, `Convert
    after each slice, not only at the end.
 6. **Commit** after each green slice: `[Lab N] <what>`. Refactoring in its own commit (§3).
 7. **Build both targets** (Windows, Android) before the last commit.
-8. **Document**: step document, README step log and decision log, answers to
+8. **Document**: step document, [`docs/step-log.md`](docs/step-log.md) and [`docs/decision-log.md`](docs/decision-log.md), answers to
    the lab's control questions, `docs/domain` if the model changed.
 9. **Open the PR** (`labN` → previous lab). The PR text lists the lab tasks with
    ✔/✘ and what the owner must verify by hand.
@@ -173,9 +173,9 @@ than a few lines.
 - Each lab has a step document `docs/steps/0N-*.md` (template:
   `docs/steps/_template.md`): before / what the lab asks / our interpretation /
   decisions / changes / answers to the lab's control questions.
-- Every architectural decision is also added to the **Decision log** in `README.md`
+- Every architectural decision is also added to the **Decision log** in [`docs/decision-log.md`](docs/decision-log.md)
   (one line: decision, why).
-- Update the step log in `README.md` when a lab is done.
+- Update the step log in [`docs/step-log.md`](docs/step-log.md) when a lab is done.
 - Never commit `bin/`, `obj/`, the lab PDFs (`docks/`), or personal report files.
 
 ## 6. Language
