@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The navigation rail (600 wide and more): on the left, full height. Receive and Issue on top as filled buttons,
+     then Home, Products, Search, Activity. Same commands and AutomationIds as the bottom bar -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Mobile_apps_L1_Model_view.Views.Components"
+             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services;assembly=StockRoom.Core"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels;assembly=StockRoom.Core"
+             x:Class="Mobile_apps_L1_Model_view.Views.Components.NavRail"
+             x:DataType="viewModels:BottomNavViewModel">
+    <Grid ColumnDefinitions="*,1" WidthRequest="{StaticResource NavRailWidth}" BackgroundColor="{DynamicResource Surface}">
+        <VerticalStackLayout Padding="6,16" Spacing="8">
+            <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="48"
+                    Background="{DynamicResource PrimaryBrush}">
+                <Grid>
+                    <Button Text="+ Receive" Style="{StaticResource PillHalf}" FontSize="12" MinimumHeightRequest="48"
+                            Command="{Binding OpenCommand}" CommandParameter="{x:Static services:Routes.Receive}"
+                            AutomationId="NavReceive" />
+                    <Border Style="{StaticResource PillBadge}" IsVisible="{Binding HasReceiveBadge}">
+                        <Label Text="{Binding ReceiveBadge}" Style="{StaticResource PillBadgeText}" />
+                    </Border>
+                </Grid>
+            </Border>
+            <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="48"
+                    Background="{DynamicResource PrimaryBrush}" IsVisible="{Binding CanIssue}">
+                <Grid>
+                    <Button Text="− Issue" Style="{StaticResource PillHalf}" FontSize="12" MinimumHeightRequest="48"
+                            Command="{Binding OpenCommand}" CommandParameter="{x:Static services:Routes.Issue}"
+                            AutomationId="NavIssue" />
+                    <Border Style="{StaticResource PillBadge}" IsVisible="{Binding HasIssueBadge}">
+                        <Label Text="{Binding IssueBadge}" Style="{StaticResource PillBadgeText}" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <VerticalStackLayout Spacing="4" Margin="0,12,0,0">
+                <components:BottomNavItem Glyph="{StaticResource IconHome}" Text="Home" ItemId="NavHome" HeightRequest="64"
+                                          IsSelected="{Binding IsHome}" Command="{Binding OpenCommand}"
+                                          CommandParameter="{x:Static services:Routes.Home}" />
+                <components:BottomNavItem Glyph="{StaticResource IconBox}" Text="Products" ItemId="NavProducts" HeightRequest="64"
+                                          IsSelected="{Binding IsProducts}" Command="{Binding OpenCommand}"
+                                          CommandParameter="{x:Static services:Routes.Products}" />
+                <components:BottomNavItem Glyph="{StaticResource IconSearch}" Text="Search" ItemId="NavSearch" HeightRequest="64"
+                                          IsSelected="{Binding IsSearch}" Command="{Binding OpenCommand}"
+                                          CommandParameter="{x:Static services:Routes.Search}" />
+                <components:BottomNavItem Glyph="{StaticResource IconHistory}" Text="Activity" ItemId="NavActivity" HeightRequest="64"
+                                          IsSelected="{Binding IsActivity}" Command="{Binding OpenCommand}"
+                                          CommandParameter="{x:Static services:Routes.Activity}" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+        <BoxView Grid.Column="1" />
+    </Grid>
+</ContentView>
