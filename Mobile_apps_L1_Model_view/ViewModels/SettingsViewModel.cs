@@ -14,6 +14,8 @@ public partial class SettingsViewModel(
     IDiagnosticsService diagnostics,
     IBiometricSettings biometricSettings,
     IBiometricAuthenticator biometrics,
+    IShakeSettings shakeSettings,
+    IShakeDetector shakeDetector,
     INavigationService navigation,
     ILogger<SettingsViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
@@ -51,6 +53,15 @@ public partial class SettingsViewModel(
     [ObservableProperty]
     public partial bool IsBiometricSupported { get; set; }
 
+    // "Shake to scan": on = shaking the device on the product list opens the scanner. On by default
+    [ObservableProperty]
+    public partial bool ShakeToScan { get; set; } = shakeSettings.IsEnabled;
+
+    // The switch is disabled, with a note, on a device without an accelerometer (a Windows PC)
+    public bool IsShakeSupported => shakeDetector.IsSupported;
+
+    public bool IsShakeUnsupported => !shakeDetector.IsSupported;
+
     // The Diagnostics section is for the Manager (also refused by IDiagnosticsService)
     public bool ShowDiagnostics => diagnostics.IsAvailable;
 
@@ -70,6 +81,12 @@ public partial class SettingsViewModel(
     {
         biometricSettings.IsEnabled = value;
         logger.LogInformation("Biometric unlock switched {State}", value ? "on" : "off");
+    }
+
+    partial void OnShakeToScanChanged(bool value)
+    {
+        shakeSettings.IsEnabled = value;
+        logger.LogInformation("Shake to scan switched {State}", value ? "on" : "off");
     }
 
     partial void OnSimulateOfflineChanged(bool value)

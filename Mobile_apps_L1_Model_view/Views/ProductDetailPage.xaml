@@ -23,6 +23,17 @@
             <Label Text="{Binding Barcode, StringFormat='Barcode {0}'}" Style="{StaticResource CaptionLabel}" />
             <Label Text="{Binding Quantity, StringFormat='On hand: {0} pcs'}" FontAttributes="Bold" />
 
+            <Image Source="{Binding Photo.ResolvedPath}" IsVisible="{Binding Photo.HasPhoto}"
+                   Style="{StaticResource Thumbnail}" AutomationId="ProductPhoto" />
+            <FlexLayout Wrap="Wrap" IsVisible="{Binding CanEdit}">
+                <Button Text="Take photo" Command="{Binding TakePhotoCommand}" AutomationId="TakePhotoButton"
+                        IsVisible="{Binding Photo.IsCaptureSupported}" StyleClass="Compact" Margin="0,0,10,6" />
+                <Button Text="Pick photo" Command="{Binding PickPhotoCommand}" AutomationId="PickPhotoButton"
+                        StyleClass="Compact" Margin="0,0,10,6" />
+                <Button Text="Remove photo" Command="{Binding RemovePhotoCommand}" AutomationId="RemovePhotoButton"
+                        IsVisible="{Binding Photo.HasPhoto}" StyleClass="Compact" Margin="0,0,10,6" />
+            </FlexLayout>
+
             <Label Text="Characteristics" Style="{StaticResource SectionLabel}" />
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding Characteristics}" Spacing="4">
                 <BindableLayout.ItemTemplate>
@@ -67,6 +78,14 @@
                             <Label Text="{Binding UserName, StringFormat='By {0}'}"
                                    Style="{StaticResource CaptionLabel}" />
                             <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
+                            <!-- Only for an operation recorded with a location -->
+                            <HorizontalStackLayout Spacing="8" IsVisible="{Binding HasLocation}">
+                                <Label Text="{Binding LocationText}" Style="{StaticResource CaptionLabel}"
+                                       VerticalOptions="Center" AutomationId="HistoryLocationLabel" />
+                                <Button Text="Open in maps" StyleClass="Compact" AutomationId="OpenInMapsButton"
+                                        Command="{Binding OpenLocationCommand, Source={RelativeSource AncestorType={x:Type viewModels:ProductDetailViewModel}}}"
+                                        CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
                         </VerticalStackLayout>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>

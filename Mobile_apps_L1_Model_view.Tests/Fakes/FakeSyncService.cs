@@ -17,7 +17,25 @@ public sealed class FakeSyncService : ISyncService
 
     public SyncResult Result { get; set; } = new(SyncStatus.Synced, 0, 0);
 
+    public bool IsSyncing { get; set; }
+
+    public event EventHandler? Started;
+
     public event EventHandler<SyncResult>? Completed;
+
+    // Plays the start of a sync (and leaves IsSyncing on until the test completes it)
+    public void RaiseStarted()
+    {
+        IsSyncing = true;
+        Started?.Invoke(this, EventArgs.Empty);
+    }
+
+    // Plays the end of a sync with the given result
+    public void RaiseCompleted(SyncResult result)
+    {
+        IsSyncing = false;
+        Completed?.Invoke(this, result);
+    }
 
     public void Start() => StartCalls++;
 

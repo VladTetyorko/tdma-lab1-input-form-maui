@@ -6,7 +6,8 @@ namespace Mobile_apps_L1_Model_view.Tests.Fakes;
 
 // The platform services AddStockRoomCore expects from its host, as fakes: a temporary database file,
 // an in-memory secret store, controllable connectivity, a recording file sharer and a fake network
-// (no real HTTP request leaves a test).
+// (no real HTTP request leaves a test), and the Lab 7 device capabilities (permissions, photos, location,
+// shake sensor, maps, UI thread).
 // The container owns (and disposes) the temp path, after the database has been closed.
 public static class TestPlatform
 {
@@ -26,6 +27,18 @@ public static class TestPlatform
         services.AddSingleton<IConnectivityMonitor>(provider => provider.GetRequiredService<FakeConnectivityMonitor>());
         services.AddSingleton<FakeFileSharer>();
         services.AddSingleton<IFileSharer>(provider => provider.GetRequiredService<FakeFileSharer>());
+        services.AddSingleton<FakePlatformPermissions>();
+        services.AddSingleton<IPlatformPermissions>(provider => provider.GetRequiredService<FakePlatformPermissions>());
+        services.AddSingleton<FakePhotoService>();
+        services.AddSingleton<IPhotoService>(provider => provider.GetRequiredService<FakePhotoService>());
+        services.AddSingleton<FakeLocationService>();
+        services.AddSingleton<ILocationService>(provider => provider.GetRequiredService<FakeLocationService>());
+        services.AddSingleton<FakeShakeDetector>();
+        services.AddSingleton<IShakeDetector>(provider => provider.GetRequiredService<FakeShakeDetector>());
+        services.AddSingleton<FakeMapLauncher>();
+        services.AddSingleton<IMapLauncher>(provider => provider.GetRequiredService<FakeMapLauncher>());
+        services.AddSingleton<FakeMainThread>();
+        services.AddSingleton<IMainThread>(provider => provider.GetRequiredService<FakeMainThread>());
         services.AddSingleton<FakeHttpMessageHandler>();
         services.AddSingleton<HttpMessageHandler>(provider => provider.GetRequiredService<FakeHttpMessageHandler>());
         return services;

@@ -19,6 +19,17 @@
             <Picker ItemsSource="{Binding ThemeOptions}"
                     SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
 
+            <Label Text="Gestures" Style="{StaticResource SectionLabel}" />
+            <HorizontalStackLayout Spacing="10">
+                <Label Text="Shake to scan" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding ShakeToScan, Mode=TwoWay}" IsEnabled="{Binding IsShakeSupported}"
+                        VerticalOptions="Center" AutomationId="ShakeToScanSwitch" />
+            </HorizontalStackLayout>
+            <Label Text="Shake the device on the product list to open the scanner."
+                   Style="{StaticResource CaptionLabel}" />
+            <Label Text="This device has no accelerometer, so shaking is not available here."
+                   Style="{StaticResource CaptionLabel}" IsVisible="{Binding IsShakeUnsupported}" />
+
             <VerticalStackLayout IsVisible="{Binding IsBiometricSupported}" Spacing="8">
                 <Label Text="Security" Style="{StaticResource SectionLabel}" />
                 <Label Text="With biometric unlock on, the app asks for your fingerprint (or face) after a restart instead of opening straight away. The password always works."

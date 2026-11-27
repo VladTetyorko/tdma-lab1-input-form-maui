@@ -15,6 +15,7 @@ public partial class ScannerViewModel(
     IPermissionGuard guard,
     INavigationService navigation,
     IProductLookup lookup,
+    IShakeGesture shake,
     ILogger<ScannerViewModel> logger) : ObservableObject, IPageLifecycleAware
 {
     // Set when this page sent the user to a page that can change products or stock
@@ -54,10 +55,19 @@ public partial class ScannerViewModel(
     // Attribution for the open data the lookup button uses
     public string LookupAttribution => lookup.Attribution;
 
-    public void OnAppearing() => StartCommand.Execute(null);
+    // Shaking the device here starts a new scan (the same as "Scan again")
+    public void OnAppearing()
+    {
+        StartCommand.Execute(null);
+        shake.Start(() => StartAsync());
+    }
 
-    // The camera must not keep running behind another page or in the background
-    public void OnDisappearing() => IsCameraActive = false;
+    // The camera and the shake sensor must not keep running behind another page or in the background
+    public void OnDisappearing()
+    {
+        IsCameraActive = false;
+        shake.Stop();
+    }
 
     [RelayCommand]
     private async Task StartAsync()

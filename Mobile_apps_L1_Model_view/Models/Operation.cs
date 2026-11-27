@@ -8,4 +8,7 @@ public class Operation : OwnedEntity
     public int Quantity { get; init; }
     public string? Counterparty { get; init; }
     public string? Reason { get; init; }
+
+    // Where it was recorded (optional, e.g. a driver's drop-off point)
+    public GeoPoint? Location { get; init; }
 }

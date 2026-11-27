@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Mobile_apps_L1_Model_view.Views"
+             xmlns:services="clr-namespace:Mobile_apps_L1_Model_view.Services"
+             xmlns:viewModels="clr-namespace:Mobile_apps_L1_Model_view.ViewModels"
+             x:Class="Mobile_apps_L1_Model_view.Views.MapPage"
+             x:DataType="viewModels:MapViewModel"
+             Title="Operations map">
+
+    <ContentPage.Behaviors>
+        <views:PageLifecycleBehavior />
+    </ContentPage.Behaviors>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20,10" RowSpacing="8">
+        <Label Grid.Row="0"
+               Text="Operations recorded with a location. Tap Open in maps to see a place in your maps app."
+               Style="{StaticResource CaptionLabel}" />
+
+        <!-- Android and iOS only: hidden where there is no Map control (Windows) -->
+        <views:PinMapView Grid.Row="1" HeightRequest="260" ItemsSource="{Binding Pins}"
+                          IsVisible="{Binding HasPins}" AutomationId="OperationsMap" />
+
+        <Label Grid.Row="2" Text="No operation has a location yet. Attach one when you record an In or Out."
+               Style="{StaticResource CaptionLabel}" IsVisible="{Binding HasNoPins}" AutomationId="NoPinsLabel" />
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Pins}" IsVisible="{Binding HasPins}"
+                        AutomationId="PinList">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="services:LocatedOperation">
+                    <Grid ColumnDefinitions="*,Auto" Padding="0,6" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="{Binding Label}" FontAttributes="Bold" />
+                            <Label Text="{Binding Details}" Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="Open in maps" StyleClass="Compact"
+                                AutomationId="OpenInMapsButton"
+                                Command="{Binding OpenInMapsCommand, Source={RelativeSource AncestorType={x:Type viewModels:MapViewModel}}}"
+                                CommandParameter="{Binding .}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Grid.Row="3" Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" />
+    </Grid>
+</ContentPage>

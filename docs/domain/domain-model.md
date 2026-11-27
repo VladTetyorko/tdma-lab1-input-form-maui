@@ -27,6 +27,9 @@ separate decision.
 | Add / edit / delete product (delete only without operations) | — | — | ✔ |
 | Add characteristic, set its value on a product | — | — | ✔ |
 | View operation history | ✔ | own only | ✔ |
+| Take / pick / remove a product photo (Lab 7) | — | — | ✔ |
+| Attach my location to an In / Out (Lab 7) | ✔ | ✔ | ✔ |
+| Operations map, Open in maps, shake to scan (Lab 7) | ✔ | ✔ | ✔ |
 
 Authentication is local and minimal (Lab 6): each of the three seeded users has a
 login and a password; the database keeps only a salted PBKDF2 hash. There is no
@@ -40,7 +43,7 @@ refuse it with a message.
 
 The C# entities match this schema one to one (see [`entities.md`](entities.md)).
 It is created by `Data/Migrations/0001_initial.sql` and seeded by
-`0002_seed.sql`; `0003_auth.sql` adds the login and the password hash of `Users`; the full column and constraint listing, the migration
+`0002_seed.sql`; `0003_auth.sql` adds the login and the password hash of `Users`; `0004_device.sql` adds `Products.PhotoPath` and `Operations.Latitude` / `Longitude`; the full column and constraint listing, the migration
 mechanism, the sync queue and the encryption are in
 [`docs/steps/04-sqlite.md`](../steps/04-sqlite.md). Foreign keys are switched on
 for every connection, so the constraints below are enforced by the database,
@@ -78,6 +81,7 @@ erDiagram
         TEXT Id PK "UUID"
         TEXT Name
         TEXT Barcode UK "EAN-13 / Code-128"
+        TEXT PhotoPath "relative path, NULL = none (0004)"
         TEXT CreatedByUserId FK
         TEXT CreatedAt
         TEXT UpdatedAt
@@ -107,6 +111,8 @@ erDiagram
         INTEGER Quantity "> 0"
         TEXT Counterparty "who it was given to / received from"
         TEXT Reason "why, free text"
+        REAL Latitude "-90..90, with Longitude or both NULL (0004)"
+        REAL Longitude "-180..180"
         TEXT CreatedAt
         TEXT UpdatedAt
     }
@@ -117,10 +123,10 @@ erDiagram
 | Table | Purpose | Constraints |
 |-------|---------|-------------|
 | `Users` | The three people | `Role` ∈ {Storekeeper, Driver, Manager} |
-| `Products` | What is stored: only name and barcode | `Barcode` unique |
+| `Products` | What is stored: name, barcode and an optional photo path | `Barcode` unique; `PhotoPath` NULL or a relative path |
 | `Characteristics` | The list of possible characteristics (id + name) | `Name` unique, case-insensitive (`COLLATE NOCASE`); `ValueType` ∈ {Text, Number} |
 | `ProductCharacteristics` | The value of one characteristic for one product | unique (`ProductId`, `CharacteristicId`) |
-| `Operations` | Every In / Out: the only way quantity changes | `Quantity > 0`, `Direction` ∈ {In, Out}; `Counterparty` stored encrypted |
+| `Operations` | Every In / Out: the only way quantity changes | `Quantity > 0`, `Direction` ∈ {In, Out}; `Counterparty` stored encrypted; `Latitude` / `Longitude` both set or both NULL, in range |
 | `SyncQueue` | Infrastructure, not domain: changes not yet sent to the server (offline-first outbox) | `Operation` ∈ {Insert, Update, Delete}; see step 04 for why it is outside 3NF |
 
 ### What is computed, not stored

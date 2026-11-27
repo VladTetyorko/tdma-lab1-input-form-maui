@@ -42,6 +42,8 @@ public sealed class SqliteOperationRepository(
         Quantity = operation.Quantity,
         Counterparty = operation.Counterparty is null ? null : await encryptor.EncryptAsync(operation.Counterparty),
         Reason = operation.Reason,
+        Latitude = operation.Location?.Latitude,
+        Longitude = operation.Location?.Longitude,
         CreatedByUserId = RowFormat.Text(operation.CreatedByUserId),
         CreatedAt = RowFormat.Text(operation.CreatedAt),
         UpdatedAt = RowFormat.Text(operation.UpdatedAt)
@@ -55,6 +57,7 @@ public sealed class SqliteOperationRepository(
         Quantity = row.Quantity,
         Counterparty = row.Counterparty is null ? null : await DecryptAsync(row),
         Reason = row.Reason,
+        Location = row.Latitude is { } lat && row.Longitude is { } lon ? GeoPoint.TryCreate(lat, lon) : null,
         CreatedByUserId = RowFormat.ToGuid(row.CreatedByUserId),
         CreatedAt = RowFormat.ToTime(row.CreatedAt),
         UpdatedAt = RowFormat.ToTime(row.UpdatedAt)

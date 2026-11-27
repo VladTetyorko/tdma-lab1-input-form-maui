@@ -13,4 +13,7 @@ public interface IProductCatalog
 
     // Every characteristic is listed, with an empty value when the product has none
     Task<ProductDetails?> GetDetailsAsync(Guid productId);
+
+    // Every operation recorded with a location, newest first (the map page)
+    Task<IReadOnlyList<LocatedOperation>> GetLocatedOperationsAsync();
 }

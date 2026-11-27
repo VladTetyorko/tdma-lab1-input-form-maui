@@ -13,4 +13,7 @@ public sealed record ProductSummary(Guid Id, string Name, string Barcode, int Qu
     public bool HasOperations { get; init; }
 
     public bool CanDelete => !HasOperations;
+
+    // Photo of the product: path relative to the app data folder (null = none)
+    public string? PhotoPath { get; init; }
 }

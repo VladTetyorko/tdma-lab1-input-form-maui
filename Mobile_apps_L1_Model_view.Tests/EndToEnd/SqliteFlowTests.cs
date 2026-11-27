@@ -47,6 +47,12 @@ public class SqliteFlowTests : IDisposable
         services.AddSingleton<IThemeApplier>(new FakeThemeApplier());
         services.AddSingleton<IBarcodeScanner>(new FakeBarcodeScanner());
         services.AddSingleton<IBiometricAuthenticator>(new FakeBiometricAuthenticator());
+        services.AddSingleton<IPlatformPermissions>(new FakePlatformPermissions());
+        services.AddSingleton<IPhotoService>(new FakePhotoService());
+        services.AddSingleton<ILocationService>(new FakeLocationService());
+        services.AddSingleton<IShakeDetector>(new FakeShakeDetector());
+        services.AddSingleton<IMapLauncher>(new FakeMapLauncher());
+        services.AddSingleton<IMainThread>(new FakeMainThread());
         _app = services.BuildServiceProvider();
         return _app;
     }

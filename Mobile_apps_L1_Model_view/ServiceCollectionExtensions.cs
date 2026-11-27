@@ -25,6 +25,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISessionStore, SessionStore>();
         services.AddSingleton<IBiometricSettings, BiometricSettings>();
         services.AddSingleton<IPermissionGuard, PermissionGuard>();
+
+        // Device capabilities (Lab 7): the permission flow, the user messages and the shake gesture are platform-free;
+        // IPlatformPermissions, IPhotoService, ILocationService, IShakeDetector, IMapLauncher and IMainThread come from the host
+        services.AddSingleton<IPermissionService, PermissionService>();
+        services.AddSingleton<IDeviceFeedback, DeviceFeedback>();
+        services.AddSingleton<PhotoStore>();
+        services.AddSingleton<IShakeSettings, ShakeSettings>();
+        services.AddTransient<IShakeGesture, ShakeGesture>();
         services.AddSingleton<IAppStateService, AppStateService>();
         services.AddSingleton<IOperationDraftStore, OperationDraftStore>();
         services.AddSingleton<IThemeService, ThemeService>();
@@ -72,6 +80,8 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<ProductListViewModel>();
+        services.AddTransient<ProductPhotoEditor>();
+        services.AddTransient<ConnectivityBannerViewModel>();
         services.AddTransient<ProductFormViewModel>();
         services.AddTransient<ProductDetailViewModel>();
         services.AddTransient<CharacteristicsViewModel>();
@@ -79,6 +89,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<ScannerViewModel>();
         services.AddTransient<LogsViewModel>();
+        services.AddTransient<MapViewModel>();
 
         return services;
     }

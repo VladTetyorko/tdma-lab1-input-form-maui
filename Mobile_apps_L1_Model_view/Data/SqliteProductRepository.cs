@@ -40,6 +40,7 @@ public sealed class SqliteProductRepository(IDatabase database, SyncJournal jour
         Id = RowFormat.Text(product.Id),
         Name = product.Name,
         Barcode = product.Barcode,
+        PhotoPath = product.PhotoPath,
         CreatedByUserId = RowFormat.Text(product.CreatedByUserId),
         CreatedAt = RowFormat.Text(product.CreatedAt),
         UpdatedAt = RowFormat.Text(product.UpdatedAt)
@@ -50,6 +51,7 @@ public sealed class SqliteProductRepository(IDatabase database, SyncJournal jour
         Id = RowFormat.ToGuid(row.Id),
         Name = row.Name,
         Barcode = row.Barcode,
+        PhotoPath = row.PhotoPath,
         CreatedByUserId = RowFormat.ToGuid(row.CreatedByUserId),
         CreatedAt = RowFormat.ToTime(row.CreatedAt),
         UpdatedAt = RowFormat.ToTime(row.UpdatedAt)

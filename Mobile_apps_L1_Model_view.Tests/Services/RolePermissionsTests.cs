@@ -53,6 +53,9 @@ public class RolePermissionsTests
     [InlineData(Role.Driver, "UseDiagnostics", false)]
     [InlineData(Role.Driver, "RecordIn", true)]
     [InlineData(Role.Driver, "RecordOut", false)]
+    [InlineData(Role.Manager, "ManagePhotos", true)]
+    [InlineData(Role.Storekeeper, "ManagePhotos", false)]
+    [InlineData(Role.Driver, "ManagePhotos", false)]
     public void RoleMatrix(Role role, string action, bool expected)
     {
         var actual = action switch
@@ -62,6 +65,7 @@ public class RolePermissionsTests
             "UseDiagnostics" => RolePermissions.CanUseDiagnostics(role),
             "RecordIn" => RolePermissions.CanRecord(role, OperationDirection.In),
             "RecordOut" => RolePermissions.CanRecord(role, OperationDirection.Out),
+            "ManagePhotos" => RolePermissions.CanManagePhotos(role),
             _ => throw new ArgumentOutOfRangeException(nameof(action))
         };
 

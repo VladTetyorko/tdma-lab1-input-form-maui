@@ -525,6 +525,14 @@
         <Setter Property="HeightRequest" Value="32" />
     </Style>
 
+    <!-- Product photo thumbnail on the form and the detail page -->
+    <Style TargetType="Image" x:Key="Thumbnail">
+        <Setter Property="HeightRequest" Value="120" />
+        <Setter Property="WidthRequest" Value="120" />
+        <Setter Property="Aspect" Value="AspectFill" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+    </Style>
+
     <Style TargetType="Label" x:Key="SectionLabel">
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="16" />

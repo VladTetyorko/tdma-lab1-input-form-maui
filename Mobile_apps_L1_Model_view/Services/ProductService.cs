@@ -16,7 +16,9 @@ public sealed class ProductService(
         "This product has stock history, so it cannot be deleted: operations are permanent records " +
         "and must keep pointing at their product.";
 
-    public async Task<Result<Product>> AddAsync(string? name, string? barcode)
+    public const string InvalidPhotoMessage = "The photo path is not valid.";
+
+    public async Task<Result<Product>> AddAsync(string? name, string? barcode, string? photoPath = null)
     {
         var denied = CheckManager("adding", "add");
         if (denied is not null)
@@ -25,7 +27,7 @@ public sealed class ProductService(
             return Result<Product>.Failure(denied);
         }
 
-        var error = validator.ValidateName(name) ?? await validator.ValidateBarcodeAsync(barcode);
+        var error = validator.ValidateName(name) ?? await validator.ValidateBarcodeAsync(barcode) ?? ValidatePhoto(photoPath);
         if (error is not null)
         {
             logger.LogWarning("Adding a product rejected: {Reason}", error);
@@ -37,6 +39,7 @@ public sealed class ProductService(
         {
             Name = name!.Trim(),
             Barcode = barcode!.Trim(),
+            PhotoPath = photoPath,
             CreatedByUserId = currentUser.CurrentUser!.Id,
             CreatedAt = now,
             UpdatedAt = now
@@ -46,7 +49,43 @@ public sealed class ProductService(
         return Result<Product>.Success(product);
     }
 
-    public async Task<Result<Product>> UpdateAsync(Guid id, string? name, string? barcode)
+    public Task<Result<Product>> UpdateAsync(Guid id, string? name, string? barcode) =>
+        UpdateCoreAsync(id, name, barcode, keepPhoto: true, photoPath: null);
+
+    public Task<Result<Product>> UpdateAsync(Guid id, string? name, string? barcode, string? photoPath) =>
+        UpdateCoreAsync(id, name, barcode, keepPhoto: false, photoPath);
+
+    public async Task<Result<Product>> SetPhotoAsync(Guid id, string? photoPath)
+    {
+        var denied = CheckManager("changing the photo of", "change the photo of");
+        if (denied is not null)
+        {
+            logger.LogWarning("Changing the photo of product {ProductId} denied: {Reason}", id, denied);
+            return Result<Product>.Failure(denied);
+        }
+
+        var product = await products.GetByIdAsync(id);
+        if (product is null)
+        {
+            logger.LogWarning("Changing the photo rejected: product {ProductId} not found", id);
+            return Result<Product>.Failure("Product not found.");
+        }
+
+        var error = ValidatePhoto(photoPath);
+        if (error is not null)
+        {
+            logger.LogWarning("Changing the photo of product {ProductId} rejected: {Reason}", id, error);
+            return Result<Product>.Failure(error);
+        }
+
+        product.PhotoPath = photoPath;
+        product.UpdatedAt = clock.UtcNow;
+        await products.UpdateAsync(product);
+        logger.LogInformation("Product {ProductId} photo {State}", id, photoPath is null ? "removed" : "set");
+        return Result<Product>.Success(product);
+    }
+
+    private async Task<Result<Product>> UpdateCoreAsync(Guid id, string? name, string? barcode, bool keepPhoto, string? photoPath)
     {
         var denied = CheckManager("editing", "edit");
         if (denied is not null)
@@ -63,7 +102,8 @@ public sealed class ProductService(
         }
 
         // The product's own barcode is not a duplicate of itself
-        var error = validator.ValidateName(name) ?? await validator.ValidateBarcodeAsync(barcode, id);
+        var error = validator.ValidateName(name) ?? await validator.ValidateBarcodeAsync(barcode, id)
+            ?? (keepPhoto ? null : ValidatePhoto(photoPath));
         if (error is not null)
         {
             logger.LogWarning("Editing product {ProductId} rejected: {Reason}", id, error);
@@ -72,6 +112,11 @@ public sealed class ProductService(
 
         product.Name = name!.Trim();
         product.Barcode = barcode!.Trim();
+        if (!keepPhoto)
+        {
+            product.PhotoPath = photoPath;
+        }
+
         product.UpdatedAt = clock.UtcNow;
         await products.UpdateAsync(product);
         logger.LogInformation("Updated product {ProductId}", product.Id);
@@ -104,6 +149,10 @@ public sealed class ProductService(
         logger.LogInformation("Deleted product {ProductId}", id);
         return Result<Product>.Success(product);
     }
+
+    // A photo is optional; when there is one it must be a relative path inside the photos folder
+    private static string? ValidatePhoto(string? photoPath) =>
+        photoPath is null || PhotoPaths.IsValidRelative(photoPath) ? null : InvalidPhotoMessage;
 
     // Null when the current user may manage products; otherwise the message for the user
     private string? CheckManager(string gerund, string verb)

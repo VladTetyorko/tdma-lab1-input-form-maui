@@ -24,7 +24,8 @@ public class SettingsViewModelTests
     }
 
     private SettingsViewModel CreateViewModel() => new(_theme, _store.DeepLinks, _sync, _offline, _exporter,
-        _store.Diagnostics, _biometricSettings, _biometrics, _store.Navigation, _store.Logger<SettingsViewModel>());
+        _store.Diagnostics, _biometricSettings, _biometrics, _store.ShakeSettings, _store.ShakeDetector, _store.Navigation,
+        _store.Logger<SettingsViewModel>());
 
     [Fact]
     public void BiometricUnlock_IsOffByDefault_AndTheSwitchIsSavedAndLogged()

@@ -7,6 +7,9 @@ public static class RolePermissions
 {
     public static bool CanManageProducts(Role role) => role == Role.Manager;
 
+    // Taking, picking and removing a product photo changes the product, so it is the Manager's
+    public static bool CanManagePhotos(Role role) => role == Role.Manager;
+
     // The in-app log viewer and the diagnostics tools in Settings
     public static bool CanViewLogs(Role role) => role == Role.Manager;
 

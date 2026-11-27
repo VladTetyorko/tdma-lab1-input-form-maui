@@ -17,7 +17,7 @@ public class OperationViewModelTests
     public OperationViewModelTests()
     {
         _viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Guard, _store.Drafts, _store.Navigation,
-            _store.Logger<OperationViewModel>());
+            _store.Location, _store.Feedback, _store.Logger<OperationViewModel>());
     }
 
     [Fact]
@@ -279,7 +279,7 @@ public class OperationViewModelTests
         _store.Secrets.Values.Clear();
         var viewModel = new OperationViewModel(_store.Stock, _store.CurrentUser, _store.Guard, new OperationDraftStore(
             _store.AppState, new AesFieldEncryptor(_store.Secrets), NullLogger<OperationDraftStore>.Instance),
-            _store.Navigation, NullLogger<OperationViewModel>.Instance);
+            _store.Navigation, _store.Location, _store.Feedback, NullLogger<OperationViewModel>.Instance);
 
         viewModel.ApplyQueryAttributes(new Dictionary<string, object>
         {

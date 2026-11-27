@@ -19,7 +19,14 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Padding="20,10" RowSpacing="10">
-        <Label Grid.Row="0" Text="{Binding CurrentUserName}" Style="{StaticResource CaptionLabel}" />
+        <VerticalStackLayout Grid.Row="0" Spacing="2">
+            <Label Text="{Binding CurrentUserName}" Style="{StaticResource CaptionLabel}" />
+            <!-- Offline in the error color, every other state in the caption style -->
+            <Label Text="{Binding Connectivity.Text}" Style="{StaticResource ErrorLabel}"
+                   IsVisible="{Binding Connectivity.IsOffline}" AutomationId="ConnectivityBannerOffline" />
+            <Label Text="{Binding Connectivity.Text}" Style="{StaticResource CaptionLabel}"
+                   IsVisible="{Binding Connectivity.IsNotOffline}" AutomationId="ConnectivityBanner" />
+        </VerticalStackLayout>
 
         <HorizontalStackLayout Grid.Row="1" Spacing="10">
             <Label Text="Sort by" VerticalOptions="Center" />
@@ -75,7 +82,8 @@
                     IsVisible="{Binding CanAddProduct}" Margin="0,0,10,6" />
             <Button Text="Characteristics" Command="{Binding OpenCharacteristicsCommand}"
                     IsVisible="{Binding CanManageCharacteristics}" Margin="0,0,10,6" />
-            <Button Text="Scan" Command="{Binding ScanCommand}" Margin="0,0,10,6" />
+            <Button Text="Scan" Command="{Binding ScanCommand}" Margin="0,0,10,6" AutomationId="ScanButton" />
+            <Button Text="Map" Command="{Binding OpenMapCommand}" Margin="0,0,10,6" AutomationId="MapButton" />
             <Button Text="Settings" Command="{Binding OpenSettingsCommand}" Margin="0,0,10,6" />
             <Button Text="Sign out" Command="{Binding SignOutCommand}" Margin="0,0,10,6" />
         </FlexLayout>

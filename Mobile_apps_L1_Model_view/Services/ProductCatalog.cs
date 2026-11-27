@@ -59,6 +59,27 @@ public sealed class ProductCatalog(
         return new ProductDetails(summary, items, history);
     }
 
+    public async Task<IReadOnlyList<LocatedOperation>> GetLocatedOperationsAsync()
+    {
+        var names = (await users.GetAllAsync()).ToDictionary(u => u.Id, u => u.FullName);
+        var productsById = (await products.GetAllAsync()).ToDictionary(p => p.Id);
+
+        return (await operations.GetAllAsync())
+            .Where(o => o.Location is not null && productsById.ContainsKey(o.ProductId))
+            .OrderByDescending(o => o.CreatedAt)
+            .ThenByDescending(o => o.Id)
+            .Select(o => new LocatedOperation(
+                o.Id,
+                productsById[o.ProductId].Name,
+                productsById[o.ProductId].Barcode,
+                o.Direction,
+                o.Quantity,
+                o.CreatedAt,
+                names.GetValueOrDefault(o.CreatedByUserId, "Unknown"),
+                o.Location!))
+            .ToList();
+    }
+
     private async Task<IReadOnlyList<OperationHistoryItem>> BuildHistoryAsync(Guid productId)
     {
         var names = (await users.GetAllAsync()).ToDictionary(u => u.Id, u => u.FullName);
@@ -73,7 +94,8 @@ public sealed class ProductCatalog(
                 o.Quantity,
                 names.GetValueOrDefault(o.CreatedByUserId, "Unknown"),
                 o.Counterparty,
-                o.Reason))
+                o.Reason,
+                o.Location))
             .ToList();
     }
 
@@ -81,6 +103,7 @@ public sealed class ProductCatalog(
         Product product, int quantity, IEnumerable<ProductCharacteristic> productValues, bool hasOperations) =>
         new(product.Id, product.Name, product.Barcode, quantity)
         {
+            PhotoPath = product.PhotoPath,
             Values = productValues.ToDictionary(v => v.CharacteristicId, v => v.Value),
             HasOperations = hasOperations
         };
