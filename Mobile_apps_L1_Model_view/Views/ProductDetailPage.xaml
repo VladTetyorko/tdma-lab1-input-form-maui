@@ -109,9 +109,13 @@
                         <Button Grid.ColumnSpan="2" StyleClass="RowOverlay" Command="{Binding OpenHistoryCommand}"
                                 SemanticProperties.Description="All history" AutomationId="HistoryHeader" />
                     </Grid>
-                    <components:OperationHeader ShowBy="{Binding ShowBy}" />
-                    <components:OperationTable ItemsSource="{Binding History}" Command="{Binding OpenHistoryRowCommand}"
-                                               AutomationId="ProductHistoryTable" />
+                    <components:WideTable MinimumTableWidth="{StaticResource OperationTableMinWidth}">
+                        <VerticalStackLayout>
+                            <components:OperationHeader ShowBy="{Binding ShowBy}" />
+                            <components:OperationTable ItemsSource="{Binding History}" Command="{Binding OpenHistoryRowCommand}"
+                                                       AutomationId="ProductHistoryTable" />
+                        </VerticalStackLayout>
+                    </components:WideTable>
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>

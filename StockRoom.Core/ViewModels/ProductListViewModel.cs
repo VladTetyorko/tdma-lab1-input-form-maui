@@ -42,15 +42,9 @@ public partial class ProductListViewModel(
 
     public ObservableCollection<ProductTableRow> Rows { get; } = [];
 
-    // Characteristics a narrow (phone) table can show as its one extra column
-    public ObservableCollection<SortOption> ExtraColumnOptions { get; } = [];
-
+    // The width below which the table scrolls sideways instead of squeezing its columns
     [ObservableProperty]
-    public partial SortOption? SelectedExtraColumn { get; set; }
-
-    // Set by the page from its width
-    [ObservableProperty]
-    public partial bool IsNarrow { get; set; }
+    public partial double TableMinimumWidth { get; set; } = ProductTable.MinimumWidth([], false);
 
     [ObservableProperty]
     public partial SortOption? SelectedSortOption { get; set; } = SortOption.ByName;
@@ -108,9 +102,8 @@ public partial class ProductListViewModel(
 
     partial void OnSearchTextChanged(string value) => ApplySort();
 
-    partial void OnSelectedExtraColumnChanged(SortOption? value) => ApplySort();
-
-    partial void OnIsNarrowChanged(bool value) => ApplySort();
+    partial void OnCanManageProductsChanged(bool value) =>
+        TableMinimumWidth = ProductTable.MinimumWidth([.. Columns], value);
 
     // A tap on a column header: the same column flips the direction, another one starts ascending
     [RelayCommand]
@@ -333,15 +326,10 @@ public partial class ProductListViewModel(
             if (!SortOptions.Contains(option))
             {
                 SortOptions.Add(option);
-                if (option.Kind == SortKind.Characteristic)
-                {
-                    ExtraColumnOptions.Add(option);
-                }
             }
         }
 
         _sortOptionsStale = false;
-        SelectedExtraColumn ??= ExtraColumnOptions.FirstOrDefault();
         ApplySort();
     }
 
@@ -383,7 +371,7 @@ public partial class ProductListViewModel(
     private void ApplyTable(SortOption sorted)
     {
         NameColumn = ProductTable.NameColumn(sorted, SortDescending);
-        var columns = ProductTable.Columns([.. SortOptions], sorted, SortDescending, IsNarrow, SelectedExtraColumn);
+        var columns = ProductTable.Columns([.. SortOptions], sorted, SortDescending);
 
         // Headers are replaced only when they change, so tapping or typing does not rebuild them for nothing
         if (!Columns.SequenceEqual(columns))
@@ -395,11 +383,13 @@ public partial class ProductListViewModel(
             }
         }
 
+        TableMinimumWidth = ProductTable.MinimumWidth([.. Columns], CanManageProducts);
+
         Rows.Clear();
         foreach (var product in Products)
         {
             var match = _matches[product.Id];
-            Rows.Add(ProductTable.Row(product, columns) with { NameRanges = match.NameRanges, IsSimilar = match.IsFuzzy, ShowCode = IsNarrow });
+            Rows.Add(ProductTable.Row(product, columns) with { NameRanges = match.NameRanges, IsSimilar = match.IsFuzzy });
         }
     }
 }

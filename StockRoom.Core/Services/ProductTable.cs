@@ -12,30 +12,34 @@ public static class ProductTable
     private const double QuantityWidth = 96;
     private const double ValueWidth = 110;
 
-    // A phone: the name keeps as much room as possible
-    private const double NarrowQuantityWidth = 56;
-    private const double NarrowValueWidth = 88;
+    // The widths of the page around the columns (the row padding, the gap between columns, the edit/delete column)
+    private const double NameMinimumWidth = 180;
+    private const double RowPadding = 12;
+    private const double ColumnSpacing = 8;
+    public const double ActionsWidth = 104;
 
     public static TableColumn NameColumn(SortOption sorted, bool descending) =>
         Mark(new TableColumn("Name", SortOption.ByName, 0), sorted, descending);
 
-    // Wide: barcode, quantity, every characteristic. Narrow: quantity and one chosen characteristic (the first by default)
-    public static IReadOnlyList<TableColumn> Columns(
-        IReadOnlyList<SortOption> options, SortOption sorted, bool descending, bool narrow, SortOption? extra)
+    // Always the same columns: barcode, quantity, every characteristic. The table scrolls sideways when they do not fit
+    public static IReadOnlyList<TableColumn> Columns(IReadOnlyList<SortOption> options, SortOption sorted, bool descending)
     {
-        var characteristics = options.Where(option => option.Kind == SortKind.Characteristic).ToList();
-        List<TableColumn> columns = [];
-        if (!narrow)
-        {
-            columns.Add(new TableColumn("Barcode", null, BarcodeWidth));
-        }
-
-        columns.Add(new TableColumn("Qty", SortOption.ByQuantity, narrow ? NarrowQuantityWidth : QuantityWidth,
-            IsNumeric: true));
-        var shown = narrow ? Chosen(characteristics, extra) : characteristics;
-        columns.AddRange(shown.Select(option => new TableColumn(
-            option.Title, option, narrow ? NarrowValueWidth : ValueWidth, option.ValueType == Models.CharacteristicValueType.Number)));
+        List<TableColumn> columns =
+        [
+            new TableColumn("Barcode", null, BarcodeWidth),
+            new TableColumn("Qty", SortOption.ByQuantity, QuantityWidth, IsNumeric: true)
+        ];
+        columns.AddRange(options.Where(option => option.Kind == SortKind.Characteristic).Select(option =>
+            new TableColumn(option.Title, option, ValueWidth, option.ValueType == Models.CharacteristicValueType.Number)));
         return [.. columns.Select(column => Mark(column, sorted, descending))];
+    }
+
+    // The least width at which the table keeps every column: below it the table scrolls sideways
+    public static double MinimumWidth(IReadOnlyList<TableColumn> columns, bool withActions)
+    {
+        var cells = columns.Count + 1 + (withActions ? 1 : 0);
+        return 2 * RowPadding + NameMinimumWidth + columns.Sum(column => column.Width)
+               + (withActions ? ActionsWidth : 0) + (cells - 1) * ColumnSpacing;
     }
 
     // The same column flips its direction; another column starts ascending
@@ -51,9 +55,6 @@ public static class ProductTable
         {
             IsAlert = column.Sort == SortOption.ByQuantity && product.Quantity <= 0
         };
-
-    private static IEnumerable<SortOption> Chosen(List<SortOption> characteristics, SortOption? extra) =>
-        extra is not null && characteristics.Contains(extra) ? [extra] : characteristics.Take(1);
 
     private static string Text(ProductSummary product, TableColumn column) => column.Sort switch
     {

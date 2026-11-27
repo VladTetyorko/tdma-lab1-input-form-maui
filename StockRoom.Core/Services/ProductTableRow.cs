@@ -12,11 +12,6 @@ public sealed record ProductTableRow(ProductSummary Product, IReadOnlyList<Produ
 
     public string Barcode => Product.Barcode;
 
-    // A narrow table has no barcode column: the code is under the name, as in every product row
-    public bool ShowCode { get; init; }
-
-    public string CodeText => ShowCode ? Barcode : string.Empty;
-
     public string SimilarText => IsSimilar ? ProductSuggestion.SimilarCaption : string.Empty;
 
     public bool CanDelete => Product.CanDelete;

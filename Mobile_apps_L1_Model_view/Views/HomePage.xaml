@@ -17,9 +17,9 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
-        <components:AppBar Title="StockRoom" Route="home" />
-        <ScrollView Grid.Row="1">
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*" SafeAreaEdges="Container">
+        <components:AppBar Grid.Column="1" Title="StockRoom" Route="home" />
+        <ScrollView Grid.Row="1" Grid.Column="1">
             <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="12" MaximumWidthRequest="720">
                 <VerticalStackLayout>
                     <components:SyncChip OnlyWhenNeeded="True" HorizontalOptions="End" />
@@ -86,15 +86,19 @@
                                 SemanticProperties.Description="{Binding TodayTitle}" AutomationId="HomeToday" />
                     </Grid>
                     <VerticalStackLayout IsVisible="{Binding HasToday}">
-                        <components:OperationHeader ShowBy="{Binding ShowBy}" />
-                        <components:OperationTable ItemsSource="{Binding Today}" Command="{Binding OpenOperationCommand}"
-                                                   AutomationId="HomeTodayTable" />
+                        <components:WideTable MinimumTableWidth="{StaticResource OperationTableMinWidth}">
+                            <VerticalStackLayout>
+                                <components:OperationHeader ShowBy="{Binding ShowBy}" />
+                                <components:OperationTable ItemsSource="{Binding Today}" Command="{Binding OpenOperationCommand}"
+                                                           AutomationId="HomeTodayTable" />
+                            </VerticalStackLayout>
+                        </components:WideTable>
                     </VerticalStackLayout>
                     <Label Text="{Binding TodayEmptyText}" Style="{StaticResource TextBody}" Padding="0,8"
                            TextColor="{DynamicResource TextSecondary}" AutomationId="HomeTodayEmpty" />
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
-        <components:BottomNav Grid.Row="2" />
+        <components:BottomNav Grid.Row="2" Grid.Column="1" />
     </Grid>
 </ContentPage>

@@ -89,17 +89,30 @@ public class ProductListTableTests
     }
 
     [Fact]
-    public async Task Narrow_ShowsQuantityAndOneCharacteristicColumn()
+    public async Task Columns_AreAlwaysBarcodeQuantityAndEveryCharacteristic()
     {
         await _store.AddCharacteristicAsync("Brand", CharacteristicValueType.Text);
         await _store.AddCharacteristicAsync("Weight", CharacteristicValueType.Number);
         await LoadTwoAsync();
 
-        _viewModel.IsNarrow = true;
+        Assert.Equal(["Barcode", "Qty", "Brand", "Weight"], _viewModel.Columns.Select(column => column.Title));
+        Assert.All(_viewModel.Rows, row => Assert.Equal(4, row.Cells.Count));
+    }
 
-        Assert.Equal(2, _viewModel.Columns.Count);
-        Assert.Equal(_viewModel.SelectedExtraColumn, _viewModel.Columns[1].Sort);
-        Assert.All(_viewModel.Rows, row => Assert.Equal(2, row.Cells.Count));
+    [Fact]
+    public async Task TableMinimumWidth_FollowsCharacteristicsAndTheRoleOfTheUser()
+    {
+        await LoadTwoAsync();
+        var manager = _viewModel.TableMinimumWidth;
+        Assert.True(_viewModel.CanManageProducts);
+
+        await _store.AddCharacteristicAsync("Colour", CharacteristicValueType.Text);
+        _viewModel.ApplyQueryAttributes(new Dictionary<string, object> { [NavigationKeys.CharacteristicsChanged] = true });
+        await _viewModel.EnsureLoadedCommand.ExecuteAsync(null);
+        Assert.Equal(manager + 110 + 8, _viewModel.TableMinimumWidth);
+
+        _viewModel.CanManageProducts = false;
+        Assert.Equal(manager + 118 - 112, _viewModel.TableMinimumWidth);
     }
 
     [Fact]

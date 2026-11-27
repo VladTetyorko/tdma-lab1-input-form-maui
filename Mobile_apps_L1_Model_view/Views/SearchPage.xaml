@@ -15,9 +15,9 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
-        <components:AppBar Title="Search" Route="search" />
-        <ScrollView Grid.Row="1">
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*" SafeAreaEdges="Container">
+        <components:AppBar Grid.Column="1" Title="Search" Route="search" />
+        <ScrollView Grid.Row="1" Grid.Column="1">
             <VerticalStackLayout Padding="{OnIdiom Default='24,8', Phone='16,8'}" Spacing="8" MaximumWidthRequest="720">
                 <Border HeightRequest="220" IsVisible="{Binding IsCameraActive}" StrokeShape="RoundRectangle 10">
                     <views:CameraScannerView IsActive="{Binding IsCameraActive}" DetectedCommand="{Binding ScanDetectedCommand}" />
@@ -73,6 +73,6 @@
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
-        <components:BottomNav Grid.Row="2" />
+        <components:BottomNav Grid.Row="2" Grid.Column="1" />
     </Grid>
 </ContentPage>

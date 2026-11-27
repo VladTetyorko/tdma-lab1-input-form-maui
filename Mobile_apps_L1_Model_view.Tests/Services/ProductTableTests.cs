@@ -12,26 +12,16 @@ public class ProductTableTests
     [Fact]
     public void Columns_Wide_ShowBarcodeQuantityAndEveryCharacteristic()
     {
-        var columns = ProductTable.Columns(Options, SortOption.ByName, false, narrow: false, extra: null);
+        var columns = ProductTable.Columns(Options, SortOption.ByName, false);
 
         Assert.Equal(["Barcode", "Qty", "Brand", "Weight, g"], columns.Select(column => column.Title));
         Assert.Null(columns[0].Sort);
     }
 
-    [Theory]
-    [InlineData(false, "Brand")]
-    [InlineData(true, "Weight, g")]
-    public void Columns_Narrow_ShowQuantityAndOneCharacteristic(bool chooseWeight, string expected)
-    {
-        var columns = ProductTable.Columns(Options, SortOption.ByName, false, narrow: true, chooseWeight ? Weight : null);
-
-        Assert.Equal(["Qty", expected], columns.Select(column => column.Title));
-    }
-
     [Fact]
     public void Columns_MarkOnlyTheSortedOne()
     {
-        var columns = ProductTable.Columns(Options, Weight, true, narrow: false, extra: null);
+        var columns = ProductTable.Columns(Options, Weight, true);
 
         var sorted = Assert.Single(columns, column => column.IsSorted);
         Assert.Equal("▼ Weight, g", sorted.Header);
@@ -42,11 +32,23 @@ public class ProductTableTests
     }
 
     [Fact]
-    public void Columns_AreNarrowerOnAPhone_AndNumbersAreMarkedAsNumeric()
+    public void Columns_HaveFixedWidths_AndNumbersAreMarkedAsNumeric()
     {
-        var columns = ProductTable.Columns(Options, SortOption.ByName, false, narrow: true, Weight);
+        var columns = ProductTable.Columns(Options, SortOption.ByName, false);
 
-        Assert.Equal([(56d, true), (88d, true)], columns.Select(column => (column.Width, column.IsNumeric)));
+        Assert.Equal([(130d, false), (96d, true), (110d, false), (110d, true)],
+            columns.Select(column => (column.Width, column.IsNumeric)));
+    }
+
+    [Fact]
+    public void MinimumWidth_IsPaddingNameColumnsAndSpacing()
+    {
+        var columns = ProductTable.Columns(Options, SortOption.ByName, false);
+
+        // 24 padding + 180 name + (130 + 96 + 110 + 110) + 4 gaps of 8
+        Assert.Equal(24 + 180 + 446 + 32, ProductTable.MinimumWidth(columns, withActions: false));
+        // + the actions column (104: two 48 icon buttons and a gap on a phone) and one more gap
+        Assert.Equal(24 + 180 + 446 + 104 + 40, ProductTable.MinimumWidth(columns, withActions: true));
     }
 
     [Fact]
@@ -69,7 +71,7 @@ public class ProductTableTests
         {
             Values = new Dictionary<Guid, string> { [Brand.CharacteristicId] = "Ferrero" }
         };
-        var columns = ProductTable.Columns(Options, SortOption.ByName, false, narrow: false, extra: null);
+        var columns = ProductTable.Columns(Options, SortOption.ByName, false);
 
         var row = ProductTable.Row(product, columns);
 

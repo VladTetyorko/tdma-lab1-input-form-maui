@@ -15,10 +15,10 @@
         <views:PageLifecycleBehavior />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
-        <components:AppBar Title="Activity" Route="activity" />
-        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*" Padding="{OnIdiom Default='24,8', Phone='16,8'}"
-              RowSpacing="8" MaximumWidthRequest="720">
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*" SafeAreaEdges="Container">
+        <components:AppBar Grid.Column="1" Title="Activity" Route="activity" />
+        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto,*" Padding="{OnIdiom Default='24,8', Phone='16,8'}"
+              RowSpacing="8">
             <FlexLayout Wrap="Wrap">
                 <Button Text="All" StyleClass="Choice" Margin="0,0,8,4" Command="{Binding ShowDirectionCommand}"
                         CommandParameter="All" AutomationId="FilterAll">
@@ -67,16 +67,20 @@
                     </DataTrigger>
                 </Label.Triggers>
             </Label>
-            <components:OperationHeader Grid.Row="2" ShowBy="{Binding ShowBy}" />
-            <ScrollView Grid.Row="3">
-                <VerticalStackLayout>
-                    <components:OperationTable ItemsSource="{Binding Days}" Command="{Binding OpenCommand}"
-                                               AutomationId="ActivityTable" />
-                    <Label Text="{Binding EmptyText}" Style="{StaticResource TextBody}" Padding="0,24"
-                           HorizontalTextAlignment="Center" TextColor="{DynamicResource TextSecondary}" />
-                </VerticalStackLayout>
-            </ScrollView>
+            <!-- Header and rows scroll sideways together when the screen is narrower than the table; the rows scroll
+                 up and down under the header. The empty text stays outside the sideways scroll -->
+            <components:WideTable Grid.Row="2" MinimumTableWidth="{StaticResource OperationTableMinWidth}">
+                <Grid RowDefinitions="Auto,*">
+                    <components:OperationHeader ShowBy="{Binding ShowBy}" />
+                    <ScrollView Grid.Row="1">
+                        <components:OperationTable ItemsSource="{Binding Days}" Command="{Binding OpenCommand}"
+                                                   AutomationId="ActivityTable" />
+                    </ScrollView>
+                </Grid>
+            </components:WideTable>
+            <Label Grid.Row="2" Text="{Binding EmptyText}" Style="{StaticResource TextBody}" Margin="0,36,0,0" Padding="0,24"
+                   VerticalOptions="Start" HorizontalTextAlignment="Center" TextColor="{DynamicResource TextSecondary}" />
         </Grid>
-        <components:BottomNav Grid.Row="2" />
+        <components:BottomNav Grid.Row="2" Grid.Column="1" />
     </Grid>
 </ContentPage>

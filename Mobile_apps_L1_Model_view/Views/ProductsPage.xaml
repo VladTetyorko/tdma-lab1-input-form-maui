@@ -17,12 +17,12 @@
 
     <!-- Map and Characteristics are in the drawer; the Manager adds a product with + in the app bar. The keyboard
          covers the bottom bar instead of pushing it up (SafeAreaEdges) -->
-    <Grid RowDefinitions="Auto,*,Auto" SafeAreaEdges="Container">
-        <components:AppBar Title="Products" Route="products"
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*" SafeAreaEdges="Container">
+        <components:AppBar Grid.Column="1" Title="Products" Route="products"
                            ActionGlyph="{StaticResource IconAdd}" ActionDescription="Add product"
                            ActionCommand="{Binding AddProductCommand}" ActionId="AddProductButton"
                            IsActionShown="{Binding CanAddProduct}" />
-        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}"
+        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" Padding="{OnIdiom Default='24,8', Phone='16,8'}"
               RowSpacing="8">
             <components:SyncChip Grid.Row="0" OnlyWhenNeeded="True" HorizontalOptions="End" />
 
@@ -33,135 +33,112 @@
                                           Text="{Binding SearchText, Mode=TwoWay}" />
             </VerticalStackLayout>
 
-            <!-- Header: outside the list, so it stays while the rows scroll. Same columns and padding as a row, and
-                 every header is aligned like its cells. On a phone ▾ at its end chooses the extra column -->
-            <Grid Grid.Row="2" Padding="12,0" BackgroundColor="{DynamicResource SurfaceAlt}"
-                  ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" MinimumHeightRequest="48">
-                <Grid>
-                    <Label Text="{Binding NameColumn.Header}" Style="{StaticResource TableHeader}" />
-                    <Button StyleClass="RowOverlay" Command="{Binding SortByColumnCommand}"
-                            CommandParameter="{Binding NameColumn}"
-                            SemanticProperties.Description="{Binding NameColumn.Description}" AutomationId="SortHeader_Name" />
-                </Grid>
-                <HorizontalStackLayout Grid.Column="1" Spacing="8" BindableLayout.ItemsSource="{Binding Columns}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="services:TableColumn">
-                            <Grid WidthRequest="{Binding Width}" MinimumHeightRequest="48">
-                                <Label Text="{Binding Header}" Style="{StaticResource TableHeader}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsNumeric}" Value="True">
-                                            <Setter Property="HorizontalTextAlignment" Value="End" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                                <Button StyleClass="RowOverlay"
-                                        Command="{Binding BindingContext.SortByColumnCommand, Source={x:Reference ThisPage}}"
-                                        CommandParameter="{Binding .}" SemanticProperties.Description="{Binding Description}"
-                                        AutomationId="{Binding AutomationId}" />
-                            </Grid>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </HorizontalStackLayout>
-                <Grid Grid.Column="2" WidthRequest="{OnIdiom 96, Phone=28}">
-                    <Grid IsVisible="{Binding IsNarrow}">
-                        <Label Text="{StaticResource IconChevronDown}" Style="{StaticResource IconGlyph}"
-                               HorizontalOptions="Center" TextColor="{DynamicResource PrimaryText}" />
-                        <!-- Invisible, on top: a tap opens the choice -->
-                        <Picker ItemsSource="{Binding ExtraColumnOptions}" Opacity="0" Title="Extra column"
-                                SelectedItem="{Binding SelectedExtraColumn, Mode=TwoWay}" AutomationId="ExtraColumnPicker"
-                                SemanticProperties.Description="Extra column" />
+            <!-- The table: fixed columns and a stretching name column. Narrower than TableMinimumWidth it scrolls sideways,
+                 header and rows together; the rows still scroll up and down. Header and row use the same padding,
+                 spacing and widths, so the columns line up -->
+            <components:WideTable Grid.Row="2" MinimumTableWidth="{Binding TableMinimumWidth}">
+                <Grid RowDefinitions="Auto,*">
+                    <Grid Padding="12,0" BackgroundColor="{DynamicResource SurfaceAlt}"
+                          ColumnDefinitions="*,Auto" ColumnSpacing="8" MinimumHeightRequest="48">
+                        <Grid>
+                            <Label Text="{Binding NameColumn.Header}" Style="{StaticResource TableHeader}" />
+                            <Button StyleClass="RowOverlay" Command="{Binding SortByColumnCommand}"
+                                    CommandParameter="{Binding NameColumn}"
+                                    SemanticProperties.Description="{Binding NameColumn.Description}" AutomationId="SortHeader_Name" />
+                        </Grid>
+                        <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                            <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Columns}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="services:TableColumn">
+                                        <Grid WidthRequest="{Binding Width}" MinimumHeightRequest="48">
+                                            <Label Text="{Binding Header}" Style="{StaticResource TableHeader}">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsNumeric}" Value="True">
+                                                        <Setter Property="HorizontalTextAlignment" Value="End" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                            <Button StyleClass="RowOverlay"
+                                                    Command="{Binding BindingContext.SortByColumnCommand, Source={x:Reference ThisPage}}"
+                                                    CommandParameter="{Binding .}" SemanticProperties.Description="{Binding Description}"
+                                                    AutomationId="{Binding AutomationId}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </HorizontalStackLayout>
+                            <!-- The room of the edit and delete buttons of the rows -->
+                            <BoxView WidthRequest="{StaticResource TableActionsWidth}" Color="Transparent"
+                                     IsVisible="{Binding CanManageProducts}" />
+                        </HorizontalStackLayout>
                     </Grid>
-                </Grid>
-            </Grid>
 
-            <RefreshView Grid.Row="3" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}">
-                <CollectionView ItemsSource="{Binding Rows}" AutomationId="ProductsCollection">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="services:ProductTableRow">
-                            <!-- Swipe is a touch shortcut (phone); desktop shows the same two actions as buttons -->
-                            <SwipeView>
-                                <SwipeView.RightItems>
-                                    <SwipeItems>
-                                        <SwipeItemView IsVisible="{Binding BindingContext.CanManageProducts, Source={x:Reference ThisPage}}"
-                                                       Command="{Binding BindingContext.EditProductCommand, Source={x:Reference ThisPage}}"
-                                                       CommandParameter="{Binding Product}">
-                                            <Label Text="Edit" Padding="16,0" VerticalOptions="Center" TextColor="{DynamicResource PrimaryText}" />
-                                        </SwipeItemView>
-                                        <SwipeItemView IsVisible="{Binding BindingContext.CanManageProducts, Source={x:Reference ThisPage}}"
-                                                       Command="{Binding BindingContext.DeleteProductCommand, Source={x:Reference ThisPage}}"
-                                                       CommandParameter="{Binding Product}">
-                                            <Label Text="Delete" Padding="16,0" VerticalOptions="Center" TextColor="{DynamicResource Danger}" />
-                                        </SwipeItemView>
-                                    </SwipeItems>
-                                </SwipeView.RightItems>
-
-                                <Grid RowDefinitions="Auto,1" BackgroundColor="{DynamicResource Background}" AutomationId="ProductRow">
-                                    <Grid.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding BindingContext.OpenDetailsCommand, Source={x:Reference ThisPage}}"
-                                            CommandParameter="{Binding Product}" />
-                                    </Grid.GestureRecognizers>
-                                    <components:ProductRow ProductName="{Binding Name}" NameRanges="{Binding NameRanges}"
-                                                           Code="{Binding CodeText}" IsOutOfStock="{Binding IsOutOfStock}"
-                                                           Note="{Binding SimilarText}">
-                                        <components:ProductRow.Right>
-                                            <HorizontalStackLayout Spacing="8">
-                                                <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Cells}">
-                                                    <BindableLayout.ItemTemplate>
-                                                        <DataTemplate x:DataType="services:ProductTableCell">
-                                                            <Label Text="{Binding Text}" WidthRequest="{Binding Width}"
-                                                                   VerticalOptions="Center" LineBreakMode="TailTruncation">
-                                                                <Label.Triggers>
-                                                                    <DataTrigger TargetType="Label" Binding="{Binding IsNumeric}" Value="True">
-                                                                        <Setter Property="HorizontalTextAlignment" Value="End" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger TargetType="Label" Binding="{Binding IsAlert}" Value="True">
-                                                                        <Setter Property="TextColor" Value="{DynamicResource Danger}" />
-                                                                        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-                                                                    </DataTrigger>
-                                                                </Label.Triggers>
-                                                            </Label>
-                                                        </DataTemplate>
-                                                    </BindableLayout.ItemTemplate>
-                                                </HorizontalStackLayout>
-                                                <!-- Phone: the room of the header's column chooser; desktop: edit and delete -->
-                                                <Grid WidthRequest="{OnIdiom 96, Phone=28}">
-                                                    <HorizontalStackLayout Spacing="8"
-                                                                           IsVisible="{OnIdiom Default=True, Phone=False}">
+                    <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}">
+                        <CollectionView ItemsSource="{Binding Rows}" AutomationId="ProductsCollection">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="services:ProductTableRow">
+                                    <Grid RowDefinitions="Auto,1" BackgroundColor="{DynamicResource Background}" AutomationId="ProductRow">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding BindingContext.OpenDetailsCommand, Source={x:Reference ThisPage}}"
+                                                CommandParameter="{Binding Product}" />
+                                        </Grid.GestureRecognizers>
+                                        <components:ProductRow ProductName="{Binding Name}" NameRanges="{Binding NameRanges}"
+                                                               IsOutOfStock="{Binding IsOutOfStock}" Note="{Binding SimilarText}">
+                                            <components:ProductRow.Right>
+                                                <HorizontalStackLayout Spacing="8">
+                                                    <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Cells}">
+                                                        <BindableLayout.ItemTemplate>
+                                                            <DataTemplate x:DataType="services:ProductTableCell">
+                                                                <Label Text="{Binding Text}" WidthRequest="{Binding Width}"
+                                                                       VerticalOptions="Center" LineBreakMode="TailTruncation">
+                                                                    <Label.Triggers>
+                                                                        <DataTrigger TargetType="Label" Binding="{Binding IsNumeric}" Value="True">
+                                                                            <Setter Property="HorizontalTextAlignment" Value="End" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger TargetType="Label" Binding="{Binding IsAlert}" Value="True">
+                                                                            <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                                                                            <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                                                                        </DataTrigger>
+                                                                    </Label.Triggers>
+                                                                </Label>
+                                                            </DataTemplate>
+                                                        </BindableLayout.ItemTemplate>
+                                                    </HorizontalStackLayout>
+                                                    <!-- Edit and delete, on every device (a swipe would fight the sideways scroll) -->
+                                                    <HorizontalStackLayout Spacing="8" WidthRequest="{StaticResource TableActionsWidth}"
+                                                                           IsVisible="{Binding BindingContext.CanManageProducts, Source={x:Reference ThisPage}}">
                                                         <Button StyleClass="Icon" Text="{StaticResource IconEdit}" AutomationId="EditProductButton"
-                                                                IsVisible="{Binding BindingContext.CanManageProducts, Source={x:Reference ThisPage}}"
                                                                 SemanticProperties.Description="{Binding Name, StringFormat='Edit {0}'}"
                                                                 Command="{Binding BindingContext.EditProductCommand, Source={x:Reference ThisPage}}"
                                                                 CommandParameter="{Binding Product}" />
                                                         <Button StyleClass="IconDanger" Text="{StaticResource IconDelete}" AutomationId="DeleteProductButton"
-                                                                IsVisible="{Binding BindingContext.CanManageProducts, Source={x:Reference ThisPage}}"
                                                                 IsEnabled="{Binding CanDelete}"
                                                                 SemanticProperties.Description="{Binding Name, StringFormat='Delete {0}'}"
                                                                 Command="{Binding BindingContext.DeleteProductCommand, Source={x:Reference ThisPage}}"
                                                                 CommandParameter="{Binding Product}" />
                                                     </HorizontalStackLayout>
-                                                </Grid>
-                                            </HorizontalStackLayout>
-                                        </components:ProductRow.Right>
-                                    </components:ProductRow>
-                                    <BoxView Grid.Row="1" />
-                                </Grid>
-                            </SwipeView>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </RefreshView>
+                                                </HorizontalStackLayout>
+                                            </components:ProductRow.Right>
+                                        </components:ProductRow>
+                                        <BoxView Grid.Row="1" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </RefreshView>
+                </Grid>
+            </components:WideTable>
 
-            <components:EmptyState Grid.Row="3" Glyph="{StaticResource IconBox}" Title="{Binding EmptyText}"
+            <components:EmptyState Grid.Row="2" Margin="0,56,0,0" Glyph="{StaticResource IconBox}" Title="{Binding EmptyText}"
                                    Message="{Binding EmptyHint}" ActionText="{Binding EmptyActionText}"
                                    ActionCommand="{Binding ClearSearchCommand}" IsVisible="{Binding IsEmptyShown}"
                                    VerticalOptions="Start" AutomationId="EmptyState" />
 
-            <VerticalStackLayout Grid.Row="4" Spacing="4">
+            <VerticalStackLayout Grid.Row="3" Spacing="4">
                 <Label Text="{Binding StatusMessage}" Style="{StaticResource ErrorLabel}" AutomationId="StatusLabel" />
             </VerticalStackLayout>
         </Grid>
 
-        <components:BottomNav Grid.Row="2" />
+        <components:BottomNav Grid.Row="2" Grid.Column="1" />
     </Grid>
 </ContentPage>
